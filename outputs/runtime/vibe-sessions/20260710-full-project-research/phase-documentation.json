@@ -1,0 +1,13 @@
+{
+  "stage": "plan_execute",
+  "result": "passed",
+  "documentation_root": "docs/technical-reference",
+  "markdown_files": 26,
+  "measured_lines": 5824,
+  "maximum_chapter_lines": 328,
+  "java_source_files": 306,
+  "java_files_documented": 306,
+  "frontend_source_files": 157,
+  "frontend_files_documented": 157,
+  "build_or_test_commands_run": false
+}
