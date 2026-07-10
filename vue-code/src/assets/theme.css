@@ -1,0 +1,95 @@
+/* ============================================================
+   macOS 26 Tahoe — Liquid Glass Design System
+   ============================================================ */
+
+:root {
+  --ab: #0A84FF;
+  --ar: #FF453A;
+  --ag: #30D158;
+  --ao: #FF9F0A;
+  --ap: #BF5AF2;
+  --apple-gray: rgba(120,120,128,.65);
+
+  --glass-bg: rgba(255,255,255,0.70);
+  --glass-bg-deep: rgba(255,255,255,0.50);
+  --glass-bg-float: rgba(255,255,255,0.72);
+  --glass-border: rgba(255,255,255,0.85);
+  --glass-border-in: rgba(255,255,255,0.45);
+  --glass-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 1.5px 4px rgba(0,0,0,0.04);
+  --glass-shadow-float: 0 16px 48px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08);
+  --glass-blur: blur(28px) saturate(1.8);
+  --glass-blur-sm: blur(16px) saturate(1.6);
+
+  --bg-gradient: linear-gradient(145deg, #e8f4fd 0%, #e0eafc 25%, #ead5f7 55%, #fde8f0 80%, #fef3e2 100%);
+  --apple-text: #1c1c1e;
+  --apple-text2: rgba(28,28,30,.55);
+  --apple-sep: rgba(60,60,67,.12);
+
+  --r: 16px;
+  --r-sm: 10px;
+  --r-pill: 100px;
+  --r-lg: 22px;
+
+  --color-background: #e8e8e8;
+  --color-background-soft: var(--glass-bg);
+  --color-background-mute: var(--glass-bg-deep);
+  --color-border: var(--apple-sep);
+  --color-border-hover: var(--ab);
+  --color-heading: var(--apple-text);
+  --color-text: var(--apple-text);
+  --color-primary: var(--ab);
+  --color-primary-hover: #0070e0;
+  --color-success: var(--ag);
+  --color-warning: var(--ao);
+  --color-danger: var(--ar);
+  --color-info: var(--ab);
+
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--bg-gradient);
+  color: var(--apple-text);
+}
+
+/* Table action button */
+.table-action-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  background: rgba(10,132,255,.12);
+  color: #0A84FF;
+  min-height: 28px;
+}
+
+.table-action-btn:hover {
+  background: rgba(10,132,255,.2);
+}
+
+.table-action-btn-danger {
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255,69,58,.12);
+  color: #FF453A;
+  min-height: 28px;
+}
+
+.table-action-btn-danger:hover {
+  background: rgba(255,69,58,.2);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.25);
+}
