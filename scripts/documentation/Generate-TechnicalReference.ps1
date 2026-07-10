@@ -103,18 +103,18 @@ foreach ($file in $javaFiles) {
     $mappings = Get-UniqueMatches $lines '^\s*@(RequestMapping|GetMapping|PostMapping|PutMapping|DeleteMapping|PatchMapping)(.*)$' 30
     $tables = Get-UniqueMatches $lines '(?:@TableName\(|\bFROM\s+|\bJOIN\s+|\bUPDATE\s+|\bINTO\s+)["'']?([a-zA-Z][a-zA-Z0-9_]+)' 20
 
-    $javaBody.Add("## `$relative`")
+    $javaBody.Add("## $relative")
     $javaBody.Add('')
-    $javaBody.Add("- 主类型：`$declaration`")
-    $javaBody.Add("- 包：`$package`")
+    $javaBody.Add("- 主类型：$declaration")
+    $javaBody.Add("- 包：$package")
     $javaBody.Add("- 规模：$($lines.Count) 行；文件大小 $($file.Length) 字节。")
     $javaBody.Add("- 职责判断：$(Get-Responsibility $relative $file.BaseName)")
-    $javaBody.Add("- 注解：$(if ($annotations.Count) { ($annotations | ForEach-Object { "``$_``" }) -join '、' } else { '无类级或成员级注解被提取' })。")
-    $javaBody.Add("- 显式方法：$(if ($methods.Count) { ($methods | ForEach-Object { "``$_``" }) -join '；' } else { '未提取到常规方法签名，可能是标记接口、纯字段对象或 Lombok 数据类型' })。")
-    $javaBody.Add("- 项目内依赖：$(if ($internalImports.Count) { ($internalImports | ForEach-Object { "``$_``" }) -join '、' } else { '无显式项目内 import' })。")
-    $javaBody.Add("- 主要外部依赖：$(if ($externalImports.Count) { ($externalImports | ForEach-Object { "``$_``" }) -join '、' } else { '仅 JDK 类型或无显式外部 import' })。")
-    $javaBody.Add("- Web 映射注解：$(if ($mappings.Count) { ($mappings | ForEach-Object { "``@$_``" }) -join '、' } else { '无' })。")
-    $javaBody.Add("- 持久化表线索：$(if ($tables.Count) { ($tables | ForEach-Object { "``$_``" }) -join '、' } else { '无直接 SQL 或表注解线索' })。")
+    $javaBody.Add("- 注解：$(if ($annotations.Count) { $annotations -join '、' } else { '无类级或成员级注解被提取' })。")
+    $javaBody.Add("- 显式方法：$(if ($methods.Count) { $methods -join '；' } else { '未提取到常规方法签名，可能是标记接口、纯字段对象或 Lombok 数据类型' })。")
+    $javaBody.Add("- 项目内依赖：$(if ($internalImports.Count) { $internalImports -join '、' } else { '无显式项目内 import' })。")
+    $javaBody.Add("- 主要外部依赖：$(if ($externalImports.Count) { $externalImports -join '、' } else { '仅 JDK 类型或无显式外部 import' })。")
+    $javaBody.Add("- Web 映射注解：$(if ($mappings.Count) { $mappings -join '、' } else { '无' })。")
+    $javaBody.Add("- 持久化表线索：$(if ($tables.Count) { $tables -join '、' } else { '无直接 SQL 或表注解线索' })。")
     $javaBody.Add('- 维护提示：修改该文件时应同步检查其构造器注入对象、调用方、DTO/实体字段和异常返回约定。')
     $javaBody.Add('')
 }
@@ -140,15 +140,15 @@ foreach ($file in $frontendFiles) {
         elseif ($relative.Contains('/assets/')) { '全局样式或静态视觉资源。' }
         else { 'Vue 应用入口或基础模块。' }
 
-    $frontendBody.Add("## `$relative`")
+    $frontendBody.Add("## $relative")
     $frontendBody.Add('')
     $frontendBody.Add("- 规模：$($lines.Count) 行；文件大小 $($file.Length) 字节。")
     $frontendBody.Add("- 职责判断：$role")
-    $frontendBody.Add("- 模块依赖：$(if ($imports.Count) { ($imports | ForEach-Object { "``$_``" }) -join '、' } else { '未提取到 ES module import' })。")
-    $frontendBody.Add("- 导出符号：$(if ($exports.Count) { ($exports | ForEach-Object { "``$_``" }) -join '、' } else { '无命名导出或由 Vue SFC 模板隐式提供' })。")
-    $frontendBody.Add("- 后端路径：$(if ($urls.Count) { ($urls | ForEach-Object { "``$_``" }) -join '、' } else { '无直接请求 URL' })。")
-    $frontendBody.Add("- 使用的业务组件：$(if ($components.Count) { ($components | ForEach-Object { "``$_``" }) -join '、' } else { '未提取到 PascalCase 子组件标签' })。")
-    $frontendBody.Add("- Composition API：$(if ($reactivity.Count) { ($reactivity | Sort-Object -Unique | ForEach-Object { "``$_``" }) -join '、' } else { '未提取到常见响应式 API 调用' })。")
+    $frontendBody.Add("- 模块依赖：$(if ($imports.Count) { $imports -join '、' } else { '未提取到 ES module import' })。")
+    $frontendBody.Add("- 导出符号：$(if ($exports.Count) { $exports -join '、' } else { '无命名导出或由 Vue SFC 模板隐式提供' })。")
+    $frontendBody.Add("- 后端路径：$(if ($urls.Count) { $urls -join '、' } else { '无直接请求 URL' })。")
+    $frontendBody.Add("- 使用的业务组件：$(if ($components.Count) { $components -join '、' } else { '未提取到 PascalCase 子组件标签' })。")
+    $frontendBody.Add("- Composition API：$(if ($reactivity.Count) { ($reactivity | Sort-Object -Unique) -join '、' } else { '未提取到常见响应式 API 调用' })。")
     $frontendBody.Add('- 维护提示：修改时应同步核对类型定义、请求响应结构、加载/错误状态和路由入口。')
     $frontendBody.Add('')
 }
@@ -163,9 +163,9 @@ foreach ($file in ($resourceFiles | Sort-Object FullName -Unique)) {
     $relative = Convert-ToRelativePath $file.FullName
     $isText = $file.Extension -in '.xml', '.yml', '.yaml', '.properties', '.sql', '.json', '.ts', '.html', '.sh', '.cmd', '.txt', '.md', '.gitignore', '.gitattributes', '.dockerignore' -or $file.Name -in @('Dockerfile', 'mvnw')
     $lineCount = if ($isText) { [IO.File]::ReadAllLines($file.FullName, [Text.Encoding]::UTF8).Count } else { 0 }
-    $resourceBody.Add("## `$relative`")
+    $resourceBody.Add("## $relative")
     $resourceBody.Add('')
-    $resourceBody.Add("- 类型：`$($file.Extension)`；大小：$($file.Length) 字节；文本行数：$lineCount。")
+    $resourceBody.Add("- 类型：$($file.Extension)；大小：$($file.Length) 字节；文本行数：$lineCount。")
     $resourceBody.Add("- 角色：$(if ($relative.Contains('resources')) { '后端运行资源、数据库初始化、日志、静态文件或应用配置。' } elseif ($relative.StartsWith('vue-code/')) { '前端工程、TypeScript 或 Vite 配置。' } else { '仓库级构建、容器、安装或版本控制配置。' })")
     $resourceBody.Add('- 维护提示：配置变更应核对默认值、环境变量覆盖、容器挂载路径和敏感信息处理。')
     $resourceBody.Add('')
