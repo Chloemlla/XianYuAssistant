@@ -1,0 +1,18 @@
+{
+  "stage": "deep_interview",
+  "goal": "用最新版VitePress包装技术调研文档并优化Vercel部署",
+  "vitepress_version": "1.6.4",
+  "deliverables": [
+    "美化主页与整体主题",
+    "完整导航侧栏和搜索",
+    "根目录vercel.json",
+    "Vercel构建缓存与响应头优化",
+    "GitHub workflow构建验证"
+  ],
+  "constraints": [
+    "本地不运行构建测试",
+    "文档依赖与业务前端隔离",
+    "不创建超级文件",
+    "完成后提交并推送"
+  ]
+}

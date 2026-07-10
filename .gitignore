@@ -47,3 +47,8 @@ build/
 /.qoder/
 /.arts/
 fuck-my-shit-mountain/
+
+### VitePress ###
+/docs/node_modules/
+/docs/.vitepress/cache/
+/docs/.vitepress/dist/

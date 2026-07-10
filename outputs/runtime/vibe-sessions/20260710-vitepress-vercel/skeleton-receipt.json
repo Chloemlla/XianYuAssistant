@@ -1,0 +1,9 @@
+{
+  "stage": "skeleton_check",
+  "branch": "main",
+  "working_tree": "clean",
+  "documentation_root": "docs",
+  "existing_vitepress": false,
+  "local_builds_allowed": false,
+  "result": "passed"
+}
