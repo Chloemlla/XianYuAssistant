@@ -37,7 +37,7 @@
 - 规模：153 行；文件大小 6810 字节。
 - 职责判断：数据导入导出及模块化备份处理器。
 - 注解：@Slf4j、@Component、@Autowired、@Override、@SuppressWarnings("unchecked")。
-- 显式方法：getModuleKey()；getModuleName()；exportData()；importData(Map<String, Object> data, Map<String, Object> context)。
+- 显式方法：getModuleKey()；getModuleName()；exportData()；importData(Map&lt;String, Object&gt; data, Map&lt;String, Object&gt; context)。
 - 项目内依赖：com.feijimiao.xianyuassistant.backup.DataBackupHandler、com.feijimiao.xianyuassistant.entity.XianyuAccount、com.feijimiao.xianyuassistant.entity.XianyuCookie、com.feijimiao.xianyuassistant.mapper.XianyuAccountMapper、com.feijimiao.xianyuassistant.mapper.XianyuCookieMapper。
 - 主要外部依赖：com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Component。
 - Web 映射注解：无。
@@ -51,7 +51,7 @@
 - 规模：124 行；文件大小 5737 字节。
 - 职责判断：数据导入导出及模块化备份处理器。
 - 注解：@Slf4j、@Component、@Autowired、@Override、@SuppressWarnings("unchecked")。
-- 显式方法：getModuleKey()；getModuleName()；exportData()；importData(Map<String, Object> data, Map<String, Object> context)。
+- 显式方法：getModuleKey()；getModuleName()；exportData()；importData(Map&lt;String, Object&gt; data, Map&lt;String, Object&gt; context)。
 - 项目内依赖：com.feijimiao.xianyuassistant.backup.DataBackupHandler、com.feijimiao.xianyuassistant.entity.XianyuAccount、com.feijimiao.xianyuassistant.entity.XianyuGoodsAutoDeliveryConfig、com.feijimiao.xianyuassistant.mapper.XianyuAccountMapper、com.feijimiao.xianyuassistant.mapper.XianyuGoodsAutoDeliveryConfigMapper。
 - 主要外部依赖：com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Component。
 - Web 映射注解：无。
@@ -65,7 +65,7 @@
 - 规模：105 行；文件大小 4702 字节。
 - 职责判断：数据导入导出及模块化备份处理器。
 - 注解：@Slf4j、@Component、@Autowired、@Override、@SuppressWarnings("unchecked")。
-- 显式方法：getModuleKey()；getModuleName()；exportData()；importData(Map<String, Object> data, Map<String, Object> context)。
+- 显式方法：getModuleKey()；getModuleName()；exportData()；importData(Map&lt;String, Object&gt; data, Map&lt;String, Object&gt; context)。
 - 项目内依赖：com.feijimiao.xianyuassistant.backup.DataBackupHandler。
 - 主要外部依赖：lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.jdbc.core.JdbcTemplate、org.springframework.stereotype.Component。
 - Web 映射注解：无。
@@ -79,7 +79,7 @@
 - 规模：118 行；文件大小 4746 字节。
 - 职责判断：数据导入导出及模块化备份处理器。
 - 注解：@Slf4j、@Component、@Autowired、@Override、@SuppressWarnings("unchecked")。
-- 显式方法：getModuleKey()；getModuleName()；exportData()；importData(Map<String, Object> data, Map<String, Object> context)。
+- 显式方法：getModuleKey()；getModuleName()；exportData()；importData(Map&lt;String, Object&gt; data, Map&lt;String, Object&gt; context)。
 - 项目内依赖：com.feijimiao.xianyuassistant.backup.DataBackupHandler、com.feijimiao.xianyuassistant.entity.XianyuAccount、com.feijimiao.xianyuassistant.entity.XianyuGoodsInfo、com.feijimiao.xianyuassistant.mapper.XianyuAccountMapper、com.feijimiao.xianyuassistant.mapper.XianyuGoodsInfoMapper。
 - 主要外部依赖：com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Component。
 - Web 映射注解：无。
@@ -93,7 +93,7 @@
 - 规模：181 行；文件大小 8181 字节。
 - 职责判断：数据导入导出及模块化备份处理器。
 - 注解：@Slf4j、@Component、@Autowired、@Override、@SuppressWarnings("unchecked")。
-- 显式方法：getModuleKey()；getModuleName()；exportData()；importData(Map<String, Object> data, Map<String, Object> context)。
+- 显式方法：getModuleKey()；getModuleName()；exportData()；importData(Map&lt;String, Object&gt; data, Map&lt;String, Object&gt; context)。
 - 项目内依赖：com.feijimiao.xianyuassistant.backup.DataBackupHandler、com.feijimiao.xianyuassistant.entity.XianyuAccount、com.feijimiao.xianyuassistant.entity.XianyuKamiConfig、com.feijimiao.xianyuassistant.entity.XianyuKamiItem、com.feijimiao.xianyuassistant.mapper.XianyuAccountMapper、com.feijimiao.xianyuassistant.mapper.XianyuKamiConfigMapper、com.feijimiao.xianyuassistant.mapper.XianyuKamiItemMapper。
 - 主要外部依赖：com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Component。
 - Web 映射注解：无。
@@ -107,7 +107,7 @@
 - 规模：86 行；文件大小 3467 字节。
 - 职责判断：数据导入导出及模块化备份处理器。
 - 注解：@Slf4j、@Component、@Autowired、@Override、@SuppressWarnings("unchecked")。
-- 显式方法：getModuleKey()；getModuleName()；exportData()；importData(Map<String, Object> data, Map<String, Object> context)。
+- 显式方法：getModuleKey()；getModuleName()；exportData()；importData(Map&lt;String, Object&gt; data, Map&lt;String, Object&gt; context)。
 - 项目内依赖：com.feijimiao.xianyuassistant.backup.DataBackupHandler、com.feijimiao.xianyuassistant.entity.XianyuSysSetting、com.feijimiao.xianyuassistant.mapper.XianyuSysSettingMapper。
 - 主要外部依赖：com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Component。
 - Web 映射注解：无。
@@ -135,7 +135,7 @@
 - 规模：143 行；文件大小 3963 字节。
 - 职责判断：项目基础类型；具体职责由声明、注解和依赖共同确定。
 - 注解：@Slf4j、@Service、@Override、@SuppressWarnings("unchecked")。
-- 显式方法：put(String key, Object value)；put(String key, Object value, long timeout, TimeUnit unit)；get(String key, Class<T> clazz)；get(String key)；remove(String key)；containsKey(String key)；increment(String key)；expire(String key, long timeout, TimeUnit unit)；getExpire(String key)。
+- 显式方法：put(String key, Object value)；put(String key, Object value, long timeout, TimeUnit unit)；get(String key, Class&lt;T&gt; clazz)；get(String key)；remove(String key)；containsKey(String key)；increment(String key)；expire(String key, long timeout, TimeUnit unit)；getExpire(String key)。
 - 项目内依赖：无显式项目内 import。
 - 主要外部依赖：lombok.extern.slf4j.Slf4j、org.springframework.stereotype.Service。
 - Web 映射注解：无。
@@ -144,7 +144,7 @@
 
 ## src/main/java/com/feijimiao/xianyuassistant/common/ResultObject.java
 
-- 主类型：ResultObject<T>
+- 主类型：ResultObject&lt;T&gt;
 - 包：com.feijimiao.xianyuassistant.common
 - 规模：135 行；文件大小 3206 字节。
 - 职责判断：项目基础类型；具体职责由声明、注解和依赖共同确定。
@@ -331,7 +331,7 @@
 - 规模：362 行；文件大小 12930 字节。
 - 职责判断：Spring 容器、数据库、序列化、异步或 Web 基础设施配置。
 - 注解：@Slf4j、@Component。
-- 显式方法：parseSchemaFile(String schemaFilePath)；removeComments(String sql)；parseTables(String sqlContent)；parseColumns(String tableBody)；parseColumn(String columnDef)；splitByComma(String str)；parseIndexes(String sqlContent)；parseTriggers(String sqlContent)；getTables()；setTables(Map<String, TableDefinition> tables)；getIndexes()；setIndexes(Map<String, IndexDefinition> indexes)；getTriggers()；setTriggers(Map<String, TriggerDefinition> triggers)；getName()；setName(String name)；getCreateSql()；setCreateSql(String createSql)；getColumns()；setColumns(List<ColumnDefinition> columns)；getType()；setType(String type)；getConstraints()；setConstraints(String constraints)；getDefinition()；setDefinition(String definition)；getTableName()；setTableName(String tableName)；setColumns(List<String> columns)；isUnique()；setUnique(boolean unique)。
+- 显式方法：parseSchemaFile(String schemaFilePath)；removeComments(String sql)；parseTables(String sqlContent)；parseColumns(String tableBody)；parseColumn(String columnDef)；splitByComma(String str)；parseIndexes(String sqlContent)；parseTriggers(String sqlContent)；getTables()；setTables(Map&lt;String, TableDefinition&gt; tables)；getIndexes()；setIndexes(Map&lt;String, IndexDefinition&gt; indexes)；getTriggers()；setTriggers(Map&lt;String, TriggerDefinition&gt; triggers)；getName()；setName(String name)；getCreateSql()；setCreateSql(String createSql)；getColumns()；setColumns(List&lt;ColumnDefinition&gt; columns)；getType()；setType(String type)；getConstraints()；setConstraints(String constraints)；getDefinition()；setDefinition(String definition)；getTableName()；setTableName(String tableName)；setColumns(List&lt;String&gt; columns)；isUnique()；setUnique(boolean unique)。
 - 项目内依赖：无显式项目内 import。
 - 主要外部依赖：lombok.extern.slf4j.Slf4j、org.springframework.core.io.ClassPathResource、org.springframework.stereotype.Component。
 - Web 映射注解：无。

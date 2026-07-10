@@ -290,7 +290,7 @@
 - 包：com.feijimiao.xianyuassistant.mapper
 - 规模：21 行；文件大小 940 字节。
 - 职责判断：MyBatis-Plus 数据访问接口。
-- 注解：@Mapper、@Insert("INSERT INTO xianyu_human_intervention_record (xianyu_account_id, xy_goods_id, s_id, end_time)、@Options(useGeneratedKeys = true, keyProperty = "id")、@Select("SELECT * FROM xianyu_human_intervention_record WHERE s_id = #{sId} AND end_time > datetime('now', 'localtime')、@Delete("DELETE FROM xianyu_human_intervention_record WHERE end_time < datetime('now', 'localtime')。
+- 注解：@Mapper、@Insert("INSERT INTO xianyu_human_intervention_record (xianyu_account_id, xy_goods_id, s_id, end_time)、@Options(useGeneratedKeys = true, keyProperty = "id")、@Select("SELECT * FROM xianyu_human_intervention_record WHERE s_id = #{sId} AND end_time &gt; datetime('now', 'localtime')、@Delete("DELETE FROM xianyu_human_intervention_record WHERE end_time &lt; datetime('now', 'localtime')。
 - 显式方法：未提取到常规方法签名，可能是标记接口、纯字段对象或 Lombok 数据类型。
 - 项目内依赖：com.feijimiao.xianyuassistant.entity.XianyuHumanInterventionRecord。
 - 主要外部依赖：org.apache.ibatis.annotations.*。

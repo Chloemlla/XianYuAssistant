@@ -31,7 +31,7 @@
 - 规模：77 行；文件大小 3137 字节。
 - 职责判断：自动回复策略链，处理关键词、RAG、延迟和兜底逻辑。
 - 注解：@Slf4j、@Component、@Autowired、@Override。
-- 显式方法：execute(List<ChatMessageData> messageList)。
+- 显式方法：execute(List&lt;ChatMessageData&gt; messageList)。
 - 项目内依赖：com.feijimiao.xianyuassistant.entity.bo.KeywordReplyRuleBO、com.feijimiao.xianyuassistant.event.chatMessageEvent.ChatMessageData、com.feijimiao.xianyuassistant.service.KeywordReplyService。
 - 主要外部依赖：lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Component。
 - Web 映射注解：无。
@@ -45,7 +45,7 @@
 - 规模：145 行；文件大小 6521 字节。
 - 职责判断：自动回复策略链，处理关键词、RAG、延迟和兜底逻辑。
 - 注解：@Slf4j、@Component、@Autowired、@Override。
-- 显式方法：execute(List<ChatMessageData> messageList)；executeKeywordWithPolish(Long accountId, List<KeywordReplyRuleBO> matchedRules)；executeAIReply(Long accountId, String xyGoodsId, String buyerMessage)。
+- 显式方法：execute(List&lt;ChatMessageData&gt; messageList)；executeKeywordWithPolish(Long accountId, List&lt;KeywordReplyRuleBO&gt; matchedRules)；executeAIReply(Long accountId, String xyGoodsId, String buyerMessage)。
 - 项目内依赖：com.feijimiao.xianyuassistant.config.rag.DynamicAIChatClientManager、com.feijimiao.xianyuassistant.entity.XianyuGoodsConfig、com.feijimiao.xianyuassistant.entity.XianyuGoodsInfo、com.feijimiao.xianyuassistant.entity.bo.KeywordReplyRuleBO、com.feijimiao.xianyuassistant.event.chatMessageEvent.ChatMessageData、com.feijimiao.xianyuassistant.mapper.XianyuGoodsConfigMapper、com.feijimiao.xianyuassistant.mapper.XianyuGoodsInfoMapper、com.feijimiao.xianyuassistant.service.AIService、com.feijimiao.xianyuassistant.service.KeywordReplyService、com.feijimiao.xianyuassistant.service.bo.RAGReplyResult。
 - 主要外部依赖：com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Component。
 - Web 映射注解：无。
@@ -73,7 +73,7 @@
 - 规模：63 行；文件大小 2094 字节。
 - 职责判断：自动回复策略链，处理关键词、RAG、延迟和兜底逻辑。
 - 注解：@lombok.Data。
-- 显式方法：text(String text, int replyType)；image(String imageUrl, int replyType)；textAndImage(String text, String imageUrl, int replyType)；of(List<ReplyItem> items)；fail()。
+- 显式方法：text(String text, int replyType)；image(String imageUrl, int replyType)；textAndImage(String text, String imageUrl, int replyType)；of(List&lt;ReplyItem&gt; items)；fail()。
 - 项目内依赖：com.feijimiao.xianyuassistant.entity.bo.KeywordReplyRuleBO、com.feijimiao.xianyuassistant.event.chatMessageEvent.ChatMessageData。
 - 主要外部依赖：仅 JDK 类型或无显式外部 import。
 - Web 映射注解：无。
@@ -87,7 +87,7 @@
 - 规模：52 行；文件大小 1933 字节。
 - 职责判断：自动回复策略链，处理关键词、RAG、延迟和兜底逻辑。
 - 注解：@Slf4j、@Component、@Autowired。
-- 显式方法：resolve(List<ChatMessageData> messageList)。
+- 显式方法：resolve(List&lt;ChatMessageData&gt; messageList)。
 - 项目内依赖：com.feijimiao.xianyuassistant.entity.XianyuGoodsConfig、com.feijimiao.xianyuassistant.entity.bo.KeywordReplyRuleBO、com.feijimiao.xianyuassistant.event.chatMessageEvent.ChatMessageData、com.feijimiao.xianyuassistant.mapper.XianyuGoodsConfigMapper、com.feijimiao.xianyuassistant.service.KeywordReplyService。
 - 主要外部依赖：lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Component。
 - Web 映射注解：无。
@@ -185,7 +185,7 @@
 - 规模：123 行；文件大小 3351 字节。
 - 职责判断：项目基础类型；具体职责由声明、注解和依赖共同确定。
 - 注解：@Slf4j、@Component、@Value("${jwt.secret:xianyu-assistant-jwt-secret-key-2026-04-22-very-long-secret}")、@Value("${jwt.expiration:2592000000}")。
-- 显式方法：generateToken(Long userId, String username)；createToken(Map<String, Object> claims, String subject)；parseToken(String token)；getUserIdFromToken(String token)；getUsernameFromToken(String token)；validateToken(String token)；getExpiration()；getSecretKey()。
+- 显式方法：generateToken(Long userId, String username)；createToken(Map&lt;String, Object&gt; claims, String subject)；parseToken(String token)；getUserIdFromToken(String token)；getUsernameFromToken(String token)；validateToken(String token)；getExpiration()；getSecretKey()。
 - 项目内依赖：无显式项目内 import。
 - 主要外部依赖：lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Value、org.springframework.stereotype.Component。
 - Web 映射注解：无。
@@ -213,7 +213,7 @@
 - 规模：102 行；文件大小 3015 字节。
 - 职责判断：远端协议、签名、Cookie、JSON、邮件等通用技术工具。
 - 注解：@Slf4j。
-- 显式方法：parseCookies(String cookieStr)；formatCookies(Map<String, String> cookies)；extractToken(String cookieStr)；generateSign(String timestamp, String token, String data)。
+- 显式方法：parseCookies(String cookieStr)；formatCookies(Map&lt;String, String&gt; cookies)；extractToken(String cookieStr)；generateSign(String timestamp, String token, String data)。
 - 项目内依赖：无显式项目内 import。
 - 主要外部依赖：lombok.extern.slf4j.Slf4j。
 - Web 映射注解：无。
@@ -241,7 +241,7 @@
 - 规模：170 行；文件大小 6336 字节。
 - 职责判断：远端协议、签名、Cookie、JSON、邮件等通用技术工具。
 - 注解：@Slf4j。
-- 显式方法：post(String url, Map<String, String> headers, Map<String, String> body)；postWithHeaders(String url, Map<String, String> headers, Map<String, String> body)；getBody()；setBody(String body)；getStatusCode()；setStatusCode(int statusCode)；getHeaders()；setHeaders(HttpHeaders headers)；getHeaderValues(String headerName)；get(String url, Map<String, String> headers)。
+- 显式方法：post(String url, Map&lt;String, String&gt; headers, Map&lt;String, String&gt; body)；postWithHeaders(String url, Map&lt;String, String&gt; headers, Map&lt;String, String&gt; body)；getBody()；setBody(String body)；getStatusCode()；setStatusCode(int statusCode)；getHeaders()；setHeaders(HttpHeaders headers)；getHeaderValues(String headerName)；get(String url, Map&lt;String, String&gt; headers)。
 - 项目内依赖：无显式项目内 import。
 - 主要外部依赖：lombok.extern.slf4j.Slf4j、org.springframework.http.*、org.springframework.web.client.RestTemplate。
 - Web 映射注解：无。
@@ -311,7 +311,7 @@
 - 规模：213 行；文件大小 7195 字节。
 - 职责判断：远端协议、签名、Cookie、JSON、邮件等通用技术工具。
 - 注解：@Override。
-- 显式方法：initFromCookieString(String cookieStr)；getCookieString()；getCookie(String name)；getCookieMap()；getMh5tkToken()；saveFromResponse(HttpUrl url, List<Cookie> cookies)；loadForRequest(HttpUrl url)；extractTopDomain(String host)；createHttpClient()。
+- 显式方法：initFromCookieString(String cookieStr)；getCookieString()；getCookie(String name)；getCookieMap()；getMh5tkToken()；saveFromResponse(HttpUrl url, List&lt;Cookie&gt; cookies)；loadForRequest(HttpUrl url)；extractTopDomain(String host)；createHttpClient()。
 - 项目内依赖：无显式项目内 import。
 - 主要外部依赖：okhttp3.Cookie、okhttp3.CookieJar、okhttp3.HttpUrl、okhttp3.OkHttpClient。
 - Web 映射注解：无。
@@ -325,7 +325,7 @@
 - 规模：316 行；文件大小 13157 字节。
 - 职责判断：远端协议、签名、Cookie、JSON、邮件等通用技术工具。
 - 注解：@Slf4j、@Component、@Autowired、@SuppressWarnings("unchecked")。
-- 显式方法：updateCookiesFromResponse(Long accountId, String currentCookieStr, List<String> setCookieHeaders)；mergeCookies(String oldCookieStr, List<String> newCookies)；isTokenExpired(String retCode)；isRiskControl(String retCode)；isSuccess()；getResponse()；getErrorMessage()；isTokenExpired()；extractData()。
+- 显式方法：updateCookiesFromResponse(Long accountId, String currentCookieStr, List&lt;String&gt; setCookieHeaders)；mergeCookies(String oldCookieStr, List&lt;String&gt; newCookies)；isTokenExpired(String retCode)；isRiskControl(String retCode)；isSuccess()；getResponse()；getErrorMessage()；isTokenExpired()；extractData()。
 - 项目内依赖：无显式项目内 import。
 - 主要外部依赖：com.fasterxml.jackson.databind.ObjectMapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Component。
 - Web 映射注解：无。
@@ -339,7 +339,7 @@
 - 规模：381 行；文件大小 13866 字节。
 - 职责判断：远端协议、签名、Cookie、JSON、邮件等通用技术工具。
 - 注解：@Slf4j、@SuppressWarnings("unchecked")。
-- 显式方法：buildStandardHeaders(String cookiesStr)；buildStandardParams(String apiName, String timestamp, String sign)；addSpmParams(Map<String, String> params, String spmCnt, String spmPre)；getBody()；getHeaders()；getSetCookieHeaders()；callApi(String apiName, Map<String, Object> dataMap, String cookiesStr)；buildUrl(String apiName, Map<String, String> params)；isSuccess(String response)；extractData(String response)；extractError(String response)。
+- 显式方法：buildStandardHeaders(String cookiesStr)；buildStandardParams(String apiName, String timestamp, String sign)；addSpmParams(Map&lt;String, String&gt; params, String spmCnt, String spmPre)；getBody()；getHeaders()；getSetCookieHeaders()；callApi(String apiName, Map&lt;String, Object&gt; dataMap, String cookiesStr)；buildUrl(String apiName, Map&lt;String, String&gt; params)；isSuccess(String response)；extractData(String response)；extractError(String response)。
 - 项目内依赖：无显式项目内 import。
 - 主要外部依赖：com.fasterxml.jackson.databind.ObjectMapper、lombok.extern.slf4j.Slf4j。
 - Web 映射注解：无。
@@ -367,7 +367,7 @@
 - 规模：94 行；文件大小 2864 字节。
 - 职责判断：远端协议、签名、Cookie、JSON、邮件等通用技术工具。
 - 注解：@Slf4j。
-- 显式方法：parseCookies(String cookiesStr)；generateSign(String timestamp, String token, String data)；extractToken(Map<String, String> cookies)；formatCookies(Map<String, String> cookies)。
+- 显式方法：parseCookies(String cookiesStr)；generateSign(String timestamp, String token, String data)；extractToken(Map&lt;String, String&gt; cookies)；formatCookies(Map&lt;String, String&gt; cookies)。
 - 项目内依赖：无显式项目内 import。
 - 主要外部依赖：lombok.extern.slf4j.Slf4j。
 - Web 映射注解：无。
@@ -381,4 +381,4 @@
 - 规模：40 行；文件大小 1190 字节。
 - 职责判断：闲鱼长连接、消息解析、连接状态或事件分发组件。
 - 注解：@Slf4j、@Component、@Autowired、@Override。
-- 显式方法：handleMessage(String accountId, Map<String, Object> message)；handleHeartbeat(String accountId)；handleError(String accountId, Exception error)。
+- 显式方法：handleMessage(String accountId, Map&lt;String, Object&gt; message)；handleHeartbeat(String accountId)；handleError(String accountId, Exception error)。

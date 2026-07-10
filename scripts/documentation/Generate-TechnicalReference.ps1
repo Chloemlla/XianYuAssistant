@@ -43,6 +43,11 @@ function Get-UniqueMatches([string[]]$Lines, [string]$Pattern, [int]$Limit = 20)
     return $values
 }
 
+function Convert-ToMarkdownText([string]$Value) {
+    if ($null -eq $Value) { return '' }
+    return $Value.Replace('&', '&amp;').Replace('<', '&lt;').Replace('>', '&gt;')
+}
+
 function Get-Responsibility([string]$RelativePath, [string]$Name) {
     $map = [ordered]@{
         '/controller/dto/' = 'HTTP 接口的数据传输对象，定义请求或响应的序列化边界。'
@@ -102,6 +107,14 @@ foreach ($file in $javaFiles) {
     $externalImports = Get-UniqueMatches $lines '^\s*import\s+((?:org|com\.baomidou|com\.fasterxml|cn\.hutool|jakarta|okhttp3|lombok|reactor)\.[^;]+);' 15
     $mappings = Get-UniqueMatches $lines '^\s*@(RequestMapping|GetMapping|PostMapping|PutMapping|DeleteMapping|PatchMapping)(.*)$' 30
     $tables = Get-UniqueMatches $lines '(?:@TableName\(|\bFROM\s+|\bJOIN\s+|\bUPDATE\s+|\bINTO\s+)["'']?([a-zA-Z][a-zA-Z0-9_]+)' 20
+    $package = Convert-ToMarkdownText $package
+    $declaration = Convert-ToMarkdownText $declaration
+    $annotations = @($annotations | ForEach-Object { Convert-ToMarkdownText $_ })
+    $methods = @($methods | ForEach-Object { Convert-ToMarkdownText $_ })
+    $internalImports = @($internalImports | ForEach-Object { Convert-ToMarkdownText $_ })
+    $externalImports = @($externalImports | ForEach-Object { Convert-ToMarkdownText $_ })
+    $mappings = @($mappings | ForEach-Object { Convert-ToMarkdownText $_ })
+    $tables = @($tables | ForEach-Object { Convert-ToMarkdownText $_ })
 
     $javaBody.Add("## $relative")
     $javaBody.Add('')
@@ -131,6 +144,11 @@ foreach ($file in $frontendFiles) {
     $urls = Get-UniqueMatches $lines '(?:url\s*:\s*|fetch\()[''"]([^''"]+)[''"]' 30
     $components = Get-UniqueMatches $lines '<([A-Z][A-Za-z0-9]+)(?:\s|/|>)' 30
     $reactivity = Get-UniqueMatches $lines '\b(ref|reactive|computed|watch|watchEffect|onMounted|onUnmounted)\s*\(' 20
+    $imports = @($imports | ForEach-Object { Convert-ToMarkdownText $_ })
+    $exports = @($exports | ForEach-Object { Convert-ToMarkdownText $_ })
+    $urls = @($urls | ForEach-Object { Convert-ToMarkdownText $_ })
+    $components = @($components | ForEach-Object { Convert-ToMarkdownText $_ })
+    $reactivity = @($reactivity | ForEach-Object { Convert-ToMarkdownText $_ })
 
     $role = if ($relative.Contains('/api/')) { '前端 API 契约与请求封装。' }
         elseif ($relative.Contains('/views/')) { '业务页面、页面组合逻辑或页面私有组件。' }

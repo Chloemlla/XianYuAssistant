@@ -5,7 +5,7 @@
 - 规模：56 行；文件大小 2395 字节。
 - 职责判断：业务服务实现层，编排持久化、远端调用、缓存或消息链路。
 - 注解：@Slf4j、@Service、@Autowired、@Override、@Transactional(rollbackFor = Exception.class)。
-- 显式方法：listByXyGoodsId(String xyGoodsId)；saveProperties(String xyGoodsId, Long xianyuAccountId, List<XianyuGoodsSkuProperty> propertyList)；deleteByXyGoodsId(String xyGoodsId)。
+- 显式方法：listByXyGoodsId(String xyGoodsId)；saveProperties(String xyGoodsId, Long xianyuAccountId, List&lt;XianyuGoodsSkuProperty&gt; propertyList)；deleteByXyGoodsId(String xyGoodsId)。
 - 项目内依赖：com.feijimiao.xianyuassistant.entity.XianyuGoodsSkuProperty、com.feijimiao.xianyuassistant.mapper.XianyuGoodsSkuPropertyMapper、com.feijimiao.xianyuassistant.service.GoodsSkuPropertyService。
 - 主要外部依赖：com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Service、org.springframework.transaction.annotation.Transactional。
 - Web 映射注解：无。
@@ -19,7 +19,7 @@
 - 规模：67 行；文件大小 2644 字节。
 - 职责判断：业务服务实现层，编排持久化、远端调用、缓存或消息链路。
 - 注解：@Slf4j、@Service、@Autowired、@Override、@Transactional(rollbackFor = Exception.class)。
-- 显式方法：getCurrentTimeString()；listByXyGoodsId(String xyGoodsId)；countByXyGoodsId(String xyGoodsId)；saveSkus(String xyGoodsId, Long xianyuAccountId, List<XianyuGoodsSku> skuList)；deleteByXyGoodsId(String xyGoodsId)。
+- 显式方法：getCurrentTimeString()；listByXyGoodsId(String xyGoodsId)；countByXyGoodsId(String xyGoodsId)；saveSkus(String xyGoodsId, Long xianyuAccountId, List&lt;XianyuGoodsSku&gt; skuList)；deleteByXyGoodsId(String xyGoodsId)。
 - 项目内依赖：com.feijimiao.xianyuassistant.entity.XianyuGoodsSku、com.feijimiao.xianyuassistant.mapper.XianyuGoodsSkuMapper、com.feijimiao.xianyuassistant.service.GoodsSkuService。
 - 主要外部依赖：com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Service、org.springframework.transaction.annotation.Transactional。
 - Web 映射注解：无。
@@ -47,7 +47,7 @@
 - 规模：287 行；文件大小 10983 字节。
 - 职责判断：业务服务实现层，编排持久化、远端调用、缓存或消息链路。
 - 注解：@Slf4j、@Service、@Autowired、@Override、@Async。
-- 显式方法：startSync(Long accountId, List<ItemDTO> items)；executeSync(String syncId, Long accountId, List<ItemDTO> items, String cookieStr)；fetchAndSaveDetail(String itemId, String cookieStr, Long accountId)；syncSingleItem(Long accountId, String itemId)；extractDescFromDetailJson(String detailJson)；getProgress(String syncId)；cancelSync(String syncId)；isSyncing(Long accountId)。
+- 显式方法：startSync(Long accountId, List&lt;ItemDTO&gt; items)；executeSync(String syncId, Long accountId, List&lt;ItemDTO&gt; items, String cookieStr)；fetchAndSaveDetail(String itemId, String cookieStr, Long accountId)；syncSingleItem(Long accountId, String itemId)；extractDescFromDetailJson(String detailJson)；getProgress(String syncId)；cancelSync(String syncId)；isSyncing(Long accountId)。
 - 项目内依赖：com.feijimiao.xianyuassistant.controller.dto.ItemDTO、com.feijimiao.xianyuassistant.controller.dto.SyncProgressRespDTO、com.feijimiao.xianyuassistant.entity.XianyuGoodsSku、com.feijimiao.xianyuassistant.entity.XianyuGoodsSkuProperty、com.feijimiao.xianyuassistant.service.AccountService、com.feijimiao.xianyuassistant.service.GoodsInfoService、com.feijimiao.xianyuassistant.service.GoodsSkuService、com.feijimiao.xianyuassistant.service.GoodsSkuPropertyService、com.feijimiao.xianyuassistant.service.ItemDetailSyncService、com.feijimiao.xianyuassistant.utils.ItemDetailUtils、com.feijimiao.xianyuassistant.utils.XianyuApiUtils。
 - 主要外部依赖：com.fasterxml.jackson.databind.JsonNode、com.fasterxml.jackson.databind.ObjectMapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.scheduling.annotation.Async、org.springframework.stereotype.Service。
 - Web 映射注解：无。
@@ -61,7 +61,7 @@
 - 规模：1110 行；文件大小 54279 字节。
 - 职责判断：业务服务实现层，编排持久化、远端调用、缓存或消息链路。
 - 注解：@Slf4j、@Service、@Autowired、@SuppressWarnings("unchecked")、@Override。
-- 显式方法：getItemList(ItemListReqDTO reqDTO)；refreshItems(AllItemsReqDTO reqDTO)；getItemsFromDb(ItemListFromDbReqDTO reqDTO)；getItemDetail(ItemDetailReqDTO reqDTO)；buildItemWithConfig(XianyuGoodsInfo item)；fetchItemDetailFromApi(String itemId, String cookieId)；fetchDetailFromApi(String itemId, String cookiesStr)；isDetailInfoFresh(String updatedTime)；parseItemListResponse(Map<String, Object> responseMap, int pageNumber, int pageSize)；getAccountIdFromCookieId(String cookieId)；getCookieFromDb(String cookieId)；updateAutoDeliveryStatus(UpdateAutoDeliveryReqDTO reqDTO)；updateAutoReplyStatus(UpdateAutoReplyReqDTO reqDTO)；deleteItem(DeleteItemReqDTO reqDTO)；ensureMh5tkInCookie(String cookieText, Long accountId)；getRagAutoReplyConfig(RagAutoReplyConfigReqDTO reqDTO)；updateRagAutoReplyConfig(UpdateRagAutoReplyConfigReqDTO reqDTO)。
+- 显式方法：getItemList(ItemListReqDTO reqDTO)；refreshItems(AllItemsReqDTO reqDTO)；getItemsFromDb(ItemListFromDbReqDTO reqDTO)；getItemDetail(ItemDetailReqDTO reqDTO)；buildItemWithConfig(XianyuGoodsInfo item)；fetchItemDetailFromApi(String itemId, String cookieId)；fetchDetailFromApi(String itemId, String cookiesStr)；isDetailInfoFresh(String updatedTime)；parseItemListResponse(Map&lt;String, Object&gt; responseMap, int pageNumber, int pageSize)；getAccountIdFromCookieId(String cookieId)；getCookieFromDb(String cookieId)；updateAutoDeliveryStatus(UpdateAutoDeliveryReqDTO reqDTO)；updateAutoReplyStatus(UpdateAutoReplyReqDTO reqDTO)；deleteItem(DeleteItemReqDTO reqDTO)；ensureMh5tkInCookie(String cookieText, Long accountId)；getRagAutoReplyConfig(RagAutoReplyConfigReqDTO reqDTO)；updateRagAutoReplyConfig(UpdateRagAutoReplyConfigReqDTO reqDTO)。
 - 项目内依赖：com.feijimiao.xianyuassistant.common.ResultObject、com.feijimiao.xianyuassistant.controller.dto.*、com.feijimiao.xianyuassistant.entity.XianyuGoodsInfo、com.feijimiao.xianyuassistant.entity.XianyuGoodsSku、com.feijimiao.xianyuassistant.entity.XianyuGoodsSkuProperty、com.feijimiao.xianyuassistant.service.ItemService、com.feijimiao.xianyuassistant.utils.XianyuApiUtils、com.feijimiao.xianyuassistant.utils.XianyuSignUtils、com.feijimiao.xianyuassistant.utils.ItemDetailUtils。
 - 主要外部依赖：com.fasterxml.jackson.databind.ObjectMapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Service。
 - Web 映射注解：无。
@@ -89,7 +89,7 @@
 - 规模：239 行；文件大小 9678 字节。
 - 职责判断：业务服务实现层，编排持久化、远端调用、缓存或消息链路。
 - 注解：@Slf4j、@Service、@Autowired、@Override。
-- 显式方法：getRules(Long accountId, String xyGoodsId)；addRule(Long accountId, String xyGoodsId, String keyword)；deleteRule(Long ruleId)；updateKeyword(Long ruleId, String keyword)；updateMatchMode(Long ruleId, Integer matchMode)；ensureFallbackRule(Long accountId, String xyGoodsId)；addContent(Long ruleId, String replyText, String replyImageUrl)；updateContent(Long contentId, String replyText, String replyImageUrl)；deleteContent(Long contentId)；matchKeyword(Long accountId, String xyGoodsId, String message)；isKeywordReplyEnabled(Long accountId, String xyGoodsId)；toRuleBO(XianyuKeywordReplyRule rule, List<XianyuKeywordReplyContent> contents)。
+- 显式方法：getRules(Long accountId, String xyGoodsId)；addRule(Long accountId, String xyGoodsId, String keyword)；deleteRule(Long ruleId)；updateKeyword(Long ruleId, String keyword)；updateMatchMode(Long ruleId, Integer matchMode)；ensureFallbackRule(Long accountId, String xyGoodsId)；addContent(Long ruleId, String replyText, String replyImageUrl)；updateContent(Long contentId, String replyText, String replyImageUrl)；deleteContent(Long contentId)；matchKeyword(Long accountId, String xyGoodsId, String message)；isKeywordReplyEnabled(Long accountId, String xyGoodsId)；toRuleBO(XianyuKeywordReplyRule rule, List&lt;XianyuKeywordReplyContent&gt; contents)。
 - 项目内依赖：com.feijimiao.xianyuassistant.entity.XianyuGoodsConfig、com.feijimiao.xianyuassistant.entity.XianyuKeywordReplyContent、com.feijimiao.xianyuassistant.entity.XianyuKeywordReplyRule、com.feijimiao.xianyuassistant.entity.bo.KeywordReplyRuleBO、com.feijimiao.xianyuassistant.mapper.XianyuGoodsConfigMapper、com.feijimiao.xianyuassistant.mapper.XianyuKeywordReplyContentMapper、com.feijimiao.xianyuassistant.mapper.XianyuKeywordReplyRuleMapper、com.feijimiao.xianyuassistant.service.KeywordReplyService。
 - 主要外部依赖：com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Service。
 - Web 映射注解：无。
@@ -131,7 +131,7 @@
 - 规模：505 行；文件大小 22316 字节。
 - 职责判断：业务服务实现层，编排持久化、远端调用、缓存或消息链路。
 - 注解：@Slf4j、@Service、@Autowired、@Override、@SuppressWarnings("unchecked")。
-- 显式方法：confirmShipment(Long accountId, String orderId)；consignDummyDelivery(Long accountId, String orderId, String tradeText, List<String> imageUrls)；confirmShipmentToXianyu(Long accountId, String orderId)；getOrderDetail(Long accountId, String orderId)；updateOrderDetailFromApi(Long accountId, String orderId, Map<String, Object> responseData)；getOrderDetailFromLocal(Long accountId, String orderId)；queryPendingOrders(Long accountId)；getOrderDetailMap(Long accountId, String orderId)；consignDummyDeliveryWithConfig(Long accountId, String xyGoodsId, String orderId)。
+- 显式方法：confirmShipment(Long accountId, String orderId)；consignDummyDelivery(Long accountId, String orderId, String tradeText, List&lt;String&gt; imageUrls)；confirmShipmentToXianyu(Long accountId, String orderId)；getOrderDetail(Long accountId, String orderId)；updateOrderDetailFromApi(Long accountId, String orderId, Map&lt;String, Object&gt; responseData)；getOrderDetailFromLocal(Long accountId, String orderId)；queryPendingOrders(Long accountId)；getOrderDetailMap(Long accountId, String orderId)；consignDummyDeliveryWithConfig(Long accountId, String xyGoodsId, String orderId)。
 - 项目内依赖：com.feijimiao.xianyuassistant.entity.XianyuGoodsAutoDeliveryConfig、com.feijimiao.xianyuassistant.entity.XianyuGoodsOrder、com.feijimiao.xianyuassistant.exception.BusinessException、com.feijimiao.xianyuassistant.mapper.XianyuGoodsAutoDeliveryConfigMapper、com.feijimiao.xianyuassistant.mapper.XianyuGoodsOrderMapper、com.feijimiao.xianyuassistant.service.AccountService、com.feijimiao.xianyuassistant.service.OrderService、com.feijimiao.xianyuassistant.service.delivery.DeliveryContext、com.feijimiao.xianyuassistant.service.delivery.DeliveryStrategyResolver、com.feijimiao.xianyuassistant.utils.XianyuApiCallUtils。
 - 主要外部依赖：com.fasterxml.jackson.databind.ObjectMapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Service。
 - Web 映射注解：无。
@@ -159,7 +159,7 @@
 - 规模：144 行；文件大小 4702 字节。
 - 职责判断：业务服务实现层，编排持久化、远端调用、缓存或消息链路。
 - 注解：@Slf4j、@Service、@Override、@SuppressWarnings("unchecked")。
-- 显式方法：detectRiskControl(Map<String, Object> response)；handleRiskControl(Long accountId, Map<String, Object> response)；isTokenExpired(Map<String, Object> response)。
+- 显式方法：detectRiskControl(Map&lt;String, Object&gt; response)；handleRiskControl(Long accountId, Map&lt;String, Object&gt; response)；isTokenExpired(Map&lt;String, Object&gt; response)。
 - 项目内依赖：com.feijimiao.xianyuassistant.service.RiskControlService。
 - 主要外部依赖：lombok.extern.slf4j.Slf4j、org.springframework.stereotype.Service。
 - Web 映射注解：无。
@@ -229,7 +229,7 @@
 - 规模：912 行；文件大小 43778 字节。
 - 职责判断：业务服务实现层，编排持久化、远端调用、缓存或消息链路。
 - 注解：@Slf4j、@Service、@Autowired、@Override、@SuppressWarnings("unchecked")。
-- 显式方法：getTokenLock(Long accountId)；getAccessToken(Long accountId)；getLatestCookieFromDb(Long accountId)；getAccessTokenWithRetry(Long accountId, int retryCount)；appendUrlParam(StringBuilder sb, String key, String value)；getDeviceId(Long accountId, Map<String, String> cookies)；handleTokenFailure(Long accountId, int retryCount, String response, String reason)；refreshTokenViaHasLogin(Long accountId, int hasLoginRetryCount)；updateCookiesFromResponse(Long accountId, String currentCookieStr, List<String> setCookieHeaders)；mergeCookies(String oldCookieStr, List<String> newCookies)；saveToken(Long accountId, String token)；clearToken(Long accountId)；clearCaptchaWait(Long accountId)；refreshToken(Long accountId)；updateAccountStatusToCaptchaRequired(Long accountId)；updateAccountStatusToNormal(Long accountId)；updateCookieStatus(Long accountId, Integer status)；updateCookieStatus(Long accountId, Integer status, boolean sendNotify)；saveTokenToDatabase(Long accountId, String token)。
+- 显式方法：getTokenLock(Long accountId)；getAccessToken(Long accountId)；getLatestCookieFromDb(Long accountId)；getAccessTokenWithRetry(Long accountId, int retryCount)；appendUrlParam(StringBuilder sb, String key, String value)；getDeviceId(Long accountId, Map&lt;String, String&gt; cookies)；handleTokenFailure(Long accountId, int retryCount, String response, String reason)；refreshTokenViaHasLogin(Long accountId, int hasLoginRetryCount)；updateCookiesFromResponse(Long accountId, String currentCookieStr, List&lt;String&gt; setCookieHeaders)；mergeCookies(String oldCookieStr, List&lt;String&gt; newCookies)；saveToken(Long accountId, String token)；clearToken(Long accountId)；clearCaptchaWait(Long accountId)；refreshToken(Long accountId)；updateAccountStatusToCaptchaRequired(Long accountId)；updateAccountStatusToNormal(Long accountId)；updateCookieStatus(Long accountId, Integer status)；updateCookieStatus(Long accountId, Integer status, boolean sendNotify)；saveTokenToDatabase(Long accountId, String token)。
 - 项目内依赖：com.feijimiao.xianyuassistant.entity.XianyuAccount、com.feijimiao.xianyuassistant.entity.XianyuCookie、com.feijimiao.xianyuassistant.exception.CaptchaRequiredException、com.feijimiao.xianyuassistant.mapper.XianyuCookieMapper、com.feijimiao.xianyuassistant.service.AccountService、com.feijimiao.xianyuassistant.service.CookieRefreshService、com.feijimiao.xianyuassistant.service.EmailNotifyService、com.feijimiao.xianyuassistant.service.OperationLogService、com.feijimiao.xianyuassistant.service.WebSocketTokenService、com.feijimiao.xianyuassistant.utils.XianyuSignUtils。
 - 主要外部依赖：com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper、com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper、com.fasterxml.jackson.databind.ObjectMapper、lombok.extern.slf4j.Slf4j、okhttp3.*、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Service。
 - Web 映射注解：无。
@@ -341,7 +341,7 @@
 - 规模：242 行；文件大小 10978 字节。
 - 职责判断：业务服务契约或核心领域服务。
 - 注解：@Slf4j、@Service、@Autowired、@SuppressWarnings("unchecked")。
-- 显式方法：deliverPendingOrders(Long accountId)；syncOrdersToDb(Long accountId, List<Map<String, Object>> pendingOrders)；buildOrderRecord(Long accountId, Map<String, Object> order)；enrichFromDetailApi(Long accountId, String orderId, XianyuGoodsOrder existing)。
+- 显式方法：deliverPendingOrders(Long accountId)；syncOrdersToDb(Long accountId, List&lt;Map&lt;String, Object&gt;&gt; pendingOrders)；buildOrderRecord(Long accountId, Map&lt;String, Object&gt; order)；enrichFromDetailApi(Long accountId, String orderId, XianyuGoodsOrder existing)。
 - 项目内依赖：com.feijimiao.xianyuassistant.entity.XianyuGoodsOrder、com.feijimiao.xianyuassistant.mapper.XianyuGoodsOrderMapper。
 - 主要外部依赖：lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Service。
 - Web 映射注解：无。
@@ -369,7 +369,7 @@
 - 规模：67 行；文件大小 2856 字节。
 - 职责判断：自动回复策略链，处理关键词、RAG、延迟和兜底逻辑。
 - 注解：@Slf4j、@Component、@Autowired、@Override。
-- 显式方法：execute(List<ChatMessageData> messageList)。
+- 显式方法：execute(List&lt;ChatMessageData&gt; messageList)。
 - 项目内依赖：com.feijimiao.xianyuassistant.entity.XianyuGoodsConfig、com.feijimiao.xianyuassistant.entity.XianyuGoodsInfo、com.feijimiao.xianyuassistant.entity.bo.KeywordReplyRuleBO、com.feijimiao.xianyuassistant.event.chatMessageEvent.ChatMessageData、com.feijimiao.xianyuassistant.mapper.XianyuGoodsConfigMapper、com.feijimiao.xianyuassistant.mapper.XianyuGoodsInfoMapper、com.feijimiao.xianyuassistant.service.AIService、com.feijimiao.xianyuassistant.service.bo.RAGReplyResult。
 - 主要外部依赖：com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper、lombok.extern.slf4j.Slf4j、org.springframework.beans.factory.annotation.Autowired、org.springframework.stereotype.Component。
 - Web 映射注解：无。
