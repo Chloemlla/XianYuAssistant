@@ -1,0 +1,19 @@
+{
+  "stage": "deep_interview",
+  "goal": "静态调研全项目并形成不少于3000行的本地技术文档集",
+  "deliverable": "docs/technical-reference 下的索引和分章节 Markdown",
+  "autonomy_mode": "inferred-with-repository-constraints",
+  "constraints": [
+    "不创建单个超级文件",
+    "不运行本地构建和测试",
+    "不修改业务源码",
+    "保留README.md现有用户修改",
+    "完成后提交并推送"
+  ],
+  "acceptance": [
+    "Markdown总行数不少于3000",
+    "覆盖后端前端配置数据部署和关键业务链路",
+    "索引链接完整",
+    "静态核验通过"
+  ]
+}

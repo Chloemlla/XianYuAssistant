@@ -1,0 +1,9 @@
+{
+  "stage": "skeleton_check",
+  "repository": "XianYuAssistant",
+  "branch": "main",
+  "working_tree_note": "README.md contains pre-existing user changes and is excluded",
+  "constraints_loaded": true,
+  "local_builds_allowed": false,
+  "result": "passed"
+}

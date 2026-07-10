@@ -459,17 +459,6 @@ https://github.com/zhinianboke/xianyu-auto-reply
 
 本项目仅供学习交流使用，请勿用于商业用途。使用本工具产生的任何后果由使用者自行承担。
 
----
-
-## 💬 交流群
-
-<div align="center">
-  <img src="docs/wx/wxq.png" alt="微信交流群" width="200"/>
-  <img src="docs/wx/wx.png" alt="微信好友" width="200"/>
-  <p><i>扫码加入微信交流群 &nbsp;&nbsp;|&nbsp;&nbsp; 群二维码失效可加好友拉进群</i></p>
-</div>
-
----
 
 <div align="center">
 
