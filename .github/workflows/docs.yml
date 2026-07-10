@@ -49,6 +49,9 @@ jobs:
       - name: Build VitePress site
         run: npm run docs:build
 
+      - name: Verify generated index route
+        run: test -f .vitepress/dist/technical-reference/generated/index.html
+
       - name: Upload generated site
         uses: actions/upload-artifact@v4
         with:

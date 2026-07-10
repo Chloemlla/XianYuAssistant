@@ -190,20 +190,20 @@ foreach ($file in ($resourceFiles | Sort-Object FullName -Unique)) {
 }
 Write-SplitDocument '03-resource-index' '配置、资源与工程文件索引' $resourceBody
 
-$readme = [System.Collections.Generic.List[string]]::new()
-$readme.Add('# 自动生成章节目录')
-$readme.Add('')
-$readme.Add("生成时间：$([DateTimeOffset]::Now.ToString('yyyy-MM-dd HH:mm:ss zzz'))")
-$readme.Add('')
-$readme.Add("Java 文件：$($javaFiles.Count) 个。")
-$readme.Add('')
-$readme.Add("前端源码文件：$($frontendFiles.Count) 个。")
-$readme.Add('')
-$readme.Add("资源与工程文件：$($resourceFiles.Count) 个。")
-$readme.Add('')
-$readme.Add('## 章节')
-$readme.Add('')
-foreach ($name in $generatedFiles) { $readme.Add("- [$name](./$name)") }
-[IO.File]::WriteAllLines((Join-Path $outputRoot 'README.md'), $readme, $utf8NoBom)
+$index = [System.Collections.Generic.List[string]]::new()
+$index.Add('# 自动生成章节目录')
+$index.Add('')
+$index.Add("生成时间：$([DateTimeOffset]::Now.ToString('yyyy-MM-dd HH:mm:ss zzz'))")
+$index.Add('')
+$index.Add("Java 文件：$($javaFiles.Count) 个。")
+$index.Add('')
+$index.Add("前端源码文件：$($frontendFiles.Count) 个。")
+$index.Add('')
+$index.Add("资源与工程文件：$($resourceFiles.Count) 个。")
+$index.Add('')
+$index.Add('## 章节')
+$index.Add('')
+foreach ($name in $generatedFiles) { $index.Add("- [$name](./$name)") }
+[IO.File]::WriteAllLines((Join-Path $outputRoot 'index.md'), $index, $utf8NoBom)
 
 Write-Output "Generated $($generatedFiles.Count) chapter files under $outputRoot"

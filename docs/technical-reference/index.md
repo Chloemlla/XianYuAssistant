@@ -15,7 +15,7 @@
 - [核心业务链路](./03-core-workflows.md)
 - [数据模型、配置与持久化](./04-data-and-configuration.md)
 - [前端、部署、运维与风险](./05-frontend-deployment-and-risks.md)
-- [自动生成的逐文件技术索引](./generated/README.md)
+- [自动生成的逐文件技术索引](./generated/)
 
 ## 自动生成索引覆盖
 
