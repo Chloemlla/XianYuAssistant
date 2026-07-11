@@ -258,10 +258,7 @@ public class CookieRefreshServiceImpl implements CookieRefreshService {
                         );
 
                         if (mh5tkUpdated) {
-                            log.info("【账号{}】✅ _m_h5_tk已从hasLogin响应中更新: {} -> {}",
-                                    accountId,
-                                    oldMh5tk != null ? oldMh5tk.substring(0, Math.min(20, oldMh5tk.length())) + "..." : "null",
-                                    newMh5tk.substring(0, Math.min(20, newMh5tk.length())) + "...");
+                            log.info("【账号{}】✅ _m_h5_tk已从hasLogin响应中更新: changed=true", accountId);
                         }
                         log.info("【账号{}】✅ Cookie已通过SessionCookieJar自动更新到数据库", accountId);
                     } else {

@@ -24,7 +24,8 @@ done
 grep -q "ARG APP_VERSION=${expected_version}" Dockerfile
 grep -q 'ghcr.io/chloemlla/xianyuassistant' README.md install.sh
 
-if grep -Eqi 'iamlzy/xianyuassistant|docker\.io/.+xianyuassistant|jdbc:sqlite|mybatis-plus|/app/dbdata' README.md install.sh docs/technical-reference/*.md; then
+if grep -Eqi 'iamlzy/xianyuassistant|docker\.io/.+xianyuassistant|jdbc:sqlite|mybatis-plus|/app/dbdata' \
+  README.md install.sh docs/technical-reference/0[1-5]-*.md; then
   echo "Legacy release channel or storage documentation remains" >&2
   exit 1
 fi

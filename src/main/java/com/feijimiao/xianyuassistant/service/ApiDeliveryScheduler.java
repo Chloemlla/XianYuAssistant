@@ -108,7 +108,7 @@ public class ApiDeliveryScheduler {
 
                 String claimToken = UUID.randomUUID().toString();
                 XianyuGoodsOrder claimed = orderMapper.claimForApiDelivery(
-                        accountId, orderId, claimToken, System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5));
+                        accountId, orderId, claimToken, System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(30));
                 if (claimed != null) toDeliver.add(new ClaimedOrder(order, claimed, claimToken));
             } catch (Exception e) {
                 log.warn("【账号{}】筛选待发货订单异常: {}", accountId, e.getMessage());

@@ -752,8 +752,8 @@ public class XianyuWebSocketClient extends WebSocketClient {
             String cleanCid = cid.replace("@goofish", "");
             String cleanToId = toId.replace("@goofish", "");
             
-            log.info("{}准备发送图片消息: cid={}, toId={}, url={}, size={}x{}", 
-                    logPrefix(), cleanCid, cleanToId, imageUrl, width, height);
+            log.info("{}准备发送图片消息: cid={}, toId={}, urlLength={}, size={}x{}",
+                    logPrefix(), cleanCid, cleanToId, imageUrl == null ? 0 : imageUrl.length(), width, height);
             
             // 构造图片消息内容
             Map<String, Object> imageContent = new HashMap<>();
@@ -849,8 +849,8 @@ public class XianyuWebSocketClient extends WebSocketClient {
             String cleanCid = cid.replace("@goofish", "");
             String cleanToId = toId.replace("@goofish", "");
 
-            log.info("{}准备发送图片消息(等待结果): cid={}, toId={}, url={}, size={}x{}",
-                    logPrefix(), cleanCid, cleanToId, imageUrl, width, height);
+            log.info("{}准备发送图片消息(等待结果): cid={}, toId={}, urlLength={}, size={}x{}",
+                    logPrefix(), cleanCid, cleanToId, imageUrl == null ? 0 : imageUrl.length(), width, height);
 
             Map<String, Object> imageContent = new HashMap<>();
             imageContent.put("contentType", 2);

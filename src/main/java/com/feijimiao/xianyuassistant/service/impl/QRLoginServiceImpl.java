@@ -211,7 +211,7 @@ public class QRLoginServiceImpl implements QRLoginService {
                 
                 if (matcher.find()) {
                     String jsonString = matcher.group(1);
-                    log.debug("提取到的viewData: {}", jsonString.substring(0, Math.min(200, jsonString.length())));
+                    log.debug("提取到viewData: payloadLength={}", jsonString.length());
                     
                     JsonObject viewData = gson.fromJson(jsonString, JsonObject.class);
                     JsonObject loginFormData = viewData.getAsJsonObject("loginFormData");
@@ -260,7 +260,7 @@ public class QRLoginServiceImpl implements QRLoginService {
                 }
                 
                 // 如果都失败了，保存HTML用于调试
-                log.error("无法提取登录参数，HTML内容前1000字符: {}", html.substring(0, Math.min(1000, html.length())));
+                log.error("无法提取登录参数: htmlLength={}", html.length());
                 
                 // 尝试直接查找所有可能的参数
                 Map<String, String> params = extractParamsFromHtml(html);
@@ -491,7 +491,7 @@ public class QRLoginServiceImpl implements QRLoginService {
                                 // 恢复之前获取的 _m_h5_tk（如果响应中没有新的）
                                 if (existingMh5tk != null && !session.getCookies().containsKey("_m_h5_tk")) {
                                     session.getCookies().put("_m_h5_tk", existingMh5tk);
-                                    log.info("✅ 恢复之前获取的_m_h5_tk: {}", existingMh5tk.substring(0, Math.min(20, existingMh5tk.length())));
+                                    log.info("✅ 恢复之前获取的_m_h5_tk: restored=true");
                                 }
                                 if (existingMh5tkEnc != null && !session.getCookies().containsKey("_m_h5_tk_enc")) {
                                     session.getCookies().put("_m_h5_tk_enc", existingMh5tkEnc);

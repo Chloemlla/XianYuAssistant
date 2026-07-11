@@ -322,7 +322,7 @@ public class SyncMessageHandler extends AbstractLwpHandler {
                         Object level5 = ((Map<?, ?>) level3).get("5");
                         if (level5 instanceof String) {
                             String jsonStr = (String) level5;
-                            log.debug("📋 提取订单ID: 找到字段1.6.3.5={}", jsonStr.length() > 200 ? jsonStr.substring(0, 200) + "..." : jsonStr);
+                            log.debug("📋 提取订单ID: metadataLength={}", jsonStr.length());
                             
                             try {
                                 // 解析嵌套的JSON字符串
@@ -482,7 +482,7 @@ public class SyncMessageHandler extends AbstractLwpHandler {
                 return orderId;
             }
             
-            log.warn("⚠️ URL中未找到orderId或id参数: {}", url);
+            log.warn("⚠️ URL中未找到orderId或id参数: urlLength={}", url == null ? 0 : url.length());
             return null;
             
         } catch (Exception e) {

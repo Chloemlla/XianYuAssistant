@@ -76,7 +76,7 @@ public class WebSocketController {
             }
             
         } catch (com.feijimiao.xianyuassistant.exception.CaptchaRequiredException e) {
-            log.warn("⚠️ 需要滑块验证: accountId={}, url={}", reqDTO.getXianyuAccountId(), e.getCaptchaUrl());
+            log.warn("⚠️ 需要滑块验证: accountId={}, urlAvailable={}", reqDTO.getXianyuAccountId(), e.getCaptchaUrl() != null);
             CaptchaInfoDTO captchaInfo = new CaptchaInfoDTO();
             captchaInfo.setNeedCaptcha(true);
             captchaInfo.setCaptchaUrl(e.getCaptchaUrl());
@@ -254,8 +254,9 @@ public class WebSocketController {
     @PostMapping("/sendImageMessage")
     public ResultObject<String> sendImageMessage(@RequestBody SendImageMessageReqDTO reqDTO) {
         try {
-            log.info("发送图片消息请求: xianyuAccountId={}, cid={}, toId={}, imageUrl={}", 
-                    reqDTO.getXianyuAccountId(), reqDTO.getCid(), reqDTO.getToId(), reqDTO.getImageUrl());
+            log.info("发送图片消息请求: xianyuAccountId={}, cid={}, toId={}, imageUrlLength={}",
+                    reqDTO.getXianyuAccountId(), reqDTO.getCid(), reqDTO.getToId(),
+                    reqDTO.getImageUrl() == null ? 0 : reqDTO.getImageUrl().length());
             
             // 参数校验
             if (reqDTO.getXianyuAccountId() == null) {

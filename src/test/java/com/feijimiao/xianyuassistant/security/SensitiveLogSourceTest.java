@@ -23,6 +23,11 @@ class SensitiveLogSourceTest {
         assertFalse(source.contains("prompt={}, goodsId"));
         assertFalse(source.contains("hasLogin响应: {}"));
         assertFalse(source.contains("完整响应内容: {}"));
+        assertFalse(source.contains("原始加密数据: {}"));
+        assertFalse(source.contains("\"text\", text.length()"));
+        assertFalse(source.contains("发送POST请求: {}"));
+        assertFalse(source.contains("验证URL: {}"));
+        assertFalse(source.contains("imageUrl={}"));
     }
 
     private String read(Path path) {

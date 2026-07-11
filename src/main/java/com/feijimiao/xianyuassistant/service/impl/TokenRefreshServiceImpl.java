@@ -398,7 +398,7 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
             long now = System.currentTimeMillis();
             long nextMaintenanceAt = now + randomRefreshDelayMinutes() * ONE_MINUTE_MS;
             List<XianyuCookie> dueCookies = cookieMapper.claimDueCredentialMaintenance(
-                    50, now, now + 5 * ONE_MINUTE_MS, nextMaintenanceAt);
+                    50, now, now + 30 * ONE_MINUTE_MS, nextMaintenanceAt);
             for (XianyuCookie cookie : dueCookies) {
                 XianyuAccount account = accountMapper.selectById(cookie.getXianyuAccountId());
                 if (account != null && Integer.valueOf(1).equals(account.getStatus())) {
@@ -466,7 +466,7 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
 
             long now = System.currentTimeMillis();
             List<XianyuCookie> dueCookies = cookieMapper.claimDueWebsocketTokenRefresh(
-                    50, now, now + ONE_MINUTE_MS * 60, now + 5 * ONE_MINUTE_MS);
+                    50, now, now + ONE_MINUTE_MS * 60, now + 30 * ONE_MINUTE_MS);
             for (XianyuCookie cookie : dueCookies) {
                 XianyuAccount account = accountMapper.selectById(cookie.getXianyuAccountId());
                 if (account != null && Integer.valueOf(1).equals(account.getStatus())) {

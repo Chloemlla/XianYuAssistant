@@ -5,17 +5,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-@Component
+@Component("sharedDelayScheduler")
 public class BoundedDelayScheduler {
     private static final int MAX_PENDING_TASKS = 500;
     private final Semaphore admission = new Semaphore(MAX_PENDING_TASKS);
-    private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(4);
+    private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(4);
+
+    public BoundedDelayScheduler() {
+        executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+        executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+        executor.setRemoveOnCancelPolicy(true);
+    }
 
     public void schedule(Runnable task, long delay, TimeUnit unit) {
         if (!admission.tryAcquire()) {
@@ -38,6 +43,6 @@ public class BoundedDelayScheduler {
 
     @PreDestroy
     void shutdown() {
-        executor.shutdown();
+        executor.shutdownNow();
     }
 }

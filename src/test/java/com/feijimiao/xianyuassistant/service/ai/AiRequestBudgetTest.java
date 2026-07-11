@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AiRequestBudgetTest {
     private final ExecutorService executor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS,
@@ -41,7 +42,7 @@ class AiRequestBudgetTest {
                 try { release.await(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
                 return "ok";
             }));
-            entered.await(1, TimeUnit.SECONDS);
+            assertTrue(entered.await(1, TimeUnit.SECONDS));
             assertThrows(IllegalStateException.class, () -> budget.call("second", () -> "unexpected"));
             release.countDown();
         } finally {
@@ -54,5 +55,14 @@ class AiRequestBudgetTest {
     void returnsSuccessfulResultInsideBudget() {
         AiRequestBudget budget = new AiRequestBudget(1000, 1, 2, executor);
         assertEquals("ok", budget.call("hello", () -> "ok"));
+    }
+
+    @Test
+    void cancelsRequestThatExceedsTimeout() {
+        AiRequestBudget budget = new AiRequestBudget(1000, 1, 1, executor);
+        assertThrows(IllegalStateException.class, () -> budget.call("hello", () -> {
+            try { Thread.sleep(2_000); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            return "late";
+        }));
     }
 }

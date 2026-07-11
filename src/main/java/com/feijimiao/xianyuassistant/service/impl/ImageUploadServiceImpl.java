@@ -98,7 +98,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
             return uploadImage(accountId, imageData, filename);
             
         } catch (Exception e) {
-            log.error("从URL上传图片失败: accountId={}, url={}", accountId, imageUrl, e);
+            log.error("从URL上传图片失败: accountId={}, urlLength={}", accountId, imageUrl == null ? 0 : imageUrl.length(), e);
             return ResultObject.failed("从URL上传图片失败: " + e.getMessage());
         }
     }
@@ -284,7 +284,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
             }
             
         } catch (Exception e) {
-            log.error("下载图片失败: {}", imageUrl, e);
+            log.error("下载图片失败: urlLength={}", imageUrl == null ? 0 : imageUrl.length(), e);
             return null;
         }
     }

@@ -287,7 +287,7 @@ public class WebSocketTokenServiceImpl implements WebSocketTokenService {
 
             log.info("【账号{}】============", accountId);
             log.info("【账号{}】1、请求体已构建: dataLength={}", accountId, dataVal.length());
-            log.info("【账号{}】2、发送POST请求: {}", accountId, fullUrl);
+            log.info("【账号{}】2、发送POST请求: urlLength={}", accountId, fullUrl.length());
 
             // 10. 发送请求（OkHttp能正确返回Set-Cookie头）
             try (Response httpResponse = httpClient.newCall(requestBuilder.build()).execute()) {
@@ -381,7 +381,7 @@ public class WebSocketTokenServiceImpl implements WebSocketTokenService {
 
                             updateAccountStatusToCaptchaRequired(accountId);
 
-                            log.warn("【账号{}】检测到滑块验证，URL: {}", accountId, captchaUrl);
+                            log.warn("【账号{}】检测到滑块验证: urlAvailable={}", accountId, captchaUrl != null);
                             log.warn("【账号{}】需要人工完成滑块验证，请访问: http://localhost:8080/websocket-manual-captcha.html", accountId);
                             log.warn("【账号{}】账号状态已更新为-2（需要验证）", accountId);
 

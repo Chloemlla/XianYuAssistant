@@ -68,7 +68,7 @@ public class AIServiceImpl implements AIService {
                 }
             }
         } catch (Exception parseEx) {
-            log.debug("解析AI错误JSON失败: {}", parseEx.getMessage());
+            log.debug("解析AI错误JSON失败: errorType={}", parseEx.getClass().getSimpleName());
         }
         if (msg.length() > 200) return msg.substring(0, 200);
         return msg;
@@ -125,7 +125,7 @@ public class AIServiceImpl implements AIService {
                             .build()
             );
         } catch (Exception e) {
-            log.warn("[AI Chat] 向量搜索失败，使用无上下文模式: {}", e.getMessage());
+            log.warn("[AI Chat] 向量搜索失败，使用无上下文模式: errorType={}", e.getClass().getSimpleName());
             return chatWithoutContext(chatClient, prompt, startTime);
         }
         long searchCost = System.currentTimeMillis() - searchStart;
@@ -171,7 +171,7 @@ public class AIServiceImpl implements AIService {
                     }
                 })
                 .onErrorResume(e -> {
-                    log.error("[AI Chat] LLM调用失败: {}", e.getMessage());
+                    log.error("[AI Chat] LLM调用失败: errorType={}", e.getClass().getSimpleName());
                     String errorMsg = extractAiErrorMessage(e);
                     return Flux.just("【AI服务错误】" + errorMsg);
                 });
@@ -230,7 +230,7 @@ public class AIServiceImpl implements AIService {
                 
                 log.info("[AI Chat WithDetails] 向量搜索命中文档数: {}", documents.size());
             } catch (Exception e) {
-                log.warn("[AI Chat WithDetails] 向量搜索失败，使用无上下文模式: {}", e.getMessage());
+                log.warn("[AI Chat WithDetails] 向量搜索失败，使用无上下文模式: errorType={}", e.getClass().getSimpleName());
             }
         }
 
@@ -263,7 +263,7 @@ public class AIServiceImpl implements AIService {
                     .content();
             result.setReplyContent(replyContent);
         } catch (Exception e) {
-            log.error("[AI Chat WithDetails] 调用LLM失败: {}", e.getMessage());
+            log.error("[AI Chat WithDetails] 调用LLM失败: errorType={}", e.getClass().getSimpleName());
             result.setReplyContent("AI回复生成失败：" + e.getMessage());
         }
 
@@ -319,7 +319,7 @@ public class AIServiceImpl implements AIService {
                 
                 log.info("[AI Chat WithDetails+Context] 向量搜索命中文档数: {}", documents.size());
             } catch (Exception e) {
-                log.warn("[AI Chat WithDetails+Context] 向量搜索失败，使用无上下文模式: {}", e.getMessage());
+                log.warn("[AI Chat WithDetails+Context] 向量搜索失败，使用无上下文模式: errorType={}", e.getClass().getSimpleName());
             }
         }
 
@@ -351,7 +351,7 @@ public class AIServiceImpl implements AIService {
                     .content();
             result.setReplyContent(replyContent);
         } catch (Exception e) {
-            log.error("[AI Chat WithDetails+Context] 调用LLM失败: {}", e.getMessage());
+            log.error("[AI Chat WithDetails+Context] 调用LLM失败: errorType={}", e.getClass().getSimpleName());
             result.setReplyContent("AI回复生成失败：" + e.getMessage());
         }
 
@@ -396,7 +396,7 @@ public class AIServiceImpl implements AIService {
                 
                 log.info("[AI Chat Test Stream] 向量搜索命中文档数: {}", documents.size());
             } catch (Exception e) {
-                log.warn("[AI Chat Test Stream] 向量搜索失败: {}", e.getMessage());
+                log.warn("[AI Chat Test Stream] 向量搜索失败: errorType={}", e.getClass().getSimpleName());
             }
         }
 
@@ -434,7 +434,7 @@ public class AIServiceImpl implements AIService {
                 .stream()
                 .content()
                 .onErrorResume(e -> {
-                    log.error("[AI Chat Test Stream] LLM调用失败: {}", e.getMessage());
+                    log.error("[AI Chat Test Stream] LLM调用失败: errorType={}", e.getClass().getSimpleName());
                     return Flux.just("【AI服务错误】" + extractAiErrorMessage(e));
                 });
     }
@@ -493,7 +493,7 @@ public class AIServiceImpl implements AIService {
                 
                 log.info("[AI Chat FixedMaterial] 向量搜索命中文档数: {}", documents.size());
             } catch (Exception e) {
-                log.warn("[AI Chat FixedMaterial] 向量搜索失败，使用无上下文模式: {}", e.getMessage());
+                log.warn("[AI Chat FixedMaterial] 向量搜索失败，使用无上下文模式: errorType={}", e.getClass().getSimpleName());
             }
         }
 
@@ -556,7 +556,7 @@ public class AIServiceImpl implements AIService {
             
             result.setReplyContent(replyContent);
         } catch (Exception e) {
-            log.error("[AI Chat FixedMaterial] 调用LLM失败: {}", e.getMessage());
+            log.error("[AI Chat FixedMaterial] 调用LLM失败: errorType={}", e.getClass().getSimpleName());
             result.setReplyContent("AI回复生成失败：" + e.getMessage());
         }
 
@@ -589,7 +589,7 @@ public class AIServiceImpl implements AIService {
                     }
                 })
                 .onErrorResume(e -> {
-                    log.error("[AI Chat] LLM调用失败: {}", e.getMessage());
+                    log.error("[AI Chat] LLM调用失败: errorType={}", e.getClass().getSimpleName());
                     return Flux.just("【AI服务错误】" + extractAiErrorMessage(e));
                 });
     }
@@ -707,7 +707,7 @@ public class AIServiceImpl implements AIService {
                     .call()
                     .content();
         } catch (Exception e) {
-            log.error("[AI simpleChat] 调用失败: {}", e.getMessage());
+            log.error("[AI simpleChat] 调用失败: errorType={}", e.getClass().getSimpleName());
             return null;
         }
     }

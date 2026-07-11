@@ -177,7 +177,7 @@ public class WebSocketServiceImpl implements WebSocketService {
             return connectWebSocket(accountId, cookieStr, deviceId, accessToken, unb);
 
         } catch (com.feijimiao.xianyuassistant.exception.CaptchaRequiredException e) {
-            log.warn("启动WebSocket需要滑块验证: accountId={}, url={}", accountId, e.getCaptchaUrl());
+            log.warn("启动WebSocket需要滑块验证: accountId={}, urlAvailable={}", accountId, e.getCaptchaUrl() != null);
             throw e; // 重新抛出，让Controller处理
         } catch (Exception e) {
             log.error("启动WebSocket失败: accountId={}", accountId, e);
@@ -881,8 +881,8 @@ public class WebSocketServiceImpl implements WebSocketService {
     @Override
     public boolean sendImageMessage(Long accountId, String cid, String toId, String imageUrl, int width, int height) {
         try {
-            log.info("发送图片消息: accountId={}, cid={}, toId={}, url={}, size={}x{}", 
-                    accountId, cid, toId, imageUrl, width, height);
+            log.info("发送图片消息: accountId={}, cid={}, toId={}, urlLength={}, size={}x{}",
+                    accountId, cid, toId, imageUrl == null ? 0 : imageUrl.length(), width, height);
             
             XianyuWebSocketClient client = webSocketClients.get(accountId);
             if (client == null) {
@@ -907,8 +907,8 @@ public class WebSocketServiceImpl implements WebSocketService {
     @Override
     public boolean sendImageMessageWithResult(Long accountId, String cid, String toId, String imageUrl, int width, int height) {
         try {
-            log.info("发送图片消息(等待结果): accountId={}, cid={}, toId={}, url={}, size={}x{}",
-                    accountId, cid, toId, imageUrl, width, height);
+            log.info("发送图片消息(等待结果): accountId={}, cid={}, toId={}, urlLength={}, size={}x{}",
+                    accountId, cid, toId, imageUrl == null ? 0 : imageUrl.length(), width, height);
 
             XianyuWebSocketClient client = webSocketClients.get(accountId);
             if (client == null) {

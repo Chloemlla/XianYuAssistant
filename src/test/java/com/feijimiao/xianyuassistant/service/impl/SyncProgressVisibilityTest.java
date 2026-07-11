@@ -13,5 +13,8 @@ class SyncProgressVisibilityTest {
         for (String field : new String[]{"completedCount", "successCount", "failedCount", "isCompleted", "isRunning", "message", "cancelled"}) {
             assertTrue(Modifier.isVolatile(type.getDeclaredField(field).getModifiers()), field + " must be volatile");
         }
+        var maxEntries = ItemDetailSyncServiceImpl.class.getDeclaredField("MAX_PROGRESS_ENTRIES");
+        maxEntries.setAccessible(true);
+        assertTrue(maxEntries.getInt(null) > 0);
     }
 }
