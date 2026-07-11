@@ -50,7 +50,9 @@ jobs:
           java-version: "21"
           cache: maven
       - name: Run backend tests
-        run: ./mvnw --batch-mode test
+        run: |
+          chmod +x ./mvnw
+          ./mvnw --batch-mode test
       - name: Reject legacy production storage references
         shell: bash
         run: |
