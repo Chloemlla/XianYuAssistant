@@ -1,0 +1,22 @@
+ (() => {
+    const cookie = document.cookie
+      .split(";")
+      .map(item => item.trim())
+      .filter(Boolean)
+      .join("; ");
+
+    const names = new Set(
+      cookie.split("; ").map(item => item.split("=")[0])
+    );
+
+    console.log("规范化 Cookie：");
+    console.log(cookie);
+    console.table({
+      unb: names.has("unb") ? "已找到" : "缺失",
+      _m_h5_tk: names.has("_m_h5_tk") ? "已找到" : "缺失",
+      _m_h5_tk_enc: names.has("_m_h5_tk_enc") ? "已找到" : "缺失"
+    });
+
+    copy(cookie);
+    console.log("Cookie 已复制到剪贴板");
+  })();
