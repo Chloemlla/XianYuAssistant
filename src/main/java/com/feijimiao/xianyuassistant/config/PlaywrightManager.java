@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,28 +26,55 @@ public class PlaywrightManager {
     private final ReentrantLock lock = new ReentrantLock();
     private volatile boolean initialized = false;
 
-    private static final String BROWSER_CACHE_DIR;
+    private static final Path BROWSER_CACHE_DIR = resolveBrowserCacheDirectory();
 
     static {
-        String jarDir = getJarDirectory();
-        BROWSER_CACHE_DIR = jarDir + File.separator + "ms-playwright";
-        System.setProperty("PLAYWRIGHT_BROWSERS_PATH", BROWSER_CACHE_DIR);
+        System.setProperty("PLAYWRIGHT_BROWSERS_PATH", BROWSER_CACHE_DIR.toString());
         log.info("Playwright浏览器缓存目录: {}", BROWSER_CACHE_DIR);
     }
 
-    private static String getJarDirectory() {
+    private static Path resolveBrowserCacheDirectory() {
+        String configuredPath = System.getProperty("PLAYWRIGHT_BROWSERS_PATH");
+        if (configuredPath == null || configuredPath.isBlank()) {
+            configuredPath = System.getenv("PLAYWRIGHT_BROWSERS_PATH");
+        }
+        if (configuredPath != null && !configuredPath.isBlank()) {
+            return Paths.get(configuredPath).toAbsolutePath().normalize();
+        }
+
+        URL codeSourceLocation = null;
         try {
-            String jarPath = PlaywrightManager.class.getProtectionDomain()
-                    .getCodeSource().getLocation().toURI().getPath();
-            File jarFile = new File(jarPath);
-            if (jarFile.isFile()) {
-                return jarFile.getParent();
+            if (PlaywrightManager.class.getProtectionDomain() != null
+                    && PlaywrightManager.class.getProtectionDomain().getCodeSource() != null) {
+                codeSourceLocation = PlaywrightManager.class.getProtectionDomain().getCodeSource().getLocation();
             }
-            return jarFile.getAbsolutePath();
+        } catch (SecurityException e) {
+            log.debug("无法读取应用CodeSource，回退到user.dir: errorType={}", e.getClass().getSimpleName());
+        }
+
+        Path applicationDirectory = resolveApplicationDirectory(
+                codeSourceLocation, System.getProperty("user.dir", "."));
+        return applicationDirectory.resolve("ms-playwright").normalize();
+    }
+
+    static Path resolveApplicationDirectory(URL codeSourceLocation, String fallbackDirectory) {
+        Path fallback = Paths.get(
+                fallbackDirectory == null || fallbackDirectory.isBlank() ? "." : fallbackDirectory)
+                .toAbsolutePath()
+                .normalize();
+        if (codeSourceLocation == null) {
+            return fallback;
+        }
+        try {
+            Path location = Paths.get(codeSourceLocation.toURI()).toAbsolutePath().normalize();
+            if (Files.isRegularFile(location)) {
+                Path parent = location.getParent();
+                return parent == null ? fallback : parent;
+            }
+            return location;
         } catch (Exception e) {
-            String userDir = System.getProperty("user.dir");
-            log.warn("无法获取JAR目录，使用user.dir: {}", userDir, e);
-            return userDir;
+            log.debug("无法解析应用CodeSource，回退到user.dir: errorType={}", e.getClass().getSimpleName());
+            return fallback;
         }
     }
 
