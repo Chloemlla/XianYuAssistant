@@ -47,10 +47,20 @@ RUN ./mvnw clean package -DskipTests && \
     test -f "target/XianYuAssistant-${APP_VERSION}.jar" && \
     cp "target/XianYuAssistant-${APP_VERSION}.jar" target/app.jar
 
-# 阶段3: 运行时镜像
+# 阶段3: 提供与编译目标一致的 Java 21 运行时
+FROM eclipse-temurin:21-jre-jammy AS java-runtime
+
+# 阶段4: Playwright 浏览器环境 + Java 21
 FROM mcr.microsoft.com/playwright/java:v1.40.0-jammy
 
 ARG APP_VERSION
+
+# Playwright 1.40.0 镜像自带的 Java 版本可能低于项目编译目标；
+# 显式覆盖为 Temurin 21，避免 class file 65 在 Java 17 上启动失败。
+COPY --from=java-runtime /opt/java/openjdk /opt/java/openjdk
+ENV JAVA_HOME=/opt/java/openjdk
+ENV PATH=/opt/java/openjdk/bin:${PATH}
+RUN java -version 2>&1 | grep -q 'version "21'
 
 LABEL maintainer="IAMLZY"
 LABEL description="XianYuAssistant - 闲鱼自动化管理系统"

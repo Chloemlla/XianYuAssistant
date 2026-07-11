@@ -22,6 +22,9 @@ for entry in \
 done
 
 grep -q "ARG APP_VERSION=${expected_version}" Dockerfile
+grep -q 'FROM eclipse-temurin:21-jre-jammy AS java-runtime' Dockerfile
+grep -q 'COPY --from=java-runtime /opt/java/openjdk /opt/java/openjdk' Dockerfile
+grep -q 'ENV JAVA_HOME=/opt/java/openjdk' Dockerfile
 grep -q 'ghcr.io/chloemlla/xianyuassistant' README.md install.sh
 
 if grep -Eqi 'iamlzy/xianyuassistant|docker\.io/.+xianyuassistant|jdbc:sqlite|mybatis-plus|/app/dbdata' \
