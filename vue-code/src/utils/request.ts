@@ -4,6 +4,7 @@ import type { ApiResponse } from '@/types'
 
 // Token存储key
 const TOKEN_KEY = 'xianyu_auth_token'
+const REFRESH_TOKEN_KEY = 'xianyu_auth_refresh_token'
 const USERNAME_KEY = 'xianyu_auth_username'
 
 /** 获取Token */
@@ -12,14 +13,20 @@ export function getAuthToken(): string | null {
 }
 
 /** 设置Token */
-export function setAuthToken(token: string, username: string) {
+export function setAuthToken(token: string, refreshToken: string, username: string) {
   localStorage.setItem(TOKEN_KEY, token)
+  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
   localStorage.setItem(USERNAME_KEY, username)
+}
+
+export function getRefreshToken(): string | null {
+  return localStorage.getItem(REFRESH_TOKEN_KEY)
 }
 
 /** 清除Token */
 export function clearAuthToken() {
   localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(REFRESH_TOKEN_KEY)
   localStorage.removeItem(USERNAME_KEY)
 }
 
@@ -42,6 +49,62 @@ const service: AxiosInstance = axios.create({
   }
 })
 
+interface AuthSession {
+  token: string
+  refreshToken: string
+  username: string
+}
+
+interface RetriableRequestConfig extends AxiosRequestConfig {
+  _authRetry?: boolean
+}
+
+let refreshPromise: Promise<string> | null = null
+
+export const refreshAccessToken = () => {
+  if (!refreshPromise) {
+    const refreshToken = getRefreshToken()
+    if (!refreshToken) return Promise.reject(new Error('登录已过期，请重新登录'))
+
+    refreshPromise = axios.post<ApiResponse<AuthSession>>('/api/login/refresh', { refreshToken }, {
+      timeout: 30000,
+      headers: { 'Content-Type': 'application/json' }
+    }).then(response => {
+      const result = response.data
+      if ((result.code !== 0 && result.code !== 200) || !result.data?.token || !result.data.refreshToken) {
+        throw new Error(result.msg || '刷新登录状态失败')
+      }
+      setAuthToken(result.data.token, result.data.refreshToken, result.data.username || getAuthUsername() || '')
+      return result.data.token
+    }).finally(() => {
+      refreshPromise = null
+    })
+  }
+  return refreshPromise
+}
+
+export const resetAuthRefreshForTests = () => {
+  refreshPromise = null
+}
+
+const retryWithRefresh = async (config: RetriableRequestConfig) => {
+  if (config._authRetry || config.url?.includes('/login/')) {
+    throw new Error('登录已过期，请重新登录')
+  }
+  config._authRetry = true
+  const token = await refreshAccessToken()
+  config.headers = { ...config.headers, Authorization: `Bearer ${token}` }
+  return service.request(config)
+}
+
+const expireSession = (message: string) => {
+  clearAuthToken()
+  if (!window.location.pathname.includes('/login')) {
+    toast.error(message)
+    window.location.href = '/login'
+  }
+}
+
 // 请求拦截器
 service.interceptors.request.use(
   (config) => {
@@ -50,30 +113,26 @@ service.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
-    console.log('发送请求:', config.url, config.data)
     return config
   },
   (error) => {
-    console.error('请求错误:', error)
     return Promise.reject(error)
   }
 )
 
 // 响应拦截器
 service.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse<any>>) => {
-    console.log('收到响应:', response.config.url, response.data)
+  async (response: AxiosResponse<ApiResponse<any>>) => {
     const res = response.data
 
     // 401未登录 -> 跳转登录页
     if (res.code === 401) {
-      clearAuthToken()
-      // 避免在登录页重复跳转
-      if (!window.location.pathname.includes('/login')) {
-        toast.error(res.msg || '登录已过期，请重新登录')
-        window.location.href = '/login'
+      try {
+        return await retryWithRefresh(response.config as RetriableRequestConfig)
+      } catch {
+        expireSession(res.msg || '登录已过期，请重新登录')
+        return Promise.reject(new Error(res.msg || '未登录'))
       }
-      return Promise.reject(new Error(res.msg || '未登录'))
     }
 
     // 特殊处理：1001是滑块验证码，需要业务代码自己处理，不在这里拦截
@@ -93,8 +152,15 @@ service.interceptors.response.use(
 
     return response // 保持返回完整的 AxiosResponse
   },
-  (error) => {
-    console.error('响应错误:', error)
+  async (error) => {
+    if (error?.response?.status === 401 && error.config) {
+      try {
+        return await retryWithRefresh(error.config as RetriableRequestConfig)
+      } catch {
+        expireSession('登录已过期，请重新登录')
+        return Promise.reject(new Error('登录已过期，请重新登录'))
+      }
+    }
     // 只有在错误消息未显示过时才弹出提示
     if (!(error as any).messageShown) {
       toast.error(error.message || '网络请求失败')

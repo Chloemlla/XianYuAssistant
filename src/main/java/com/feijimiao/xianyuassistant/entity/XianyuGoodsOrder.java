@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
         @CompoundIndex(name = "uk_goods_order_account_pnm", def = "{'xianyuAccountId': 1, 'pnmId': 1}", unique = true),
         @CompoundIndex(name = "idx_goods_order_account_created", def = "{'xianyuAccountId': 1, 'createTime': -1}"),
         @CompoundIndex(name = "idx_goods_order_account_order", def = "{'xianyuAccountId': 1, 'orderId': 1}")
+        ,@CompoundIndex(name = "idx_goods_order_delivery_claim", def = "{'deliveryClaimExpiresAt': 1, 'state': 1}")
 })
 public class XianyuGoodsOrder {
     @Id
@@ -59,4 +60,8 @@ public class XianyuGoodsOrder {
     private String totalPrice;
 
     private Integer buyNum;
+
+    private String deliveryClaimToken;
+
+    private Long deliveryClaimExpiresAt;
 }

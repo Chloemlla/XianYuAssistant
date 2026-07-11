@@ -6,6 +6,7 @@ import com.feijimiao.xianyuassistant.service.AIService;
 import com.feijimiao.xianyuassistant.service.SysSettingService;
 import com.feijimiao.xianyuassistant.service.bo.RAGDataRespBO;
 import com.feijimiao.xianyuassistant.service.bo.RAGReplyResult;
+import com.feijimiao.xianyuassistant.service.ai.AiRequestBudget;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
@@ -82,10 +83,17 @@ public class AIServiceImpl implements AIService {
     @Autowired
     private SysSettingService sysSettingService;
 
+    @Autowired
+    private AiRequestBudget aiRequestBudget;
+
     @Override
     public Flux<String> chatByRAG(String prompt, String goodsId) {
+        return aiRequestBudget.stream(prompt, () -> chatByRAGInternal(prompt, goodsId));
+    }
+
+    private Flux<String> chatByRAGInternal(String prompt, String goodsId) {
         long startTime = System.currentTimeMillis();
-        log.info("[AI Chat] 收到请求, prompt={}, goodsId={}", prompt, goodsId);
+        log.info("[AI Chat] 收到请求, promptLength={}, goodsId={}", prompt.length(), goodsId);
 
         // 1. 检查AI是否可用
         ChatClient chatClient = dynamicAIChatClientManager.getChatClient();
@@ -170,6 +178,10 @@ public class AIServiceImpl implements AIService {
 
     @Override
     public RAGReplyResult chatByRAGWithDetails(String msg, String goodsId) {
+        return aiRequestBudget.call(msg, () -> chatByRAGWithDetailsInternal(msg, goodsId));
+    }
+
+    private RAGReplyResult chatByRAGWithDetailsInternal(String msg, String goodsId) {
         RAGReplyResult result = new RAGReplyResult();
         
         // 1. 检查AI是否可用
@@ -259,6 +271,10 @@ public class AIServiceImpl implements AIService {
 
     @Override
     public RAGReplyResult chatByRAGWithDetails(String msg, String goodsId, String contextMessages) {
+        return aiRequestBudget.call(() -> chatByRAGWithDetailsContextInternal(msg, goodsId, contextMessages), msg, contextMessages);
+    }
+
+    private RAGReplyResult chatByRAGWithDetailsContextInternal(String msg, String goodsId, String contextMessages) {
         RAGReplyResult result = new RAGReplyResult();
         
         ChatClient chatClient = dynamicAIChatClientManager.getChatClient();
@@ -342,9 +358,14 @@ public class AIServiceImpl implements AIService {
 
     @Override
     public Flux<String> chatByRAGWithFixedMaterialStream(String msg, String goodsId, String fixedMaterial, String goodsDetail) {
+        return aiRequestBudget.stream(() -> chatByRAGWithFixedMaterialStreamInternal(msg, goodsId, fixedMaterial, goodsDetail),
+                msg, fixedMaterial, goodsDetail);
+    }
+
+    private Flux<String> chatByRAGWithFixedMaterialStreamInternal(String msg, String goodsId, String fixedMaterial, String goodsDetail) {
         long startTime = System.currentTimeMillis();
-        log.info("[AI Chat Test Stream] 开始流式对话: goodsId={}, msg={}, fixedMaterial={}, goodsDetail={}", 
-                goodsId, msg, fixedMaterial != null, goodsDetail != null);
+        log.info("[AI Chat Test Stream] 开始流式对话: goodsId={}, msgLength={}, fixedMaterialLength={}, goodsDetailLength={}",
+                goodsId, msg.length(), fixedMaterial == null ? 0 : fixedMaterial.length(), goodsDetail == null ? 0 : goodsDetail.length());
         
         ChatClient chatClient = dynamicAIChatClientManager.getChatClient();
         if (chatClient == null) {
@@ -421,6 +442,11 @@ public class AIServiceImpl implements AIService {
 
     @Override
     public RAGReplyResult chatByRAGWithFixedMaterial(String msg, String goodsId, String contextMessages, String fixedMaterial, String goodsDetail) {
+        return aiRequestBudget.call(() -> chatByRAGWithFixedMaterialInternal(msg, goodsId, contextMessages, fixedMaterial, goodsDetail),
+                msg, contextMessages, fixedMaterial, goodsDetail);
+    }
+
+    private RAGReplyResult chatByRAGWithFixedMaterialInternal(String msg, String goodsId, String contextMessages, String fixedMaterial, String goodsDetail) {
         RAGReplyResult result = new RAGReplyResult();
         
         ChatClient chatClient = dynamicAIChatClientManager.getChatClient();
@@ -565,6 +591,7 @@ public class AIServiceImpl implements AIService {
 
     @Override
     public void putDataToRAG(String content, String goodsId) {
+        aiRequestBudget.validateInputs(content);
         VectorStore vectorStore = dynamicVectorStoreManager.getVectorStore();
         if (vectorStore == null) {
             log.warn("[AI RAG] 向量库未初始化，无法写入数据");
@@ -661,6 +688,10 @@ public class AIServiceImpl implements AIService {
 
     @Override
     public String simpleChat(String message) {
+        return aiRequestBudget.call(message, () -> simpleChatInternal(message));
+    }
+
+    private String simpleChatInternal(String message) {
         ChatClient chatClient = dynamicAIChatClientManager.getChatClient();
         if (chatClient == null) {
             return null;

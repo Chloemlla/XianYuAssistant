@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
@@ -25,6 +26,18 @@ public class XianyuGoodsOrderMapper extends AbstractMongoMapper<XianyuGoodsOrder
     public int updateStateContentAndFailReason(Long id,Integer s,String c,String f){return update(id,new Update().set("state",s).set("content",c).set("failReason",f));}
     public XianyuGoodsOrder selectByOrderId(Long a,String g,String o){return mongoTemplate.findOne(Query.query(Criteria.where("xianyuAccountId").is(a).and("xyGoodsId").is(g).and("orderId").is(o)),entityType);}
     public XianyuGoodsOrder selectByAccountIdAndOrderId(Long a,String o){return mongoTemplate.findOne(Query.query(Criteria.where("xianyuAccountId").is(a).and("orderId").is(o)),entityType);}
+    public XianyuGoodsOrder claimForApiDelivery(Long accountId,String orderId,String claimToken,long leaseUntil){
+        Criteria available = new Criteria().orOperator(Criteria.where("deliveryClaimExpiresAt").exists(false),Criteria.where("deliveryClaimExpiresAt").lt(System.currentTimeMillis()));
+        Query query = Query.query(new Criteria().andOperator(Criteria.where("xianyuAccountId").is(accountId),Criteria.where("orderId").is(orderId),Criteria.where("state").ne(1),available));
+        Update update = new Update().set("deliveryClaimToken",claimToken).set("deliveryClaimExpiresAt",leaseUntil).set("state",2);
+        return mongoTemplate.findAndModify(query,update,FindAndModifyOptions.options().returnNew(true),entityType);
+    }
+    public int finishApiDeliveryClaim(Long id,String claimToken,boolean success,String failure){
+        Query query=Query.query(Criteria.where("_id").is(id).and("deliveryClaimToken").is(claimToken));
+        Update update=new Update().set("state",success?1:-1).unset("deliveryClaimToken").unset("deliveryClaimExpiresAt");
+        if(failure!=null)update.set("failReason",failure);
+        return Math.toIntExact(mongoTemplate.updateFirst(query,update,entityType).getModifiedCount());
+    }
     public int updateConfirmState(Long a,String o){return Math.toIntExact(mongoTemplate.updateMulti(Query.query(Criteria.where("xianyuAccountId").is(a).and("orderId").is(o)),new Update().set("confirmState",1),entityType).getModifiedCount());}
     public XianyuGoodsOrder selectByPnmId(Long a,String p){return mongoTemplate.findOne(Query.query(Criteria.where("xianyuAccountId").is(a).and("pnmId").is(p)),entityType);}
     public int countYesterdayOrders(){return countOrdersByDate(LocalDate.now().minusDays(1).toString());}

@@ -13,6 +13,7 @@ import IconImage from '@/components/icons/IconImage.vue'
 
 import GoodsSidebar from './components/GoodsSidebar.vue'
 import MessageList from './components/MessageList.vue'
+import { useVisibilityPolling } from '@/composables/useVisibilityPolling'
 
 const {
   loading,
@@ -26,10 +27,14 @@ const {
   total,
   totalPages,
   filterCurrentAccount,
+  messageError,
+  messageLastUpdatedAt,
   goodsList,
   goodsTotal,
   goodsLoading,
   goodsListRef,
+  goodsError,
+  goodsLastUpdatedAt,
   isMobile,
   mobileView,
   selectedGoodsForMobile,
@@ -110,6 +115,8 @@ const HeaderSelectors = defineComponent({
       h('button', {
         class: ['header-toggle-btn', { 'header-toggle-btn--on': filterCurrentAccount.value }],
         title: '隐藏我发送的',
+        'aria-label': '隐藏我发送的',
+        'aria-pressed': filterCurrentAccount.value,
         onClick: () => {
           filterCurrentAccount.value = !filterCurrentAccount.value
           currentPage.value = 1
@@ -122,6 +129,7 @@ const HeaderSelectors = defineComponent({
       ]),
       h('button', {
         class: ['header-refresh-btn', { 'header-refresh-btn--loading': loading.value }],
+        'aria-label': '刷新消息',
         disabled: loading.value,
         onClick: loadMessages
       }, [
@@ -131,7 +139,11 @@ const HeaderSelectors = defineComponent({
   }
 })
 
-let refreshTimer: ReturnType<typeof setInterval> | null = null
+const polling = useVisibilityPolling(
+  () => loadMessages(true),
+  3000,
+  () => !!selectedAccountId.value
+)
 
 onMounted(async () => {
   checkScreenSize()
@@ -144,19 +156,12 @@ onMounted(async () => {
   if (setHeaderContent) {
     setHeaderContent(HeaderSelectors)
   }
-  refreshTimer = setInterval(() => {
-    if (selectedAccountId.value) {
-      loadMessages(true)
-    }
-  }, 3000)
+  polling.start()
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', checkScreenSize)
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-    refreshTimer = null
-  }
+  polling.stop()
 })
 
 const checkScreenSize = () => {
@@ -169,6 +174,13 @@ const checkScreenSize = () => {
 
 <template>
   <div class="messages">
+    <div v-if="messageError || goodsError" class="messages__error-banner" role="alert">
+      <span>{{ messageError || goodsError }}</span>
+      <button type="button" @click="messageError ? loadMessages() : loadGoodsList()">重试</button>
+    </div>
+    <div v-if="messageLastUpdatedAt || goodsLastUpdatedAt" class="messages__updated-at">
+      最后更新：{{ (messageLastUpdatedAt || goodsLastUpdatedAt)?.toLocaleTimeString('zh-CN') }}
+    </div>
     <!-- ========== Desktop Layout ========== -->
     <template v-if="!isMobile">
       <!-- Header -->
@@ -259,6 +271,8 @@ const checkScreenSize = () => {
           </template>
           <button
             class="messages__sidebar-toggle"
+            type="button"
+            :aria-label="sidebarCollapsed ? '展开商品列表' : '折叠商品列表'"
             :title="sidebarCollapsed ? '展开商品列表' : '折叠商品列表'"
             @click="sidebarCollapsed = !sidebarCollapsed"
           >
@@ -419,7 +433,7 @@ const checkScreenSize = () => {
             />
             <span class="mobile-messages__goods-name">{{ selectedGoodsForMobile.item.title }}</span>
           </div>
-          <button class="mobile-messages__refresh" @click="loadMessages()">
+          <button class="mobile-messages__refresh" type="button" aria-label="刷新消息" @click="loadMessages()">
             <IconRefresh />
           </button>
         </div>
@@ -468,6 +482,33 @@ const checkScreenSize = () => {
 </template>
 
 <style scoped>
+.messages__error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 12px 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: #b42318;
+  background: rgba(255, 59, 48, 0.1);
+  font-size: 12px;
+}
+
+.messages__error-banner button {
+  border: 0;
+  background: transparent;
+  color: #007aff;
+  cursor: pointer;
+}
+
+.messages__updated-at {
+  padding: 4px 16px 0;
+  color: #86868b;
+  font-size: 11px;
+  text-align: right;
+}
+
 /* ============================================================
    Mobile Goods View
    ============================================================ */

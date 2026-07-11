@@ -1,0 +1,28 @@
+{
+  "runId": "20260711-audit-f01-f21-remediation",
+  "lane": "child_governed",
+  "task": "independent-static-remediation-review",
+  "envelope": "outputs/runtime/vibe-sessions/20260711-audit-f01-f21-remediation/delegation-envelope.json",
+  "requirements": "docs/requirements/2026-07-11-audit-f01-f21-remediation.md",
+  "plan": "docs/plans/2026-07-11-audit-f01-f21-execution-plan.md",
+  "validation": "accepted",
+  "ownership": {
+    "sourceEdits": false,
+    "canonicalRequirementOrPlanEdits": false,
+    "receiptOnlyWrite": true,
+    "fullCompletionClaim": false
+  },
+  "inspectionPolicy": {
+    "staticOnly": true,
+    "allowed": ["git diff", "rg", "Get-Content"],
+    "buildsOrTestsRun": false,
+    "commitOrPushPerformed": false
+  },
+  "skillProtocol": {
+    "runtime": "vibe",
+    "canonicalSkillRead": true,
+    "referencedProtocolsAvailable": false,
+    "degradedReason": "SKILL.md references protocols/runtime.md, protocols/review.md, and protocols/team.md, but those files are absent from the installed skill tree. Review proceeded under the canonical SKILL.md child-governed contract."
+  },
+  "result": "review-findings-returned-to-root"
+}

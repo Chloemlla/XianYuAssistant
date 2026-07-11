@@ -1,0 +1,8 @@
+{
+  "goal": "Implement all audit findings F01 through F21",
+  "deliverable": "Pushed code, tests, workflows, and documentation with remote workflow evidence",
+  "autonomy": "implementation-forward",
+  "acceptanceSource": "docs/requirements/2026-07-11-audit-f01-f21-remediation.md",
+  "nonGoals": ["visual rewrite", "large global state framework", "local builds/tests"],
+  "completionPolicy": "No full-completion claim without successful GitHub Actions evidence"
+}

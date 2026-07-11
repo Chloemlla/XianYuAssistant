@@ -1,0 +1,22 @@
+{
+  "runId": "20260711-audit-f01-f21-remediation",
+  "lane": "child_governed",
+  "task": "frontend_remediation",
+  "validated": true,
+  "requirements": "docs/requirements/2026-07-11-audit-f01-f21-remediation.md",
+  "plan": "docs/plans/2026-07-11-audit-f01-f21-execution-plan.md",
+  "findings": ["F06", "F07", "F11", "F13", "F14", "F15", "F16", "F17", "F18"],
+  "writeScope": [
+    "vue-code/src/**",
+    "vue-code frontend unit/component tests",
+    "outputs/runtime/vibe-sessions/20260711-audit-f01-f21-remediation/delegation-validation-receipt-frontend.json"
+  ],
+  "constraints": [
+    "no canonical requirement or plan edits",
+    "no package.json, lockfile, Dockerfile, workflow, backend, README, docs, or install.sh edits",
+    "no local build or test execution",
+    "no commit or push",
+    "focused files only"
+  ],
+  "governanceDegradation": "Referenced vibe protocols/runtime.md, protocols/do.md, protocols/review.md, and protocols/team.md were unavailable; execution follows the complete top-level SKILL.md child-governed contract."
+}

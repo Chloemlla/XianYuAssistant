@@ -37,7 +37,13 @@ function show(message: string, type: string = 'info', duration: number = 2500) {
     animation:toast-in .25s cubic-bezier(.34,1.56,.64,1) forwards;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   `
-  el.innerHTML = `${ICON_MAP[type] || ''}<span>${message}</span>`
+  const icon = document.createElement('span')
+  icon.setAttribute('aria-hidden', 'true')
+  icon.innerHTML = ICON_MAP[type] || ''
+  const text = document.createElement('span')
+  text.textContent = message
+  el.setAttribute('role', type === 'error' ? 'alert' : 'status')
+  el.append(icon, text)
   getContainer().appendChild(el)
   setTimeout(() => {
     el.style.animation = 'toast-out .2s ease forwards'

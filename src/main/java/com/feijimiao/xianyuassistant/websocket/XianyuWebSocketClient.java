@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -33,8 +32,8 @@ public class XianyuWebSocketClient extends WebSocketClient {
     private String myUserId = null;
     
     // 消息处理并发控制（参考Python的_handle_message_with_semaphore）
-    private final Semaphore messageSemaphore = new Semaphore(100); // 最多100个并发消息处理（参考Python）
-    private final ExecutorService messageExecutor = Executors.newFixedThreadPool(10);
+    private final Semaphore messageSemaphore = new Semaphore(16);
+    private final ExecutorService messageExecutor;
     
     // 消息处理器
     private WebSocketMessageHandler messageHandler;
@@ -64,10 +63,12 @@ public class XianyuWebSocketClient extends WebSocketClient {
     // 是否为主动关闭（防止主动关闭时触发重连）
     private volatile boolean intentionalClose = false;
 
-    public XianyuWebSocketClient(URI serverUri, Map<String, String> headers, String accountId, AccountDisplayNameUtils displayNameUtils) {
+    public XianyuWebSocketClient(URI serverUri, Map<String, String> headers, String accountId,
+                                AccountDisplayNameUtils displayNameUtils, ExecutorService messageExecutor) {
         super(serverUri, headers);
         this.accountId = accountId;
         this.displayNameUtils = displayNameUtils;
+        this.messageExecutor = messageExecutor;
     }
     
     /**
@@ -477,12 +478,6 @@ public class XianyuWebSocketClient extends WebSocketClient {
         log.info("{}WebSocket连接关闭 - 关闭方: {}, 代码: {}, 原因: {}", 
                 logPrefix(), closeType, code, reason);
         
-        // 关闭消息处理线程池
-        if (messageExecutor != null && !messageExecutor.isShutdown()) {
-            messageExecutor.shutdown();
-            log.debug("{}消息处理线程池已关闭", logPrefix());
-        }
-        
         // 触发连接关闭回调（参考Python的finally块中重连逻辑）
         // 但如果是主动关闭（如Token刷新重连），则不触发回调，由调用方自行处理重连
         if (!intentionalClose && onConnectionClosed != null) {
@@ -549,7 +544,7 @@ public class XianyuWebSocketClient extends WebSocketClient {
         try {
             String cleanCid = cid.replace("@goofish", "");
             String cleanToId = toId.replace("@goofish", "");
-            log.info("【账号{}】准备发送消息: cleanCid={}, cleanToId={}, text={}", accountId, cleanCid, cleanToId, text);
+            log.info("【账号{}】准备发送消息: cleanCid={}, cleanToId={}, textLength={}", accountId, cleanCid, cleanToId, text.length());
 
             Map<String, Object> textContent = new HashMap<>();
             textContent.put("contentType", 1);
@@ -644,8 +639,8 @@ public class XianyuWebSocketClient extends WebSocketClient {
             String cleanCid = cid.replace("@goofish", "");
             String cleanToId = toId.replace("@goofish", "");
             
-            log.info("【账号{}】准备发送消息: cleanCid={}, cleanToId={}, text={}", 
-                    accountId, cleanCid, cleanToId, text);
+            log.info("【账号{}】准备发送消息: cleanCid={}, cleanToId={}, textLength={}",
+                    accountId, cleanCid, cleanToId, text.length());
             
             Map<String, Object> textContent = new HashMap<>();
             textContent.put("contentType", 1);
@@ -712,7 +707,7 @@ public class XianyuWebSocketClient extends WebSocketClient {
             pendingResponses.put(mid, future);
             
             String messageJson = objectMapper.writeValueAsString(message);
-            log.debug("【账号{}】发送消息JSON: {}", accountId, messageJson);
+            log.debug("【账号{}】发送消息JSON: mid={}, payloadLength={}", accountId, mid, messageJson.length());
             send(messageJson);
             log.info("【账号{}】消息已发送到WebSocket，等待响应: mid={}", accountId, mid);
             
@@ -832,7 +827,7 @@ public class XianyuWebSocketClient extends WebSocketClient {
             
             // 发送
             String messageJson = objectMapper.writeValueAsString(message);
-            log.debug("{}发送图片消息JSON: {}", logPrefix(), messageJson);
+            log.debug("{}发送图片消息JSON: payloadLength={}", logPrefix(), messageJson.length());
             send(messageJson);
             log.info("{}✅ 图片消息已发送: {}", logPrefix(), imageUrl);
             

@@ -1,4 +1,7 @@
+# syntax=docker/dockerfile:1
 # ===== 多阶段构建 =====
+
+ARG APP_VERSION=2.0.3
 
 # 阶段1: 构建前端
 FROM node:20-alpine AS frontend-build
@@ -19,6 +22,8 @@ RUN npm run build:spring
 # 阶段2: 构建后端 JAR
 FROM eclipse-temurin:21-jdk-alpine AS backend-build
 
+ARG APP_VERSION
+
 WORKDIR /app
 
 # 配置阿里云 Maven 镜像
@@ -29,28 +34,39 @@ COPY .mvn/ .mvn/
 COPY mvnw mvnw.cmd pom.xml ./
 RUN chmod +x mvnw
 
-# 复制前端构建产物到 static 目录
-COPY --from=frontend-build /app/vue-code/../src/main/resources/static src/main/resources/static/
-
 # 复制后端源码
 COPY src/ src/
 
+# committed static 不是发布制品来源；只保留本次前端构建结果
+RUN rm -rf src/main/resources/static && mkdir -p src/main/resources/static
+COPY --from=frontend-build /app/src/main/resources/static/ src/main/resources/static/
+RUN test -f src/main/resources/static/index.html
+
 # 构建 JAR（跳过测试）
-RUN ./mvnw clean package -DskipTests
+RUN ./mvnw clean package -DskipTests && \
+    test -f "target/XianYuAssistant-${APP_VERSION}.jar" && \
+    cp "target/XianYuAssistant-${APP_VERSION}.jar" target/app.jar
 
 # 阶段3: 运行时镜像
-FROM eclipse-temurin:21-jre-alpine
+FROM mcr.microsoft.com/playwright/java:v1.40.0-jammy
+
+ARG APP_VERSION
 
 LABEL maintainer="IAMLZY"
 LABEL description="XianYuAssistant - 闲鱼自动化管理系统"
+LABEL org.opencontainers.image.version="${APP_VERSION}"
+LABEL org.opencontainers.image.source="https://github.com/Chloemlla/XianYuAssistant"
 
 WORKDIR /app
 
-# 创建运行时目录（业务数据由 MongoDB 持久化）
-RUN mkdir -p /app/logs /app/ms-playwright
+# 官方 Playwright 运行镜像已包含与 Java 依赖同版本的 Chromium 及系统库。
+# 应用固定从 JAR 同目录的 ms-playwright 查找浏览器，因此建立稳定链接。
+RUN mkdir -p /app/logs && \
+    ln -s /ms-playwright /app/ms-playwright && \
+    test -d /ms-playwright
 
 # 从构建阶段复制 JAR
-COPY --from=backend-build /app/target/XianYuAssistant-2.0.3.jar app.jar
+COPY --from=backend-build /app/target/app.jar app.jar
 
 # 暴露端口
 EXPOSE 12400

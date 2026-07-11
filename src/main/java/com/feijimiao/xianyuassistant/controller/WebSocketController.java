@@ -192,8 +192,9 @@ public class WebSocketController {
     @PostMapping("/sendMessage")
     public ResultObject<String> sendMessage(@RequestBody SendMessageReqDTO reqDTO) {
         try {
-            log.info("发送消息请求: xianyuAccountId={}, cid={}, toId={}, text={}", 
-                    reqDTO.getXianyuAccountId(), reqDTO.getCid(), reqDTO.getToId(), reqDTO.getText());
+            log.info("发送消息请求: xianyuAccountId={}, cid={}, toId={}, textLength={}",
+                    reqDTO.getXianyuAccountId(), reqDTO.getCid(), reqDTO.getToId(),
+                    reqDTO.getText() == null ? 0 : reqDTO.getText().length());
             
             // 参数校验
             if (reqDTO.getXianyuAccountId() == null) {

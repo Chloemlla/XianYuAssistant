@@ -183,7 +183,7 @@ public class CookieRefreshServiceImpl implements CookieRefreshService {
                 }
 
                 String responseBody = response.body().string();
-                log.debug("【账号{}】hasLogin响应: {}", accountId, responseBody);
+                log.debug("【账号{}】hasLogin响应: responseLength={}", accountId, responseBody.length());
 
                 // 检测风控（参考Python实现）
                 boolean isRiskControl = responseBody != null && (
@@ -192,7 +192,7 @@ public class CookieRefreshServiceImpl implements CookieRefreshService {
                     responseBody.contains("FAIL_SYS_RGV587_ERROR"));
 
                 if (isRiskControl) {
-                    log.error("【账号{}】❌ hasLogin触发风控: {}", accountId, responseBody);
+                    log.error("【账号{}】❌ hasLogin触发风控: responseLength={}", accountId, responseBody.length());
                     log.error("【账号{}】系统目前无法自动解决，请进入闲鱼网页版-点击消息-过滑块-复制最新的Cookie", accountId);
                     
                     // 标记为失效（风控）

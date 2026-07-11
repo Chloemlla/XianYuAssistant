@@ -40,6 +40,8 @@ jobs:
     env:
       SPRING_DATA_MONGODB_URI: mongodb://localhost:27017/xianyu_assistant_test
       AI_ENABLED: "false"
+      JWT_SECRET: ci-only-jwt-secret-with-at-least-32-bytes
+      BOOTSTRAP_TOKEN: ci-only-bootstrap-token
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,7 +54,12 @@ jobs:
       - name: Run backend tests
         run: |
           chmod +x ./mvnw
-          ./mvnw --batch-mode test
+          test_count=$(find src/test -type f \( -name '*Test.java' -o -name '*Tests.java' -o -name '*IT.java' \) | wc -l)
+          if [ "$test_count" -eq 0 ]; then
+            echo "Backend test suite is absent"
+            exit 1
+          fi
+          ./mvnw --batch-mode -DfailIfNoTests=true test
       - name: Reject legacy production storage references
         shell: bash
         run: |
@@ -60,9 +67,60 @@ jobs:
             exit 1
           fi
 
+  frontend-verify:
+    name: Verify frontend contracts
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vue-code
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: vue-code/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --prefer-offline --no-audit --fund=false
+      - name: Require frontend tests
+        shell: bash
+        run: |
+          test_count=$(find src -type f \( -name '*.test.ts' -o -name '*.spec.ts' -o -name '*.test.js' -o -name '*.spec.js' \) | wc -l)
+          if [ "$test_count" -eq 0 ]; then
+            echo "Frontend unit/component test suite is absent"
+            exit 1
+          fi
+      - name: Type-check
+        run: npm run type-check
+      - name: Lint without modifying sources
+        run: npm run lint
+      - name: Run unit and component tests
+        run: npm run test:unit
+      - name: Build current frontend artifact
+        run: npm run build:spring
+
+  release-contract:
+    name: Verify release contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify version, channel, and storage documentation
+        shell: bash
+        run: bash scripts/ci/verify-release-contract.sh 2.0.3
+
   docker:
     name: Build and publish image
-    needs: backend-verify
+    needs:
+      - backend-verify
+      - frontend-verify
+      - release-contract
     runs-on: ubuntu-latest
 
     steps:
@@ -106,7 +164,7 @@ jobs:
         with:
           context: .
           file: Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

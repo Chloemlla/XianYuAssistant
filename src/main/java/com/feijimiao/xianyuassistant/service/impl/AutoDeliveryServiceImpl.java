@@ -23,6 +23,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 自动发货服务实现类（编排层）
@@ -67,6 +69,9 @@ public class AutoDeliveryServiceImpl implements AutoDeliveryService {
 
     @Autowired
     private DeliveryStrategyResolver deliveryStrategyResolver;
+
+    @Autowired
+    private com.feijimiao.xianyuassistant.concurrent.BoundedDelayScheduler delayScheduler;
     
     @Override
     public XianyuGoodsConfig getGoodsConfig(Long accountId, String xyGoodsId) {
@@ -161,7 +166,7 @@ public class AutoDeliveryServiceImpl implements AutoDeliveryService {
             }
             
             String content = deliveryConfig.getAutoDeliveryContent();
-            log.info("【账号{}】准备发送自动发货消息: content={}", accountId, content);
+            log.info("【账号{}】准备发送自动发货消息: contentLength={}", accountId, content == null ? 0 : content.length());
 
             HumanLikeDelayUtils.mediumDelay();
             HumanLikeDelayUtils.thinkingDelay();
@@ -175,8 +180,8 @@ public class AutoDeliveryServiceImpl implements AutoDeliveryService {
             recordAutoDelivery(accountId, xyGoodsId, buyerUserId, buyerUserName, content, success ? 1 : 0, null, orderId);
             
             if (success) {
-                log.info("【账号{}】自动发货成功: xyGoodsId={}, buyerUserName={}, content={}", 
-                        accountId, xyGoodsId, buyerUserName, content);
+                log.info("【账号{}】自动发货成功: xyGoodsId={}, buyerUserName={}, contentLength={}",
+                        accountId, xyGoodsId, buyerUserName, content == null ? 0 : content.length());
                 sentMessageSaveService.saveAiAssistantReply(accountId, cid, toId, content, xyGoodsId);
             } else {
                 log.error("【账号{}】自动发货失败: xyGoodsId={}", accountId, xyGoodsId);
@@ -509,9 +514,10 @@ public class AutoDeliveryServiceImpl implements AutoDeliveryService {
             return;
         }
         log.info("【账号{}】提交异步自动确认发货: orderId={}", accountId, orderId);
-        new Thread(() -> {
+        long delayMs = ThreadLocalRandom.current().nextLong(2000, 5001);
+        try {
+          delayScheduler.schedule(() -> {
             try {
-                HumanLikeDelayUtils.longDelay();
                 String result = orderService.confirmShipment(accountId, orderId);
                 if (result != null) {
                     log.info("【账号{}】✅ 自动确认发货成功: orderId={}", accountId, orderId);
@@ -522,7 +528,10 @@ public class AutoDeliveryServiceImpl implements AutoDeliveryService {
             } catch (Exception e) {
                 log.error("【账号{}】自动确认发货异常: orderId={}", accountId, orderId, e);
             }
-        }).start();
+          }, delayMs, TimeUnit.MILLISECONDS);
+        } catch (java.util.concurrent.RejectedExecutionException e) {
+            log.warn("【账号{}】自动确认延迟队列已满: orderId={}", accountId, orderId);
+        }
     }
 
     private void updateRecordState(Long recordId, Integer state, String content, String failReason) {

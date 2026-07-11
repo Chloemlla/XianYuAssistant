@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { uploadImage } from '@/api/image'
 import { toast } from '@/utils/toast'
 import IconImage from '@/components/icons/IconImage.vue'
@@ -27,6 +27,21 @@ const uploading = ref(false)
 const uploadProgress = ref(0)
 const previewUrl = computed(() => props.modelValue)
 const fileInput = ref<HTMLInputElement | null>(null)
+let progressInterval: ReturnType<typeof setInterval> | null = null
+let resetTimer: ReturnType<typeof setTimeout> | null = null
+
+const clearUploadTimers = () => {
+  if (progressInterval) {
+    clearInterval(progressInterval)
+    progressInterval = null
+  }
+  if (resetTimer) {
+    clearTimeout(resetTimer)
+    resetTimer = null
+  }
+}
+
+onUnmounted(clearUploadTimers)
 
 const handleFileSelect = async (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -51,12 +66,13 @@ const handleFileSelect = async (event: Event) => {
 }
 
 const doUpload = async (file: File) => {
+  clearUploadTimers()
   uploading.value = true
   uploadProgress.value = 0
   
   try {
     // 模拟上传进度
-    const progressInterval = setInterval(() => {
+    progressInterval = setInterval(() => {
       if (uploadProgress.value < 90) {
         uploadProgress.value += 10
       }
@@ -65,6 +81,7 @@ const doUpload = async (file: File) => {
     const res = await uploadImage(props.accountId, file)
     
     clearInterval(progressInterval)
+    progressInterval = null
     uploadProgress.value = 100
     
     if (res && res.code === 200 && res.data) {
@@ -79,9 +96,14 @@ const doUpload = async (file: File) => {
     emit('error', error.message || '上传失败')
     toast.error(error.message || '图片上传失败')
   } finally {
-    setTimeout(() => {
+    if (progressInterval) {
+      clearInterval(progressInterval)
+      progressInterval = null
+    }
+    resetTimer = setTimeout(() => {
       uploading.value = false
       uploadProgress.value = 0
+      resetTimer = null
     }, 500)
   }
 }
@@ -119,7 +141,7 @@ const clearImage = () => {
     <!-- 已上传图片预览 -->
     <div v-if="previewUrl" class="image-preview">
       <img :src="previewUrl" alt="预览图片" />
-      <button class="image-preview__remove" @click="clearImage">
+      <button type="button" class="image-preview__remove" aria-label="删除已上传图片" @click="clearImage">
         <IconClose />
       </button>
     </div>
@@ -129,9 +151,14 @@ const clearImage = () => {
       v-else
       class="image-upload-area"
       :class="{ 'image-upload-area--uploading': uploading }"
+      role="button"
+      tabindex="0"
+      aria-label="选择或拖拽图片上传"
       @drop="handleDrop"
       @dragover="handleDragOver"
       @click="(fileInput as HTMLInputElement)?.click()"
+      @keydown.enter.prevent="(fileInput as HTMLInputElement)?.click()"
+      @keydown.space.prevent="(fileInput as HTMLInputElement)?.click()"
     >
       <input
         ref="fileInput"

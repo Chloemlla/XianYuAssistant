@@ -1,0 +1,28 @@
+{
+  "runId": "20260711-audit-f01-f21-remediation",
+  "lane": "child_governed",
+  "task": "release-remediation-f09-f10-f20",
+  "validated": true,
+  "validatedEnvelope": "outputs/runtime/vibe-sessions/20260711-audit-f01-f21-remediation/delegation-envelope.json",
+  "inheritedRequirements": "docs/requirements/2026-07-11-audit-f01-f21-remediation.md",
+  "inheritedPlan": "docs/plans/2026-07-11-audit-f01-f21-execution-plan.md",
+  "ownership": [
+    "Dockerfile",
+    ".github/workflows/**",
+    "pom.xml",
+    "vue-code/package.json",
+    "vue-code lockfiles when needed",
+    "README.md",
+    "install.sh",
+    "docs/technical-reference/**",
+    "focused CI helper scripts/config files"
+  ],
+  "constraints": [
+    "no application source edits",
+    "no test source edits owned by other lanes",
+    "no local builds or tests",
+    "no Maven, npm, Flutter, Gradle, or Docker execution",
+    "no canonical requirement or plan edits",
+    "no commit or push from this child lane"
+  ]
+}

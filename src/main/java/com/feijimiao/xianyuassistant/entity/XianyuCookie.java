@@ -67,4 +67,13 @@ public class XianyuCookie {
      */
     @Indexed
     private Long tokenExpireTime;
+
+    @Indexed
+    private Long nextCredentialMaintenanceAt;
+
+    @Indexed
+    private Long credentialMaintenanceLeaseUntil;
+
+    @Indexed
+    private Long websocketTokenLeaseUntil;
 }

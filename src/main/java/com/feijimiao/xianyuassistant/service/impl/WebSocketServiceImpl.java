@@ -15,6 +15,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -64,6 +65,10 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Autowired
     private com.feijimiao.xianyuassistant.mapper.XianyuAccountMapper xianyuAccountMapper;
+
+    @Autowired
+    @Qualifier("websocketMessageExecutor")
+    private ExecutorService websocketMessageExecutor;
 
 
     // 存储WebSocket客户端
@@ -186,8 +191,6 @@ public class WebSocketServiceImpl implements WebSocketService {
             log.info("========== 使用手动Token启动WebSocket连接 ==========");
             log.info("【账号{}】accountId={}", accountId, accountId);
             log.info("【账号{}】accessToken长度={}", accountId, accessToken != null ? accessToken.length() : 0);
-            log.info("【账号{}】accessToken前50字符={}", accountId, 
-                    accessToken != null && accessToken.length() > 50 ? accessToken.substring(0, 50) + "..." : accessToken);
 
             // 检查是否已经连接
             if (webSocketClients.containsKey(accountId)) {
@@ -264,7 +267,8 @@ public class WebSocketServiceImpl implements WebSocketService {
 
             // 创建WebSocket客户端（参考Python的_create_websocket_connection）
             URI serverUri = new URI(WEBSOCKET_URL);
-            XianyuWebSocketClient client = new XianyuWebSocketClient(serverUri, headers, String.valueOf(accountId), displayNameUtils);
+            XianyuWebSocketClient client = new XianyuWebSocketClient(
+                    serverUri, headers, String.valueOf(accountId), displayNameUtils, websocketMessageExecutor);
             
             // 设置当前用户ID（从Cookie的unb字段获取）
             client.setMyUserId(unb);
@@ -329,7 +333,7 @@ public class WebSocketServiceImpl implements WebSocketService {
 
             // 连接WebSocket（参考Python的connect方法）
             log.info("正在连接WebSocket: {}", WEBSOCKET_URL);
-            log.info("请求头: {}", headers);
+            log.info("WebSocket请求头已构建: headerCount={}", headers.size());
             
             boolean connected = client.connectBlocking(10, TimeUnit.SECONDS);
             
@@ -819,7 +823,7 @@ public class WebSocketServiceImpl implements WebSocketService {
     @Override
     public boolean sendMessage(Long accountId, String cid, String toId, String text) {
         try {
-            log.info("发送消息: accountId={}, cid={}, toId={}, text={}", accountId, cid, toId, text);
+            log.info("发送消息: accountId={}, cid={}, toId={}, textLength={}", accountId, cid, toId, text == null ? 0 : text.length());
             
             // 获取WebSocket客户端
             XianyuWebSocketClient client = webSocketClients.get(accountId);
@@ -846,7 +850,7 @@ public class WebSocketServiceImpl implements WebSocketService {
     @Override
     public boolean sendMessageWithResult(Long accountId, String cid, String toId, String text) {
         try {
-            log.info("发送消息(等待结果): accountId={}, cid={}, toId={}, text={}", accountId, cid, toId, text);
+            log.info("发送消息(等待结果): accountId={}, cid={}, toId={}, textLength={}", accountId, cid, toId, text == null ? 0 : text.length());
             
             XianyuWebSocketClient client = webSocketClients.get(accountId);
             if (client == null) {

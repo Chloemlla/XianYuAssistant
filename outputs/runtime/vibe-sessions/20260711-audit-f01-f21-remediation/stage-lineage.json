@@ -1,0 +1,7 @@
+[
+  {"stage": "skeleton_check", "status": "complete"},
+  {"stage": "deep_interview", "status": "complete", "method": "requirements inferred from audit and repository constraints"},
+  {"stage": "requirement_doc", "status": "complete", "artifact": "docs/requirements/2026-07-11-audit-f01-f21-remediation.md"},
+  {"stage": "xl_plan", "status": "complete", "artifact": "docs/plans/2026-07-11-audit-f01-f21-execution-plan.md"},
+  {"stage": "plan_execute", "status": "in_progress"}
+]

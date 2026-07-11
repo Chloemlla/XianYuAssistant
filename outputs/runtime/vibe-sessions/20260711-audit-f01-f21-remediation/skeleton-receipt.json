@@ -1,0 +1,9 @@
+{
+  "stage": "skeleton_check",
+  "status": "complete",
+  "branch": "main",
+  "upstream": "origin/main",
+  "initialHead": "f89e759",
+  "initialWorktree": ["docs/audit-report-xianyuassistant-2026-07-11.md"],
+  "constraints": ["workflow-only builds and tests", "no Flutter or Gradle", "preserve user audit report", "avoid super files"]
+}

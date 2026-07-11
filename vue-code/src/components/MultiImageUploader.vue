@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { uploadImage } from '@/api/image'
 import { toast } from '@/utils/toast'
 import IconPlus from '@/components/icons/IconPlus.vue'
@@ -31,6 +31,13 @@ const canAdd = computed(() => imageUrls.value.length < props.max)
 
 const uploadingIndex = ref(-1)
 const uploadProgress = ref(0)
+let progressInterval: ReturnType<typeof setInterval> | null = null
+let resetTimer: ReturnType<typeof setTimeout> | null = null
+
+onUnmounted(() => {
+  if (progressInterval) clearInterval(progressInterval)
+  if (resetTimer) clearTimeout(resetTimer)
+})
 
 const triggerFileInput = (index: number) => {
   const input = document.getElementById(`multi-img-input-${index}`) as HTMLInputElement
@@ -55,15 +62,19 @@ const handleFileChange = async (index: number, event: Event) => {
 
   uploadingIndex.value = index
   uploadProgress.value = 0
-
+  if (resetTimer) {
+    clearTimeout(resetTimer)
+    resetTimer = null
+  }
   try {
-    const progressInterval = setInterval(() => {
+    progressInterval = setInterval(() => {
       if (uploadProgress.value < 90) uploadProgress.value += 10
     }, 100)
 
     const res = await uploadImage(props.accountId, file)
 
     clearInterval(progressInterval)
+    progressInterval = null
     uploadProgress.value = 100
 
     if (res && res.code === 200 && res.data) {
@@ -81,9 +92,11 @@ const handleFileChange = async (index: number, event: Event) => {
   } catch (error: any) {
     toast.error(error.message || '图片上传失败')
   } finally {
-    setTimeout(() => {
+    if (progressInterval) clearInterval(progressInterval)
+    resetTimer = setTimeout(() => {
       uploadingIndex.value = -1
       uploadProgress.value = 0
+      resetTimer = null
     }, 500)
   }
 
@@ -108,8 +121,10 @@ const removeImage = (index: number) => {
   <div class="multi-img">
     <div class="multi-img__list">
       <div v-for="(url, index) in imageUrls" :key="index" class="multi-img__card">
-        <img :src="url" class="multi-img__preview" @click="triggerFileInput(index)" />
-        <button class="multi-img__del" @click.stop="removeImage(index)">
+        <button type="button" class="multi-img__preview-btn" :aria-label="`替换第 ${index + 1} 张图片`" @click="triggerFileInput(index)">
+          <img :src="url" class="multi-img__preview" alt="" />
+        </button>
+        <button type="button" class="multi-img__del" :aria-label="`删除第 ${index + 1} 张图片`" @click.stop="removeImage(index)">
           <IconClose />
         </button>
         <input
@@ -121,10 +136,10 @@ const removeImage = (index: number) => {
         />
       </div>
 
-      <div v-if="canAdd" class="multi-img__card multi-img__card--add" @click="addImage">
+      <button v-if="canAdd" type="button" class="multi-img__card multi-img__card--add" aria-label="添加图片" @click="addImage">
         <IconPlus />
         <span>添加图片</span>
-      </div>
+      </button>
     </div>
 
     <input
@@ -137,7 +152,7 @@ const removeImage = (index: number) => {
       @change="handleFileChange(imageUrls.length + i - 1, $event)"
     />
 
-    <div v-if="uploadingIndex >= 0" class="multi-img__progress">
+    <div v-if="uploadingIndex >= 0" class="multi-img__progress" role="status" aria-live="polite">
       <div class="multi-img__progress-bar">
         <div class="multi-img__progress-fill" :style="{ width: uploadProgress + '%' }"></div>
       </div>
@@ -170,6 +185,15 @@ const removeImage = (index: number) => {
   object-fit: cover;
   cursor: pointer;
   display: block;
+}
+
+.multi-img__preview-btn {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 .multi-img__del {

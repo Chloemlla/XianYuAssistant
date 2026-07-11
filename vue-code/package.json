@@ -13,7 +13,9 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "lint": "eslint . --fix --cache"
+    "lint": "eslint . --cache",
+    "lint:fix": "eslint . --fix --cache",
+    "test:unit": "npm exec --yes --package=vitest@3.2.4 --package=@vue/test-utils@2.4.6 --package=jsdom@26.1.0 -- vitest run --environment jsdom"
   },
   "dependencies": {
     "axios": "^1.16.0",

@@ -2,6 +2,7 @@ package com.feijimiao.xianyuassistant.backup.handler;
 
 import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.backup.DataBackupHandler;
+import com.feijimiao.xianyuassistant.backup.BackupImportReporter;
 import com.feijimiao.xianyuassistant.entity.XianyuAccount;
 import com.feijimiao.xianyuassistant.entity.XianyuCookie;
 import com.feijimiao.xianyuassistant.mapper.XianyuAccountMapper;
@@ -53,11 +54,8 @@ public class AccountBackupHandler implements DataBackupHandler {
             if (account == null) continue;
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("unb", account.getUnb());
-            map.put("cookieText", cookie.getCookieText());
-            map.put("mH5Tk", cookie.getMH5Tk());
             map.put("cookieStatus", cookie.getCookieStatus());
             map.put("expireTime", cookie.getExpireTime());
-            map.put("websocketToken", cookie.getWebsocketToken());
             map.put("tokenExpireTime", cookie.getTokenExpireTime());
             cookieList.add(map);
         }
@@ -65,6 +63,7 @@ public class AccountBackupHandler implements DataBackupHandler {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("accounts", accountList);
         data.put("cookies", cookieList);
+        data.put("_sensitiveExcluded", List.of("cookieText", "mH5Tk", "websocketToken"));
         return data;
     }
 
@@ -109,6 +108,7 @@ public class AccountBackupHandler implements DataBackupHandler {
                     }
                     unbToAccountId.put(unb, account.getId());
                 } catch (Exception e) {
+                    BackupImportReporter.recordFailure(context, getModuleKey(), "account", e);
                     log.warn("[AccountBackup] 导入单条账号数据失败: {}", e.getMessage());
                 }
             }
@@ -145,6 +145,7 @@ public class AccountBackupHandler implements DataBackupHandler {
                         cookieMapper.updateById(cookie);
                     }
                 } catch (Exception e) {
+                    BackupImportReporter.recordFailure(context, getModuleKey(), "cookie", e);
                     log.warn("[AccountBackup] 导入单条Cookie数据失败: {}", e.getMessage());
                 }
             }

@@ -1,4 +1,4 @@
-import { ref, reactive, computed, onUnmounted } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAccountList } from '@/api/account'
 import {
@@ -16,6 +16,8 @@ import { showSuccess, showError, showInfo, showConfirm } from '@/utils'
 import { getGoodsStatusText, formatPrice, formatTime } from '@/utils'
 import type { Account } from '@/types'
 import type { GoodsItemWithConfig, SyncProgressResponse } from '@/api/goods'
+import { createLatestRequestGuard } from '@/utils/latestRequest'
+import { useVisibilityPolling } from '@/composables/useVisibilityPolling'
 
 export function useGoodsManager() {
   const router = useRouter()
@@ -29,6 +31,9 @@ export function useGoodsManager() {
   const currentPage = ref(1)
   const pageSize = ref(20)
   const total = ref(0)
+  const loadError = ref('')
+  const lastUpdatedAt = ref<Date | null>(null)
+  const goodsRequest = createLatestRequestGuard()
 
   const dialogs = reactive({
     detail: false,
@@ -42,14 +47,7 @@ export function useGoodsManager() {
 
   const syncProgress = ref<SyncProgressResponse | null>(null)
   const syncing = ref(false)
-  let syncProgressTimer: ReturnType<typeof setInterval> | null = null
-
-  const stopSyncPolling = () => {
-    if (syncProgressTimer) {
-      clearInterval(syncProgressTimer)
-      syncProgressTimer = null
-    }
-  }
+  const activeSyncId = ref('')
 
   const pollSyncProgress = async (syncId: string) => {
     try {
@@ -58,7 +56,8 @@ export function useGoodsManager() {
         if (response.data) {
           syncProgress.value = response.data
           if (response.data.isCompleted || !response.data.isRunning) {
-            stopSyncPolling()
+            activeSyncId.value = ''
+            syncPolling.stop()
             syncing.value = false
             refreshing.value = false
             if (response.data.successCount && response.data.successCount > 0) {
@@ -73,17 +72,20 @@ export function useGoodsManager() {
     }
   }
 
-  const startSyncPolling = (syncId: string) => {
-    stopSyncPolling()
-    syncing.value = true
-    syncProgressTimer = setInterval(() => {
-      pollSyncProgress(syncId)
-    }, 1000)
-  }
+  const syncPolling = useVisibilityPolling(
+    async () => {
+      if (activeSyncId.value) await pollSyncProgress(activeSyncId.value)
+    },
+    1000,
+    () => !!activeSyncId.value
+  )
 
-  onUnmounted(() => {
-    stopSyncPolling()
-  })
+  const startSyncPolling = (syncId: string) => {
+    syncPolling.stop()
+    activeSyncId.value = syncId
+    syncing.value = true
+    syncPolling.start(true)
+  }
 
   // Computed
   const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
@@ -116,7 +118,9 @@ export function useGoodsManager() {
       return
     }
 
+    const requestId = goodsRequest.begin()
     loading.value = true
+    loadError.value = ''
     try {
       const params: any = {
         xianyuAccountId: selectedAccountId.value,
@@ -127,15 +131,17 @@ export function useGoodsManager() {
         params.status = parseInt(statusFilter.value)
       }
       const response = await getGoodsList(params)
+      if (!goodsRequest.isLatest(requestId)) return
       if (response.code === 0 || response.code === 200) {
         goodsList.value = response.data?.itemsWithConfig || []
         total.value = response.data?.totalCount || 0
+        lastUpdatedAt.value = new Date()
       }
     } catch (error: any) {
-      console.error('加载商品列表失败:', error)
-      goodsList.value = []
+      if (!goodsRequest.isLatest(requestId)) return
+      loadError.value = error instanceof Error ? error.message : '加载商品列表失败'
     } finally {
-      loading.value = false
+      if (goodsRequest.isLatest(requestId)) loading.value = false
     }
   }
 
@@ -305,6 +311,8 @@ export function useGoodsManager() {
     pageSize,
     total,
     totalPages,
+    loadError,
+    lastUpdatedAt,
     accountName,
     dialogs,
     selectedGoodsId,

@@ -2,6 +2,7 @@ package com.feijimiao.xianyuassistant.backup.handler;
 
 import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.backup.DataBackupHandler;
+import com.feijimiao.xianyuassistant.backup.BackupImportReporter;
 import com.feijimiao.xianyuassistant.entity.XianyuAccount;
 import com.feijimiao.xianyuassistant.entity.XianyuKamiConfig;
 import com.feijimiao.xianyuassistant.entity.XianyuKamiItem;
@@ -132,6 +133,7 @@ public class KamiBackupHandler implements DataBackupHandler {
                     }
                     configKeyToId.put(unb + ":" + aliasName, config.getId());
                 } catch (Exception e) {
+                    BackupImportReporter.recordFailure(context, getModuleKey(), "kamiConfig", e);
                     log.warn("[KamiBackup] 导入单条卡密配置失败: {}", e.getMessage());
                 }
             }
@@ -170,6 +172,7 @@ public class KamiBackupHandler implements DataBackupHandler {
                     item.setSortOrder(0);
                     kamiItemMapper.insert(item);
                 } catch (Exception e) {
+                    BackupImportReporter.recordFailure(context, getModuleKey(), "kamiItem", e);
                     log.warn("[KamiBackup] 导入单条卡密项失败: {}", e.getMessage());
                 }
             }

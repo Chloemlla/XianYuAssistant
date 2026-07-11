@@ -86,6 +86,7 @@ public class DataBackupController {
             respDTO.setTotalCount(respBO.getTotalCount());
             respDTO.setSuccessCount(respBO.getSuccessCount());
             respDTO.setFailedModules(respBO.getFailedModules());
+            respDTO.setFailureDetails(respBO.getFailureDetails());
             return ResultObject.success(respDTO);
         } catch (Exception e) {
             log.error("导入备份数据失败", e);

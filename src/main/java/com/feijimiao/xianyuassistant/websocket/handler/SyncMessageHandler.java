@@ -109,19 +109,13 @@ public class SyncMessageHandler extends AbstractLwpHandler {
                 continue;
             }
             
-            log.info("【账号{}】加密消息[{}]: {}", accountId, i, encryptedData);
+            log.debug("【账号{}】加密消息[{}]: payloadLength={}", accountId, i, encryptedData.length());
             
             // 解密消息
             String decryptedData = MessageDecryptUtils.decrypt(encryptedData);
             if (decryptedData != null) {
-                log.info("【账号{}】解密消息[{}]: {}", accountId, i, decryptedData);
+                log.debug("【账号{}】解密消息[{}]: payloadLength={}", accountId, i, decryptedData.length());
                 decryptedMessages.add(decryptedData);
-                
-                // 打印解密后的原始消息（根据配置开关）
-                if (webSocketConfig.isPrintRawMessage()) {
-                    log.info("【账号{}】📝 解密后的原始消息[{}]:\n{}", 
-                            accountId, i, formatJson(decryptedData));
-                }
                 
                 // 解析并发布事件
                 parseAndPublishEvent(accountId, decryptedData, lwp);
@@ -208,11 +202,9 @@ public class SyncMessageHandler extends AbstractLwpHandler {
                             Integer contentType = extractInteger(contentMap, "contentType");
                             message.setContentType(contentType);
                             
-                            log.info("【账号{}】提取contentType: contentType={}, field635={}", 
-                                    accountId, contentType, field635.length() > 200 ? field635.substring(0, 200) + "..." : field635);
+                            log.info("【账号{}】提取contentType: contentType={}, metadataLength={}", accountId, contentType, field635.length());
                         } catch (Exception e) {
-                            log.warn("【账号{}】解析contentType失败: field635={}, error={}", 
-                                    accountId, field635.length() > 100 ? field635.substring(0, 100) + "..." : field635, e.getMessage());
+                            log.warn("【账号{}】解析contentType失败: metadataLength={}, error={}", accountId, field635.length(), e.getMessage());
                         }
                     } else {
                         log.debug("【账号{}】字段1.6.3.5为空，无法提取contentType", accountId);
@@ -285,33 +277,14 @@ public class SyncMessageHandler extends AbstractLwpHandler {
             String orderId = extractOrderIdFromMessage(message.getCompleteMsg());
             messageData.setOrderId(orderId);
             
-            log.info("【账号{}】准备发布ChatMessageReceivedEvent事件，完整消息对象: \n" +
-                    "  pnmId={}\n" +
-                    "  sId={}\n" +
-                    "  lwp={}\n" +
-                    "  contentType={}\n" +
-                    "  msgContent={}\n" +
-                    "  xyGoodsId={}\n" +
-                    "  reminderUrl={}\n" +
-                    "  senderUserId={}\n" +
-                    "  senderUserName={}\n" +
-                    "  senderAppV={}\n" +
-                    "  senderOsType={}\n" +
-                    "  messageTime={}\n" +
-                    "  orderId={}", 
+            log.info("【账号{}】准备发布ChatMessageReceivedEvent: pnmId={}, sId={}, lwp={}, contentType={}, contentLength={}, xyGoodsId={}, orderId={}",
                     message.getXianyuAccountId(),
                     message.getPnmId(),
                     message.getSId(),
                     message.getLwp(),
                     message.getContentType(),
-                    message.getMsgContent(),
+                    message.getMsgContent() == null ? 0 : message.getMsgContent().length(),
                     message.getXyGoodsId(),
-                    message.getReminderUrl(),
-                    message.getSenderUserId(),
-                    message.getSenderUserName(),
-                    message.getSenderAppV(),
-                    message.getSenderOsType(),
-                    message.getMessageTime(),
                     orderId);
             
             ChatMessageReceivedEvent event = new ChatMessageReceivedEvent(this, messageData);

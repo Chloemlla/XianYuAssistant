@@ -102,18 +102,16 @@
 #### 环境要求
 - Docker 20.10+
 - MongoDB 8.0+；AI 知识库向量检索需要 MongoDB Atlas Vector Search
+- 当前 GHCR 镜像支持 `linux/amd64`，并内置与 Java 依赖匹配的 Playwright Chromium 运行环境
 
 #### 一键部署脚本
 
-**Linux/Mac**:
+官方唯一镜像渠道是 GitHub Container Registry：`ghcr.io/chloemlla/xianyuassistant`。
+
+**Linux**（安装脚本会生成 JWT 与首次注册密钥）：
 ```bash
-docker run -d \
-  --name xianyu-assistant \
-  -p 12400:12400 \
-  -e SPRING_DATA_MONGODB_URI="mongodb://host.docker.internal:27017/xianyu_assistant" \
-  -v $(pwd)/data/logs:/app/logs \
-  --restart unless-stopped \
-  iamlzy/xianyuassistant:latest
+MONGODB_URI='mongodb://host.docker.internal:27017/xianyu_assistant' \
+  bash <(curl -fsSL https://raw.githubusercontent.com/Chloemlla/XianYuAssistant/main/install.sh)
 ```
 
 **Windows PowerShell**:
@@ -122,9 +120,11 @@ docker run -d `
   --name xianyu-assistant `
   -p 12400:12400 `
   -e SPRING_DATA_MONGODB_URI="mongodb://host.docker.internal:27017/xianyu_assistant" `
+  -e JWT_SECRET="请替换为至少32字节的随机密钥" `
+  -e BOOTSTRAP_TOKEN="请替换为一次性首次注册密钥" `
   -v ${PWD}/data/logs:/app/logs `
   --restart unless-stopped `
-  iamlzy/xianyuassistant:latest
+  ghcr.io/chloemlla/xianyuassistant:latest
 ```
 
 #### 自定义配置
@@ -137,9 +137,11 @@ docker run -d \
   -p 12400:12400 \
   -e JAVA_OPTS="-Xms256m -Xmx512m" \
   -e SPRING_DATA_MONGODB_URI="mongodb://mongo:27017/xianyu_assistant" \
+  -e JWT_SECRET="$(openssl rand -base64 48)" \
+  -e BOOTSTRAP_TOKEN="$(openssl rand -base64 48)" \
   -v /your/path/logs:/app/logs \
   --restart unless-stopped \
-  iamlzy/xianyuassistant:latest
+  ghcr.io/chloemlla/xianyuassistant:latest
 ```
 
 **配置项说明**:
@@ -151,6 +153,8 @@ docker run -d \
 | `-e JAVA_OPTS` | -Xms256m -Xmx512m | JVM内存参数 |
 | `-e SERVER_PORT` | 12400 | Spring Boot服务端口（容器内部） |
 | `-e SPRING_DATA_MONGODB_URI` | `mongodb://mongo:27017/xianyu_assistant` | MongoDB 连接 URI，生产环境必须显式配置 |
+| `-e JWT_SECRET` | 无 | JWT 签名密钥，必须使用至少 32 字节的外部随机值 |
+| `-e BOOTSTRAP_TOKEN` | 无 | 仅首次管理员注册使用；初始化成功后应从部署配置移除 |
 
 > **数据存储说明**：账号、商品、订单、配置、备份恢复数据及 AI 向量文档均存储在 MongoDB；`logs/xianyu-assistant.log` 仍为应用运行日志。
 
@@ -174,7 +178,7 @@ docker logs -f xianyu-assistant
 docker restart xianyu-assistant
 
 # 更新到最新版本
-docker pull iamlzy/xianyuassistant:latest
+docker pull ghcr.io/chloemlla/xianyuassistant:latest
 docker stop xianyu-assistant
 docker rm xianyu-assistant
 # 然后重新执行 docker run 命令
@@ -186,11 +190,12 @@ docker rm xianyu-assistant
 
 ---
 
-### 方式二：JAR包部署
+### 方式二：源码构建 JAR（开发者）
 
 #### 环境要求
 - Java 21+
-- SQLite 3.42.0+
+- MongoDB 8.0+
+- Node.js `^20.19.0 || >=22.12.0`
 
 #### 构建JAR包
 
@@ -201,24 +206,27 @@ cd XianYuAssistant
 
 # 构建前端
 cd vue-code
-npm install
+npm ci
 npm run build
 
 # 构建后端
 cd ..
-./mvnw clean package -DskipTests
+./mvnw clean package
 ```
 
 #### 启动服务
 
 ```bash
-java -jar target/XianYuAssistant-1.1.0.jar
+SPRING_DATA_MONGODB_URI='mongodb://127.0.0.1:27017/xianyu_assistant' \
+JWT_SECRET='请替换为至少32字节的随机密钥' \
+BOOTSTRAP_TOKEN='请替换为一次性首次注册密钥' \
+java -jar target/XianYuAssistant-2.0.3.jar
 ```
 
 #### 自定义配置
 
 ```bash
-java -Xms256m -Xmx512m -Dserver.port=12400 -jar target/XianYuAssistant-1.1.0.jar
+java -Xms256m -Xmx512m -Dserver.port=12400 -jar target/XianYuAssistant-2.0.3.jar
 ```
 
 #### 访问系统
@@ -318,8 +326,8 @@ java -Xms256m -Xmx512m -Dserver.port=12400 -jar target/XianYuAssistant-1.1.0.jar
 |------|------|------|
 | Java | 21 | 编程语言 |
 | Spring Boot | 3.5.7 | 应用框架 |
-| MyBatis-Plus | 3.5.5 | ORM框架 |
-| SQLite | 3.42.0 | 嵌入式数据库 |
+| Spring Data MongoDB | Spring Boot 3.5.7 管理 | 业务数据持久化与索引 |
+| MongoDB | 8.0+ | 业务数据库；Atlas Vector Search 承载 AI 向量检索 |
 | Java-WebSocket | 1.5.4 | WebSocket客户端 |
 | OkHttp | 4.12.0 | HTTP客户端 |
 | Gson | 2.10.1 | JSON处理 |
@@ -385,12 +393,12 @@ java -Xms256m -Xmx512m -Dserver.port=12400 -jar target/XianYuAssistant-1.1.0.jar
 
 ### 7. Docker部署数据存在哪里？
 
-默认存储在容器的 `/app/dbdata` 和 `/app/logs` 目录，通过数据卷映射到物理机。
+业务数据存储在 `SPRING_DATA_MONGODB_URI` 指向的 MongoDB；应用容器只需持久化 `/app/logs` 日志目录。
 
 **重要提示**:
-- ⚠️ 容器内路径（`/app/dbdata` 和 `/app/logs`）不能修改
-- ⚠️ 物理机路径一旦设置不要随意更改，否则会导致数据丢失
-- ⚠️ 升级版本时请使用相同的物理机路径，确保数据正确迁移
+- ⚠️ 应使用 `mongodump`/托管服务快照定期备份 MongoDB，而不是只备份应用容器
+- ⚠️ MongoDB URI、JWT 密钥和 bootstrap token 不得写入仓库或日志
+- ⚠️ 升级镜像前先完成 MongoDB 备份，并保留当前镜像标签以便回滚
 
 ---
 

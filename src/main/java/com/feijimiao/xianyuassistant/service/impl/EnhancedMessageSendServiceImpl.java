@@ -69,8 +69,8 @@ public class EnhancedMessageSendServiceImpl implements EnhancedMessageSendServic
         
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                log.info("【账号{}】发送消息 (尝试 {}/{}): chatId={}, toUserId={}, message={}", 
-                        accountId, attempt, maxAttempts, chatId, toUserId, message);
+                log.info("【账号{}】发送消息 (尝试 {}/{}): chatId={}, toUserId={}, messageLength={}",
+                        accountId, attempt, maxAttempts, chatId, toUserId, message == null ? 0 : message.length());
                 
                 // 发送消息
                 boolean success = webSocketService.sendMessage(accountId, chatId, toUserId, message);

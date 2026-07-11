@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -41,26 +42,32 @@ public class ItemDetailSyncServiceImpl implements ItemDetailSyncService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private com.feijimiao.xianyuassistant.concurrent.BoundedDelayScheduler cleanupScheduler;
+
     private final ConcurrentHashMap<String, SyncProgress> progressMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Long, String> accountSyncMap = new ConcurrentHashMap<>();
+    private static final int MAX_PROGRESS_ENTRIES = 2000;
+    private static final long PROGRESS_TTL_MINUTES = 30;
 
     private static class SyncProgress {
         String syncId;
         Long accountId;
-        int totalCount;
-        int completedCount = 0;
-        int successCount = 0;
-        int failedCount = 0;
-        boolean isCompleted = false;
-        boolean isRunning = true;
-        String currentItemId = null;
-        String message = "同步中...";
-        long startTime;
-        boolean cancelled = false;
+        volatile int totalCount;
+        volatile int completedCount = 0;
+        volatile int successCount = 0;
+        volatile int failedCount = 0;
+        volatile boolean isCompleted = false;
+        volatile boolean isRunning = true;
+        volatile String currentItemId = null;
+        volatile String message = "同步中...";
+        volatile long startTime;
+        volatile boolean cancelled = false;
     }
 
     @Override
     public String startSync(Long accountId, List<ItemDTO> items) {
+        evictProgressIfNeeded();
         if (isSyncing(accountId)) {
             String existingSyncId = accountSyncMap.get(accountId);
             log.info("账号已有同步任务进行中: accountId={}, syncId={}", accountId, existingSyncId);
@@ -139,7 +146,13 @@ public class ItemDetailSyncServiceImpl implements ItemDetailSyncService {
             progress.isRunning = false;
             progress.message = "同步失败: " + e.getMessage();
         } finally {
-            accountSyncMap.remove(accountId);
+            accountSyncMap.remove(accountId, syncId);
+            try {
+                cleanupScheduler.schedule(() -> progressMap.remove(syncId, progress), PROGRESS_TTL_MINUTES, TimeUnit.MINUTES);
+            } catch (java.util.concurrent.RejectedExecutionException e) {
+                evictProgressIfNeeded();
+                log.warn("同步进度清理队列已满: syncId={}", syncId);
+            }
         }
     }
 
@@ -159,7 +172,7 @@ public class ItemDetailSyncServiceImpl implements ItemDetailSyncService {
                 return false;
             }
 
-            log.info("mtop.taobao.idle.pc.detail 完整响应: itemId={}, response={}", itemId, response);
+            log.debug("商品详情接口响应: itemId={}, responseLength={}", itemId, response.length());
 
             String extractedDesc = extractDescFromDetailJson(response);
             
@@ -283,5 +296,21 @@ public class ItemDetailSyncServiceImpl implements ItemDetailSyncService {
         }
         SyncProgress progress = progressMap.get(syncId);
         return progress != null && progress.isRunning && !progress.isCompleted;
+    }
+
+    private void evictProgressIfNeeded() {
+        if (progressMap.size() < MAX_PROGRESS_ENTRIES) {
+            return;
+        }
+        progressMap.entrySet().stream()
+                .filter(entry -> entry.getValue().isCompleted)
+                .sorted(Comparator.comparingLong(entry -> entry.getValue().startTime))
+                .limit(Math.max(1, progressMap.size() - MAX_PROGRESS_ENTRIES + 1L))
+                .map(Map.Entry::getKey)
+                .toList()
+                .forEach(progressMap::remove);
+        if (progressMap.size() >= MAX_PROGRESS_ENTRIES) {
+            throw new IllegalStateException("同步任务容量已满，请等待现有任务完成");
+        }
     }
 }

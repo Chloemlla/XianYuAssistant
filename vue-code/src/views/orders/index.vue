@@ -14,6 +14,7 @@ import IconChevronRight from '@/components/icons/IconChevronRight.vue'
 import IconPackage from '@/components/icons/IconPackage.vue'
 
 import OrderTable from './components/OrderTable.vue'
+import { useModalAccessibility } from '@/composables/useModalAccessibility'
 
 const goodsPanelCollapsed = ref(true)
 const isDesktopCollapsed = computed(() => !isMobile.value && goodsPanelCollapsed.value)
@@ -31,6 +32,9 @@ const {
   selectedGoodsId,
   queryParams,
   totalPages,
+  loadError,
+  lastUpdatedAt,
+  goodsError,
   loadAccounts,
   loadOrders,
   loadGoods,
@@ -46,6 +50,7 @@ const {
 } = useOrderManager()
 
 const showFilterSheet = ref(false)
+const filterDialogRef = ref<HTMLElement | null>(null)
 const isMobile = ref(false)
 
 const checkScreenSize = () => {
@@ -138,6 +143,10 @@ const getPageButtons = () => {
 
 const showConfirmDialog = ref(false)
 const confirmTargetOrder = ref<any>(null)
+const confirmDialogRef = ref<HTMLElement | null>(null)
+
+useModalAccessibility(showFilterSheet, filterDialogRef, () => { showFilterSheet.value = false })
+useModalAccessibility(showConfirmDialog, confirmDialogRef, () => { showConfirmDialog.value = false })
 
 const openConfirmDialog = (order: any) => {
   confirmTargetOrder.value = order
@@ -155,6 +164,11 @@ const executeConfirmShipment = async () => {
 
 <template>
   <div class="orders">
+    <div v-if="loadError || goodsError" class="orders__error-banner" role="alert">
+      <span>{{ loadError || goodsError }}</span>
+      <button type="button" @click="loadError ? loadOrders() : loadGoods()">重试</button>
+    </div>
+    <div v-if="lastUpdatedAt" class="orders__updated-at">最后更新：{{ lastUpdatedAt.toLocaleTimeString('zh-CN') }}</div>
     <div class="orders__header">
       <div class="orders__title-row">
         <div class="orders__title-icon">
@@ -352,12 +366,17 @@ const executeConfirmShipment = async () => {
     <Transition name="overlay-fade">
       <div v-if="showFilterSheet" class="orders__filter-overlay" @click="showFilterSheet = false">
         <div
+          ref="filterDialogRef"
           class="orders__filter-sheet"
           :class="{ 'orders__filter-sheet--open': showFilterSheet }"
           @click.stop
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="orders-filter-title"
+          tabindex="-1"
         >
           <div class="orders__filter-sheet-handle"></div>
-          <h3 class="orders__filter-sheet-title">筛选条件</h3>
+          <h3 id="orders-filter-title" class="orders__filter-sheet-title">筛选条件</h3>
 
           <div class="orders__filter-group">
             <label class="orders__filter-label">关键词</label>
@@ -378,9 +397,9 @@ const executeConfirmShipment = async () => {
 
     <Transition name="overlay-fade">
       <div v-if="showConfirmDialog" class="orders__dialog-overlay" @click.self="showConfirmDialog = false">
-        <div class="orders__dialog">
+        <div ref="confirmDialogRef" class="orders__dialog" role="dialog" aria-modal="true" aria-labelledby="orders-confirm-title" tabindex="-1">
           <div class="orders__dialog-header">
-            <h3 class="orders__dialog-title">确认发货</h3>
+            <h3 id="orders-confirm-title" class="orders__dialog-title">确认发货</h3>
           </div>
           <div class="orders__dialog-body">
             <p class="orders__dialog-text">
@@ -408,6 +427,32 @@ const executeConfirmShipment = async () => {
 </template>
 
 <style scoped>
+.orders__error-banner {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 12px 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: #b42318;
+  background: rgba(255, 59, 48, 0.1);
+  font-size: 12px;
+}
+
+.orders__error-banner button {
+  border: 0;
+  color: #007aff;
+  background: transparent;
+  cursor: pointer;
+}
+
+.orders__updated-at {
+  padding: 4px 16px 0;
+  color: #86868b;
+  font-size: 11px;
+  text-align: right;
+}
+
 .overlay-fade-enter-active,
 .overlay-fade-leave-active {
   transition: opacity 0.2s ease;

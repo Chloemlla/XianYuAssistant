@@ -46,8 +46,9 @@ public class ChatMessageEventSaveListener {
         XianyuChatMessage message = new XianyuChatMessage();
         org.springframework.beans.BeanUtils.copyProperties(messageData, message);
         
-        log.info("【账号{}】[SaveListener]收到ChatMessageReceivedEvent事件: pnmId={}, contentType={}, msgContent={}, orderId={}", 
-                message.getXianyuAccountId(), message.getPnmId(), message.getContentType(), message.getMsgContent(), messageData.getOrderId());
+        log.info("【账号{}】[SaveListener]收到事件: pnmId={}, contentType={}, contentLength={}, orderId={}",
+                message.getXianyuAccountId(), message.getPnmId(), message.getContentType(),
+                message.getMsgContent() == null ? 0 : message.getMsgContent().length(), messageData.getOrderId());
         
         try {
             // 检查消息是否已存在（去重）

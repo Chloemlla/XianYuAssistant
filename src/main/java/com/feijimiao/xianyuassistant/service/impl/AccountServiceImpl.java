@@ -152,8 +152,7 @@ public class AccountServiceImpl implements AccountService {
                 existingCookie.setExpireTime(getFutureTimeString(30)); // 30天后过期
                 existingCookie.setUpdatedTime(getCurrentTimeString());
                 cookieMapper.updateById(existingCookie);
-                log.info("更新Cookie成功: cookieId={}, m_h5_tk={}", 
-                        existingCookie.getId(), mH5Tk != null ? "已保存" : "未提供");
+                log.info("更新Cookie成功: cookieId={}, signingTokenConfigured={}", existingCookie.getId(), mH5Tk != null);
             } else {
                 // 创建新Cookie
                 XianyuCookie cookie = new XianyuCookie();
@@ -165,8 +164,7 @@ public class AccountServiceImpl implements AccountService {
                 cookie.setCreatedTime(getCurrentTimeString());
                 cookie.setUpdatedTime(getCurrentTimeString());
                 cookieMapper.insert(cookie);
-                log.info("创建新Cookie成功: cookieId={}, m_h5_tk={}", 
-                        cookie.getId(), mH5Tk != null ? "已保存" : "未提供");
+                log.info("创建新Cookie成功: cookieId={}, signingTokenConfigured={}", cookie.getId(), mH5Tk != null);
             }
 
             log.info("保存账号和Cookie完成: accountId={}, accountNote={}", accountId, accountNote);

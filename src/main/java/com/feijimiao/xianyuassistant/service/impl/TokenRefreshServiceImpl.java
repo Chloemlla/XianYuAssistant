@@ -18,6 +18,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 
 /**
  * Token刷新服务实现
@@ -75,6 +79,12 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
 
     @Autowired(required = false)
     private com.feijimiao.xianyuassistant.service.EmailNotifyService emailNotifyService;
+
+    @Autowired
+    @Qualifier("maintenanceExecutor")
+    private ExecutorService maintenanceExecutor;
+
+    private final Set<Long> accountsUnderMaintenance = ConcurrentHashMap.newKeySet();
 
     private volatile long nextCookieKeepAliveTime = 0;
 
@@ -164,8 +174,7 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
                         cookie.setMH5Tk(newMh5tk);
                         cookieMapper.updateById(cookie);
 
-                        log.info("【账号{}】✅ _m_h5_tk token刷新成功: {}",
-                                accountId, newMh5tk.substring(0, Math.min(20, newMh5tk.length())));
+                        log.info("【账号{}】✅ _m_h5_tk token刷新成功", accountId);
 
                         operationLogService.log(accountId,
                             com.feijimiao.xianyuassistant.constants.OperationConstants.Type.REFRESH,
@@ -404,21 +413,17 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
         }
         scheduleNextCookieKeepAlive();
         try {
-            log.info("🔄 开始定期Cookie保活 + Token刷新检查...");
-
-            List<XianyuAccount> accounts = accountMapper.selectList(null);
-            int keepAliveSuccessCount = 0;
-            int tokenRefreshSuccessCount = 0;
-            int failCount = 0;
-
-            for (XianyuAccount account : accounts) {
-                if (account.getStatus() == 1) {
-                    try {
-                        // 第1步：通过hasLogin保持Cookie活跃
+            long now = System.currentTimeMillis();
+            long nextMaintenanceAt = now + randomRefreshDelayMinutes() * ONE_MINUTE_MS;
+            List<XianyuCookie> dueCookies = cookieMapper.claimDueCredentialMaintenance(
+                    50, now, now + 5 * ONE_MINUTE_MS, nextMaintenanceAt);
+            for (XianyuCookie cookie : dueCookies) {
+                XianyuAccount account = accountMapper.selectById(cookie.getXianyuAccountId());
+                if (account != null && Integer.valueOf(1).equals(account.getStatus())) {
+                    submitMaintenance(account.getId(), () -> {
+                      try {
                         boolean loginOk = cookieRefreshService.checkLoginStatus(account.getId());
-                        
                         if (loginOk) {
-                            keepAliveSuccessCount++;
                             log.debug("【账号{}】hasLogin保活成功", account.getId());
                             operationLogService.log(account.getId(),
                                     com.feijimiao.xianyuassistant.constants.OperationConstants.Type.UPDATE,
@@ -433,7 +438,6 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
                             // 关键：必须等hasLogin更新Cookie后，才能获取新Token
                             boolean tokenOk = refreshMh5tkToken(account.getId());
                             if (tokenOk) {
-                                tokenRefreshSuccessCount++;
                                 log.info("【账号{}】✅ Cookie保活 + Token刷新成功", account.getId());
                             } else {
                                 log.warn("【账号{}】⚠️ Cookie保活成功但Token刷新失败", account.getId());
@@ -443,33 +447,21 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
                             log.warn("【账号{}】hasLogin保活失败，开始触发浏览器兜底刷新Cookie...", account.getId());
                             boolean browserRefreshOk = cookieRefreshService.refreshCookie(account.getId());
                             if (browserRefreshOk) {
-                                keepAliveSuccessCount++;
-                                // 浏览器刷新成功后，也尝试刷新Token
-                                boolean tokenOk = refreshMh5tkToken(account.getId());
-                                if (tokenOk) {
-                                    tokenRefreshSuccessCount++;
-                                }
+                                refreshMh5tkToken(account.getId());
                                 log.info("【账号{}】浏览器兜底刷新Cookie成功", account.getId());
                             } else {
-                                failCount++;
                                 log.error("【账号{}】hasLogin和浏览器兜底刷新均失败，Cookie已过期，需手动更新", account.getId());
                                 triggerCookieExpireNotify(account.getId());
                             }
                         }
-                    } catch (Exception e) {
-                        failCount++;
-                        log.warn("【账号{}】Cookie保活异常: {}", account.getId(), e.getMessage());
-                    }
-
-                    // 随机间隔5-15秒，避免频繁请求和被识别为机器人
-                    int randomInterval = 5000 + new java.util.Random().nextInt(10001);
-                    Thread.sleep(randomInterval);
+                      } finally {
+                        cookieMapper.releaseCredentialMaintenanceLease(account.getId());
+                      }
+                    });
+                } else {
+                    cookieMapper.releaseCredentialMaintenanceLease(cookie.getXianyuAccountId());
                 }
             }
-
-            log.info("✅ Cookie保活 + Token刷新完成: 保活成功{}个, Token刷新成功{}个, 失败{}个", 
-                    keepAliveSuccessCount, tokenRefreshSuccessCount, failCount);
-
         } catch (Exception e) {
             log.error("定期Cookie保活检查失败", e);
         }
@@ -489,30 +481,51 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
             // 与Python完全一致：每分钟检查一次，判断是否需要刷新（1小时）
             log.debug("🔄 检查WebSocket token是否需要刷新...");
 
-            List<XianyuAccount> accounts = accountMapper.selectList(null);
-
-            for (XianyuAccount account : accounts) {
-                if (account.getStatus() == 1) { // 只刷新正常状态的账号
-                    // 检查是否需要刷新（提前1小时刷新，与Python一致）
-                    if (needsRefresh(account.getId())) {
-                        log.info("🔄 账号{}的WebSocket token即将过期，开始刷新...", account.getId());
-                        boolean success = refreshWebSocketToken(account.getId());
-
-                        if (success) {
-                            log.info("✅ 账号{}的WebSocket token刷新成功", account.getId());
-                        } else {
-                            log.warn("⚠️ 账号{}的WebSocket token刷新失败，将在下次检查时重试", account.getId());
-                        }
-
-                        // 随机间隔3-8秒，避免频繁请求
-                        int randomInterval = 3000 + new java.util.Random().nextInt(5001);
-                        Thread.sleep(randomInterval);
-                    }
+            long now = System.currentTimeMillis();
+            List<XianyuCookie> dueCookies = cookieMapper.claimDueWebsocketTokenRefresh(
+                    50, now, now + ONE_MINUTE_MS * 60, now + 5 * ONE_MINUTE_MS);
+            for (XianyuCookie cookie : dueCookies) {
+                XianyuAccount account = accountMapper.selectById(cookie.getXianyuAccountId());
+                if (account != null && Integer.valueOf(1).equals(account.getStatus())) {
+                        submitMaintenance(account.getId(), () -> {
+                          try {
+                            boolean success = refreshWebSocketToken(account.getId());
+                            if (success) {
+                                log.info("✅ 账号{}的WebSocket token刷新成功", account.getId());
+                            } else {
+                                log.warn("⚠️ 账号{}的WebSocket token刷新失败，将在下次检查时重试", account.getId());
+                            }
+                          } finally {
+                            cookieMapper.releaseWebsocketTokenLease(account.getId());
+                          }
+                        });
+                } else {
+                    cookieMapper.releaseWebsocketTokenLease(cookie.getXianyuAccountId());
                 }
             }
 
         } catch (Exception e) {
             log.error("定时检查WebSocket token失败", e);
+        }
+    }
+
+    private void submitMaintenance(Long accountId, Runnable task) {
+        if (!accountsUnderMaintenance.add(accountId)) {
+            return;
+        }
+        try {
+            maintenanceExecutor.execute(() -> {
+                try {
+                    task.run();
+                } catch (Exception e) {
+                    log.warn("【账号{}】维护任务失败: {}", accountId, e.getMessage());
+                } finally {
+                    accountsUnderMaintenance.remove(accountId);
+                }
+            });
+        } catch (java.util.concurrent.RejectedExecutionException e) {
+            accountsUnderMaintenance.remove(accountId);
+            log.warn("【账号{}】维护队列已满，本轮跳过", accountId);
         }
     }
     

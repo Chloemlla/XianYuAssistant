@@ -4,6 +4,7 @@ import { RouterView, useRoute } from 'vue-router'
 import NavMenu from './NavMenu.vue'
 import UpdateDialog from './UpdateDialog.vue'
 import { getVersion, checkUpdate } from '@/api/system'
+import { useModalAccessibility } from '@/composables/useModalAccessibility'
 
 // 导入所有页面图标
 import IconChart from '@/components/icons/IconChart.vue'
@@ -46,6 +47,7 @@ const isDesktop = ref(false) // > 1024px
 
 // 移动端和平板端共用的抽屉状态
 const drawerVisible = ref(false)
+const drawerMenuRef = ref<HTMLElement | null>(null)
 
 // 页面特定的导航栏内容
 const headerContent = shallowRef<any>(null)
@@ -124,6 +126,8 @@ const closeDrawer = () => {
   drawerVisible.value = false
 }
 
+useModalAccessibility(drawerVisible, drawerMenuRef, closeDrawer)
+
 onMounted(() => {
   checkScreenSize()
   window.addEventListener('resize', checkScreenSize)
@@ -137,28 +141,14 @@ onUnmounted(() => {
 
 <template>
   <div class="app-layout">
-    <!-- 手机端: 顶部导航栏 -->
-    <div v-if="isMobile" class="mobile-header">
-      <button class="menu-toggle-btn" @click="toggleDrawer">
+    <!-- 紧凑布局顶部导航栏；业务页面始终由下方唯一 RouterView 承载 -->
+    <div v-if="isMobile || isTablet" :class="isMobile ? 'mobile-header' : 'tablet-header'">
+      <button class="menu-toggle-btn" type="button" aria-label="打开导航菜单" @click="toggleDrawer">
         <span class="menu-icon">☰</span>
       </button>
       <div class="header-title-section">
         <component v-if="currentPageIcon" :is="currentPageIcon" class="header-page-icon" />
-        <div class="mobile-page-title">{{ currentPageTitle }}</div>
-      </div>
-      <div v-if="headerContent && (route.path === '/goods' || route.path === '/messages' || route.path === '/auto-delivery' || route.path === '/kami-config' || route.path === '/orders' || route.path === '/auto-reply' || route.path === '/operation-log')" class="header-content-slot">
-        <component :is="headerContent" />
-      </div>
-    </div>
-
-    <!-- 平板端: 顶部导航栏（带抽屉按钮） -->
-    <div v-if="isTablet" class="tablet-header">
-      <button class="menu-toggle-btn" @click="toggleDrawer">
-        <span class="menu-icon">☰</span>
-      </button>
-      <div class="header-title-section">
-        <component v-if="currentPageIcon" :is="currentPageIcon" class="header-page-icon" />
-        <div class="tablet-page-title">{{ currentPageTitle }}</div>
+        <div :class="isMobile ? 'mobile-page-title' : 'tablet-page-title'">{{ currentPageTitle }}</div>
       </div>
       <div v-if="headerContent && (route.path === '/goods' || route.path === '/messages' || route.path === '/auto-delivery' || route.path === '/kami-config' || route.path === '/orders' || route.path === '/auto-reply' || route.path === '/operation-log')" class="header-content-slot">
         <component :is="headerContent" />
@@ -168,7 +158,7 @@ onUnmounted(() => {
     <!-- 手机端和平板端: 左侧抽屉菜单 -->
     <transition name="drawer">
       <div v-if="(isMobile || isTablet) && drawerVisible" class="drawer-overlay" @click="closeDrawer">
-        <div class="drawer-menu" @click.stop>
+        <div ref="drawerMenuRef" class="drawer-menu" role="dialog" aria-modal="true" aria-label="导航菜单" tabindex="-1" @click.stop>
           <div class="drawer-header">
             <div class="logo" @click="openUpdateDialog" style="cursor: pointer">
               <div class="logo-icon">X</div>
@@ -180,7 +170,7 @@ onUnmounted(() => {
                 </div>
               </div>
             </div>
-            <button class="drawer-close-btn" @click="closeDrawer">
+            <button class="drawer-close-btn" type="button" aria-label="关闭导航菜单" @click="closeDrawer">
               <span class="close-icon">✕</span>
             </button>
           </div>
@@ -191,9 +181,9 @@ onUnmounted(() => {
       </div>
     </transition>
 
-    <!-- 桌面端: 固定侧边栏 -->
-    <div v-if="isDesktop" class="layout-container">
-      <aside class="sidebar">
+    <!-- 唯一业务内容树，跨断点只改变外壳 -->
+    <div class="layout-container">
+      <aside v-if="isDesktop" class="sidebar">
         <div class="logo" @click="openUpdateDialog" style="cursor: pointer">
           <div class="logo-icon">X</div>
           <div class="logo-text-wrap">
@@ -212,20 +202,6 @@ onUnmounted(() => {
           <RouterView />
         </main>
       </div>
-    </div>
-
-    <!-- 平板端: 主内容区 -->
-    <div v-if="isTablet" class="el-container">
-      <main>
-        <RouterView />
-      </main>
-    </div>
-
-    <!-- 手机端: 主内容区 -->
-    <div v-if="isMobile" class="el-container">
-      <main>
-        <RouterView />
-      </main>
     </div>
 
     <UpdateDialog ref="updateDialog" />

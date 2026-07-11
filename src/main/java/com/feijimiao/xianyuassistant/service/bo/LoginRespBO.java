@@ -11,4 +11,5 @@ import lombok.Data;
 public class LoginRespBO {
     private String token;
     private String username;
+    private String refreshToken;
 }

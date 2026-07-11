@@ -6,6 +6,7 @@ import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import jakarta.annotation.PostConstruct;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -22,11 +23,21 @@ import java.util.Map;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret:xianyu-assistant-jwt-secret-key-2026-04-22-very-long-secret}")
+    @Value("${jwt.secret:}")
     private String secret;
 
-    @Value("${jwt.expiration:2592000000}")
-    private long expiration; // 默认30天（毫秒）
+    @Value("${jwt.expiration:900000}")
+    private long expiration;
+
+    @PostConstruct
+    void validateConfiguration() {
+        if (secret == null || secret.isBlank() || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT_SECRET must be externally configured with at least 32 bytes");
+        }
+        if (expiration <= 0 || expiration > 24 * 60 * 60 * 1000L) {
+            throw new IllegalStateException("JWT access expiration must be between 1 ms and 24 hours");
+        }
+    }
 
     /**
      * 生成JWT Token

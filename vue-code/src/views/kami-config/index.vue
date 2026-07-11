@@ -19,6 +19,7 @@ import {
 import { getAccountList } from '@/api/account'
 import type { Account } from '@/types'
 import IconChevronDown from '@/components/icons/IconChevronDown.vue'
+import { useModalAccessibility } from '@/composables/useModalAccessibility'
 
 const accounts = ref<Account[]>([])
 const selectedAccountId = ref<number | null>(null)
@@ -54,6 +55,16 @@ const alertLoading = ref(false)
 
 const showExportDialog = ref(false)
 const exportStatus = ref<{ unused: boolean; used: boolean }>({ unused: true, used: true })
+const activeDialogRef = ref<HTMLElement | null>(null)
+const activeDialogVisible = computed(() => showCreateDialog.value || showAddDialog.value || showImportDialog.value || showAlertDialog.value || showExportDialog.value)
+const closeActiveDialog = () => {
+  showCreateDialog.value = false
+  showAddDialog.value = false
+  showImportDialog.value = false
+  showAlertDialog.value = false
+  showExportDialog.value = false
+}
+useModalAccessibility(activeDialogVisible, activeDialogRef, closeActiveDialog)
 
 const isMobile = ref(false)
 const rulesExpanded = ref(false)
@@ -638,15 +649,15 @@ onMounted(async () => {
       <!-- 新建卡密配置 -->
       <Transition name="modal">
         <div v-if="showCreateDialog" class="modal-overlay" @click.self="showCreateDialog = false">
-          <div class="modal-container">
+          <div ref="activeDialogRef" class="modal-container" role="dialog" aria-modal="true" aria-labelledby="kami-create-title" tabindex="-1">
             <div class="modal-header">
-              <h2 class="modal-title">新建卡密配置</h2>
-              <button class="modal-close" @click="showCreateDialog = false">×</button>
+              <h2 id="kami-create-title" class="modal-title">新建卡密配置</h2>
+              <button type="button" class="modal-close" aria-label="关闭新建卡密配置" @click="showCreateDialog = false">×</button>
             </div>
             <div class="modal-body">
               <div class="form-row">
-                <label class="form-label">别名</label>
-                <input v-model="createForm.aliasName" class="form-input" placeholder="请输入别名" maxlength="50" />
+                <label class="form-label" for="kami-alias">别名</label>
+                <input id="kami-alias" v-model="createForm.aliasName" class="form-input" placeholder="请输入别名" maxlength="50" />
               </div>
             </div>
             <div class="modal-footer">
@@ -660,13 +671,14 @@ onMounted(async () => {
       <!-- 添加卡密 -->
       <Transition name="modal">
         <div v-if="showAddDialog" class="modal-overlay" @click.self="showAddDialog = false">
-          <div class="modal-container">
+          <div ref="activeDialogRef" class="modal-container" role="dialog" aria-modal="true" aria-labelledby="kami-add-title" tabindex="-1">
             <div class="modal-header">
-              <h2 class="modal-title">添加卡密</h2>
-              <button class="modal-close" @click="showAddDialog = false">×</button>
+              <h2 id="kami-add-title" class="modal-title">添加卡密</h2>
+              <button type="button" class="modal-close" aria-label="关闭添加卡密" @click="showAddDialog = false">×</button>
             </div>
             <div class="modal-body">
-              <textarea v-model="addContent" class="form-textarea" :rows="3" placeholder="请输入卡密内容"></textarea>
+              <label class="sr-only" for="kami-add-content">卡密内容</label>
+              <textarea id="kami-add-content" v-model="addContent" class="form-textarea" :rows="3" placeholder="请输入卡密内容"></textarea>
             </div>
             <div class="modal-footer">
               <button class="btn btn-secondary" @click="showAddDialog = false">取消</button>
@@ -679,14 +691,15 @@ onMounted(async () => {
       <!-- 批量导入 -->
       <Transition name="modal">
         <div v-if="showImportDialog" class="modal-overlay" @click.self="showImportDialog = false">
-          <div class="modal-container modal-container--lg">
+          <div ref="activeDialogRef" class="modal-container modal-container--lg" role="dialog" aria-modal="true" aria-labelledby="kami-import-title" tabindex="-1">
             <div class="modal-header">
-              <h2 class="modal-title">批量导入卡密</h2>
-              <button class="modal-close" @click="showImportDialog = false">×</button>
+              <h2 id="kami-import-title" class="modal-title">批量导入卡密</h2>
+              <button type="button" class="modal-close" aria-label="关闭批量导入" @click="showImportDialog = false">×</button>
             </div>
             <div class="modal-body">
               <p class="form-hint">每行一条卡密，重复卡密不会跳过</p>
-              <textarea v-model="importContent" class="form-textarea" :rows="10" placeholder="卡密1&#10;卡密2&#10;卡密3"></textarea>
+              <label class="sr-only" for="kami-import-content">批量卡密内容</label>
+              <textarea id="kami-import-content" v-model="importContent" class="form-textarea" :rows="10" placeholder="卡密1&#10;卡密2&#10;卡密3"></textarea>
             </div>
             <div class="modal-footer">
               <button class="btn btn-secondary" @click="showImportDialog = false">取消</button>
@@ -699,10 +712,10 @@ onMounted(async () => {
       <!-- 预警配置 -->
       <Transition name="modal">
         <div v-if="showAlertDialog" class="modal-overlay" @click.self="showAlertDialog = false">
-          <div class="modal-container">
+          <div ref="activeDialogRef" class="modal-container" role="dialog" aria-modal="true" aria-labelledby="kami-alert-title" tabindex="-1">
             <div class="modal-header">
-              <h2 class="modal-title">预警配置</h2>
-              <button class="modal-close" @click="showAlertDialog = false">×</button>
+              <h2 id="kami-alert-title" class="modal-title">预警配置</h2>
+              <button type="button" class="modal-close" aria-label="关闭预警配置" @click="showAlertDialog = false">×</button>
             </div>
             <div class="modal-body">
               <div class="form-row">
@@ -744,10 +757,10 @@ onMounted(async () => {
       <!-- 导出卡密 -->
       <Transition name="modal">
         <div v-if="showExportDialog" class="modal-overlay" @click.self="showExportDialog = false">
-          <div class="modal-container">
+          <div ref="activeDialogRef" class="modal-container" role="dialog" aria-modal="true" aria-labelledby="kami-export-title" tabindex="-1">
             <div class="modal-header">
-              <h2 class="modal-title">导出卡密</h2>
-              <button class="modal-close" @click="showExportDialog = false">×</button>
+              <h2 id="kami-export-title" class="modal-title">导出卡密</h2>
+              <button type="button" class="modal-close" aria-label="关闭导出卡密" @click="showExportDialog = false">×</button>
             </div>
             <div class="modal-body">
               <div class="form-row">
@@ -775,6 +788,18 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .kami-page {
   height: 100%;
   display: flex;

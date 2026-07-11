@@ -15,21 +15,15 @@
 - [核心业务链路](./03-core-workflows.md)
 - [数据模型、配置与持久化](./04-data-and-configuration.md)
 - [前端、部署、运维与风险](./05-frontend-deployment-and-risks.md)
-- [自动生成的逐文件技术索引](./generated/)
+- [自动生成索引状态](./generated/)（迁移前快照已退役）
 
-## 自动生成索引覆盖
+## 自动生成索引状态
 
-- Java 源文件：306 个。
-- Vue 单文件组件：106 个。
-- TypeScript 文件：37 个。
-- 前端 CSS/SVG、后端资源与根工程文件：按可维护文本资源纳入。
-- Java 索引记录包、主类型、行数、职责、注解、方法、项目内依赖、外部依赖、Web 映射和表线索。
-- 前端索引记录模块职责、依赖、导出符号、后端 URL、组件组合和 Composition API。
-- 资源索引记录文件类型、大小、文本行数、运行角色和维护注意事项。
+迁移前生成的逐文件索引包含已删除的 SQLite/MyBatis-Plus 实现，不能作为当前架构证据，已从发布文档退役。专题章节已按 MongoDB、Atlas Vector Search、GHCR 与 2.0.3 发布契约更新。
 
 ## 维护方式
 
-源码结构变化后，可运行 `scripts/documentation/Generate-TechnicalReference.ps1` 重建 `generated/`。
+源码结构变化后，应先升级 `scripts/documentation/Generate-TechnicalReference.ps1` 以识别当前 MongoDB 持久化层，再重建 `generated/`。
 
 该脚本只做静态读取和 Markdown 输出，不调用任何构建系统。
 

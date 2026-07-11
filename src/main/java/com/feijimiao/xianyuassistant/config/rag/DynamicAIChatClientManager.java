@@ -40,6 +40,9 @@ public class DynamicAIChatClientManager {
     @Value("${ai.enabled:false}")
     private boolean aiEnabled;
 
+    @Value("${ai.limits.max-output-tokens:1024}")
+    private int maxOutputTokens;
+
     /** 当前缓存的API Key，用于判断是否需要重建 */
     private volatile String cachedApiKey;
 
@@ -94,10 +97,8 @@ public class DynamicAIChatClientManager {
                         || !safeEquals(currentModel, cachedModel);
 
                 if (stillNeedRebuild) {
-                    log.info("[DynamicAI] 检测到AI配置变化，重建ChatClient: baseUrl={}, model={}, apiKey={}***{}",
-                            currentBaseUrl, currentModel,
-                            currentApiKey.substring(0, Math.min(4, currentApiKey.length())),
-                            currentApiKey.length() > 8 ? currentApiKey.substring(currentApiKey.length() - 4) : "****");
+                    log.info("[DynamicAI] 检测到AI配置变化，重建ChatClient: baseUrl={}, model={}, apiKeyConfigured=true",
+                            currentBaseUrl, currentModel);
 
                     chatClient = buildChatClient(currentApiKey, currentBaseUrl, currentModel);
                     cachedApiKey = currentApiKey;
@@ -199,6 +200,7 @@ public class DynamicAIChatClientManager {
         OpenAiChatOptions chatOptions = OpenAiChatOptions.builder()
                 .model(effectiveModel)
                 .temperature(0.7)
+                .maxTokens(maxOutputTokens)
                 .build();
 
         OpenAiChatModel chatModel = OpenAiChatModel.builder()

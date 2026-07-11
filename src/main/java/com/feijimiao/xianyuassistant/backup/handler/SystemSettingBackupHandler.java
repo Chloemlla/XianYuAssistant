@@ -2,6 +2,7 @@ package com.feijimiao.xianyuassistant.backup.handler;
 
 import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.backup.DataBackupHandler;
+import com.feijimiao.xianyuassistant.backup.BackupImportReporter;
 import com.feijimiao.xianyuassistant.entity.XianyuSysSetting;
 import com.feijimiao.xianyuassistant.mapper.XianyuSysSettingMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -15,10 +16,10 @@ import java.util.*;
 public class SystemSettingBackupHandler implements DataBackupHandler {
 
     private static final Set<String> BACKUP_KEYS = Set.of(
-            "ai_api_key", "ai_base_url", "ai_model",
-            "ai_embedding_api_key", "ai_embedding_base_url", "ai_embedding_model",
+            "ai_base_url", "ai_model",
+            "ai_embedding_base_url", "ai_embedding_model",
             "sys_prompt", "similarity_threshold",
-            "email_smtp_host", "email_smtp_port", "email_smtp_username", "email_smtp_password",
+            "email_smtp_host", "email_smtp_port", "email_smtp_username",
             "email_smtp_from", "email_smtp_ssl",
             "email_notify_ws_disconnect_enabled", "email_notify_cookie_expire_enabled"
     );
@@ -44,6 +45,7 @@ public class SystemSettingBackupHandler implements DataBackupHandler {
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("settings", settings);
+        data.put("_sensitiveExcluded", List.of("ai_api_key", "ai_embedding_api_key", "email_smtp_password"));
         return data;
     }
 
@@ -79,6 +81,7 @@ public class SystemSettingBackupHandler implements DataBackupHandler {
                     sysSettingMapper.updateById(existing);
                 }
             } catch (Exception e) {
+                BackupImportReporter.recordFailure(context, getModuleKey(), "setting", e);
                 log.warn("[SystemSettingBackup] 导入单条系统设置失败: {}", e.getMessage());
             }
         }

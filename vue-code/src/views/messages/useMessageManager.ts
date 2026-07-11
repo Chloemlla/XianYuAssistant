@@ -6,6 +6,7 @@ import { showInfo } from '@/utils'
 import type { Account } from '@/types'
 import type { ChatMessage } from '@/api/message'
 import type { GoodsItemWithConfig } from '@/api/goods'
+import { createLatestRequestGuard } from '@/utils/latestRequest'
 
 export function useMessageManager() {
   const loading = ref(false)
@@ -18,6 +19,9 @@ export function useMessageManager() {
   const pageSize = ref(20)
   const total = ref(0)
   const filterCurrentAccount = ref(false)
+  const messageError = ref('')
+  const messageLastUpdatedAt = ref<Date | null>(null)
+  const messageRequest = createLatestRequestGuard()
 
   // 商品列表
   const goodsList = ref<GoodsItemWithConfig[]>([])
@@ -25,6 +29,9 @@ export function useMessageManager() {
   const goodsTotal = ref(0)
   const goodsLoading = ref(false)
   const goodsListRef = ref<HTMLElement | null>(null)
+  const goodsError = ref('')
+  const goodsLastUpdatedAt = ref<Date | null>(null)
+  const goodsRequest = createLatestRequestGuard()
 
   // 手机端
   const isMobile = ref(false)
@@ -115,6 +122,8 @@ export function useMessageManager() {
       showInfo('请先选择账号')
       return
     }
+    const requestId = messageRequest.begin()
+    messageError.value = ''
     if (!silent) {
       loading.value = true
     } else {
@@ -131,6 +140,7 @@ export function useMessageManager() {
         params.xyGoodsId = goodsIdFilter.value
       }
       const response = await getMessageList(params)
+      if (!messageRequest.isLatest(requestId)) return
       if (response.code === 0 || response.code === 200) {
         const newList = response.data?.list || []
         const newTotal = response.data?.totalCount || 0
@@ -149,24 +159,27 @@ export function useMessageManager() {
           messageList.value = newList
           total.value = newTotal
         }
+        messageLastUpdatedAt.value = new Date()
       } else {
         throw new Error(response.msg || '获取消息列表失败')
       }
     } catch (error: any) {
-      console.error('加载消息列表失败:', error)
-      if (!silent) {
-        messageList.value = []
-      }
+      if (!messageRequest.isLatest(requestId)) return
+      messageError.value = error instanceof Error ? error.message : '加载消息列表失败'
     } finally {
-      loading.value = false
-      silentLoading.value = false
+      if (messageRequest.isLatest(requestId)) {
+        loading.value = false
+        silentLoading.value = false
+      }
     }
   }
 
   // 加载商品列表
   const loadGoodsList = async () => {
     if (!selectedAccountId.value) return
+    const requestId = goodsRequest.begin()
     goodsLoading.value = true
+    goodsError.value = ''
     try {
       const params: any = {
         xianyuAccountId: selectedAccountId.value,
@@ -174,6 +187,7 @@ export function useMessageManager() {
         pageSize: 20
       }
       const response = await getGoodsList(params)
+      if (!goodsRequest.isLatest(requestId)) return
       if (response.code === 0 || response.code === 200) {
         if (goodsCurrentPage.value === 1) {
           goodsList.value = response.data?.itemsWithConfig || []
@@ -181,13 +195,14 @@ export function useMessageManager() {
           goodsList.value.push(...(response.data?.itemsWithConfig || []))
         }
         goodsTotal.value = response.data?.totalCount || 0
+        goodsLastUpdatedAt.value = new Date()
         checkAndLoadMore()
       }
     } catch (error: any) {
-      console.error('加载商品列表失败:', error)
-      goodsList.value = []
+      if (!goodsRequest.isLatest(requestId)) return
+      goodsError.value = error instanceof Error ? error.message : '加载商品列表失败'
     } finally {
-      goodsLoading.value = false
+      if (goodsRequest.isLatest(requestId)) goodsLoading.value = false
     }
   }
 
@@ -277,11 +292,15 @@ export function useMessageManager() {
     total,
     totalPages,
     filterCurrentAccount,
+    messageError,
+    messageLastUpdatedAt,
     goodsList,
     goodsCurrentPage,
     goodsTotal,
     goodsLoading,
     goodsListRef,
+    goodsError,
+    goodsLastUpdatedAt,
     isMobile,
     mobileView,
     selectedGoodsForMobile,

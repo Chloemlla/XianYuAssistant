@@ -1,6 +1,7 @@
 package com.feijimiao.xianyuassistant.service.impl;
 
 import com.feijimiao.xianyuassistant.backup.DataBackupHandler;
+import com.feijimiao.xianyuassistant.backup.BackupImportReporter;
 import com.feijimiao.xianyuassistant.service.DataBackupService;
 import com.feijimiao.xianyuassistant.service.bo.*;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -75,12 +76,17 @@ public class DataBackupServiceImpl implements DataBackupService {
         List<String> failedModules = new ArrayList<>();
         int totalCount = 0;
         int successCount = 0;
+        Map<String, List<String>> failureDetails = new LinkedHashMap<>();
 
         Map<String, Object> allData;
         try {
             allData = objectMapper.readValue(reqBO.getJsonData(), new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
             throw new RuntimeException("解析备份数据失败: " + e.getMessage(), e);
+        }
+        Object version = allData.get("version");
+        if (version == null || !"1.0".equals(String.valueOf(version))) {
+            throw new RuntimeException("不支持的备份版本: " + version);
         }
 
         @SuppressWarnings("unchecked")
@@ -112,11 +118,22 @@ public class DataBackupServiceImpl implements DataBackupService {
             try {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> moduleData = (Map<String, Object>) modulesData.get(moduleKey);
+                if (moduleData == null || moduleData.containsKey("_error")) {
+                    throw new IllegalArgumentException("模块数据为空或导出时已失败");
+                }
                 handler.importData(moduleData, importContext);
-                successCount++;
-                log.info("[DataBackup] 导入模块 {} 成功", moduleKey);
+                List<String> recordFailures = BackupImportReporter.failuresFor(importContext, moduleKey);
+                if (recordFailures.isEmpty()) {
+                    successCount++;
+                    log.info("[DataBackup] 导入模块 {} 成功", moduleKey);
+                } else {
+                    failedModules.add(moduleKey);
+                    failureDetails.put(moduleKey, recordFailures);
+                    log.warn("[DataBackup] 导入模块 {} 存在 {} 条失败记录", moduleKey, recordFailures.size());
+                }
             } catch (Exception e) {
                 failedModules.add(moduleKey);
+                failureDetails.put(moduleKey, List.of(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
                 log.error("[DataBackup] 导入模块 {} 失败", moduleKey, e);
             }
         }
@@ -124,6 +141,7 @@ public class DataBackupServiceImpl implements DataBackupService {
         respBO.setTotalCount(totalCount);
         respBO.setSuccessCount(successCount);
         respBO.setFailedModules(failedModules);
+        respBO.setFailureDetails(failureDetails);
         return respBO;
     }
 }

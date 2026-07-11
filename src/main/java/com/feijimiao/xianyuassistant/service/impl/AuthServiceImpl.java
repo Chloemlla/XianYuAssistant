@@ -3,20 +3,30 @@ package com.feijimiao.xianyuassistant.service.impl;
 import com.feijimiao.xianyuassistant.cache.CacheService;
 import com.feijimiao.xianyuassistant.entity.SysLoginToken;
 import com.feijimiao.xianyuassistant.entity.SysUser;
+import com.feijimiao.xianyuassistant.entity.SysRefreshToken;
 import com.feijimiao.xianyuassistant.mapper.SysLoginTokenMapper;
+import com.feijimiao.xianyuassistant.mapper.SysRefreshTokenMapper;
 import com.feijimiao.xianyuassistant.mapper.SysUserMapper;
 import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.service.AuthService;
 import com.feijimiao.xianyuassistant.service.bo.*;
 import com.feijimiao.xianyuassistant.util.JwtUtil;
+import com.feijimiao.xianyuassistant.security.BootstrapInitializationGuard;
+import com.feijimiao.xianyuassistant.security.BootstrapAuthorizationException;
+import com.feijimiao.xianyuassistant.security.AlreadyInitializedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,12 +54,26 @@ public class AuthServiceImpl implements AuthService {
     private SysLoginTokenMapper sysLoginTokenMapper;
 
     @Autowired
+    private SysRefreshTokenMapper sysRefreshTokenMapper;
+
+    @Autowired
     private JwtUtil jwtUtil;
 
     @Autowired
     private CacheService cacheService;
 
+    @Autowired
+    private BootstrapInitializationGuard bootstrapInitializationGuard;
+
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @Value("${security.bootstrap-token:}")
+    private String bootstrapToken;
+
+    @Value("${jwt.refresh-expiration:604800000}")
+    private long refreshExpirationMs;
+
+    private final SecureRandom secureRandom = new SecureRandom();
 
     @Override
     public CheckUserExistsRespBO checkUserExists() {
@@ -60,12 +84,19 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LoginRespBO register(RegisterReqBO reqBO) {
+    public synchronized LoginRespBO register(RegisterReqBO reqBO) {
         // 检查是否已有用户
         long count = sysUserMapper.selectCount(null);
         if (count > 0) {
-            throw new RuntimeException("已有账号，无法注册");
+            throw new AlreadyInitializedException("已有账号，无法注册");
         }
+        validateBootstrapToken(reqBO.getBootstrapToken());
+        String bootstrapOwner = bootstrapInitializationGuard.acquire();
+        boolean bootstrapFinalized = false;
+        try {
+            if (sysUserMapper.selectCount(null) > 0) {
+                throw new AlreadyInitializedException("已有账号，无法注册");
+            }
 
         // 检查用户名是否重复
         MongoQueryWrapper<SysUser> wrapper = new MongoQueryWrapper<>();
@@ -83,6 +114,8 @@ public class AuthServiceImpl implements AuthService {
         user.setCreatedTime(LocalDateTime.now().format(FORMATTER));
         user.setUpdatedTime(LocalDateTime.now().format(FORMATTER));
         sysUserMapper.insert(user);
+        bootstrapInitializationGuard.complete(bootstrapOwner);
+        bootstrapFinalized = true;
 
         log.info("[Auth] 注册成功: username={}", reqBO.getUsername());
 
@@ -90,7 +123,14 @@ public class AuthServiceImpl implements AuthService {
         LoginReqBO loginReqBO = new LoginReqBO();
         loginReqBO.setUsername(reqBO.getUsername());
         loginReqBO.setPassword(reqBO.getPassword());
-        return login(loginReqBO);
+            LoginRespBO response = login(loginReqBO);
+            return response;
+        } catch (RuntimeException e) {
+            if (!bootstrapFinalized) {
+                bootstrapInitializationGuard.release(bootstrapOwner);
+            }
+            throw e;
+        }
     }
 
     @Override
@@ -120,6 +160,9 @@ public class AuthServiceImpl implements AuthService {
         MongoQueryWrapper<SysLoginToken> tokenWrapper = new MongoQueryWrapper<>();
         tokenWrapper.eq(SysLoginToken::getUserId, user.getId());
         sysLoginTokenMapper.delete(tokenWrapper);
+        MongoQueryWrapper<SysRefreshToken> refreshWrapper = new MongoQueryWrapper<>();
+        refreshWrapper.eq(SysRefreshToken::getUserId, user.getId());
+        sysRefreshTokenMapper.delete(refreshWrapper);
 
         // 保存新Token到数据库
         SysLoginToken loginToken = new SysLoginToken();
@@ -127,7 +170,8 @@ public class AuthServiceImpl implements AuthService {
         loginToken.setToken(token);
         loginToken.setDeviceId(reqBO.getDeviceId());
         loginToken.setLoginIp(reqBO.getIp());
-        loginToken.setExpireTime(LocalDateTime.now().plusDays(30).format(FORMATTER));
+        long expirationMs = jwtUtil.getExpiration();
+        loginToken.setExpireTime(LocalDateTime.now().plusNanos(expirationMs * 1_000_000L).format(FORMATTER));
         loginToken.setCreatedTime(LocalDateTime.now().format(FORMATTER));
         loginToken.setUpdatedTime(LocalDateTime.now().format(FORMATTER));
         sysLoginTokenMapper.insert(loginToken);
@@ -138,14 +182,46 @@ public class AuthServiceImpl implements AuthService {
         sysUserMapper.updateById(user);
 
         // 缓存Token（提高性能）
-        cacheService.put("token:" + token, user.getId(), 30, TimeUnit.DAYS);
+        cacheService.put("token:" + token, user.getId(), expirationMs, TimeUnit.MILLISECONDS);
 
         log.info("[Auth] 登录成功: username={}, ip={}", reqBO.getUsername(), reqBO.getIp());
 
         LoginRespBO respBO = new LoginRespBO();
         respBO.setToken(token);
         respBO.setUsername(user.getUsername());
+        respBO.setRefreshToken(issueRefreshToken(user.getId()));
         return respBO;
+    }
+
+    @Override
+    public synchronized LoginRespBO refresh(String refreshToken) {
+        String tokenHash = hashRefreshToken(refreshToken);
+        MongoQueryWrapper<SysRefreshToken> wrapper = new MongoQueryWrapper<>();
+        wrapper.eq(SysRefreshToken::getTokenHash, tokenHash);
+        SysRefreshToken stored = sysRefreshTokenMapper.selectOne(wrapper);
+        if (stored == null) {
+            throw new SecurityException("refresh token无效");
+        }
+        LocalDateTime expiresAt = LocalDateTime.parse(stored.getExpireTime(), FORMATTER);
+        if (!expiresAt.isAfter(LocalDateTime.now())) {
+            sysRefreshTokenMapper.deleteById(stored.getId());
+            throw new SecurityException("refresh token已过期");
+        }
+        SysUser user = sysUserMapper.selectById(stored.getUserId());
+        if (user == null || Integer.valueOf(0).equals(user.getStatus())) {
+            sysRefreshTokenMapper.deleteById(stored.getId());
+            throw new SecurityException("用户不可用");
+        }
+        sysRefreshTokenMapper.deleteById(stored.getId());
+        revokeAccessTokens(user.getId());
+
+        String accessToken = jwtUtil.generateToken(user.getId(), user.getUsername());
+        saveAccessToken(user, accessToken, null, null);
+        LoginRespBO response = new LoginRespBO();
+        response.setToken(accessToken);
+        response.setRefreshToken(issueRefreshToken(user.getId()));
+        response.setUsername(user.getUsername());
+        return response;
     }
 
     @Override
@@ -178,7 +254,9 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 回填缓存
-        cacheService.put("token:" + token, loginToken.getUserId(), 30, TimeUnit.DAYS);
+        long remainingMs = Math.max(1, java.time.Duration.between(LocalDateTime.now(),
+                LocalDateTime.parse(loginToken.getExpireTime(), FORMATTER)).toMillis());
+        cacheService.put("token:" + token, loginToken.getUserId(), remainingMs, TimeUnit.MILLISECONDS);
         return true;
     }
 
@@ -239,6 +317,7 @@ public class AuthServiceImpl implements AuthService {
         user.setPassword(passwordEncoder.encode(reqBO.getNewPassword()));
         user.setUpdatedTime(LocalDateTime.now().format(FORMATTER));
         sysUserMapper.updateById(user);
+        revokeUserTokens(user.getId());
         log.info("[Auth] 修改密码成功: userId={}", reqBO.getUserId());
     }
 
@@ -251,11 +330,86 @@ public class AuthServiceImpl implements AuthService {
         // 删除数据库中的Token
         MongoQueryWrapper<SysLoginToken> wrapper = new MongoQueryWrapper<>();
         wrapper.eq(SysLoginToken::getToken, token);
+        SysLoginToken existing = sysLoginTokenMapper.selectOne(wrapper);
         sysLoginTokenMapper.delete(wrapper);
 
         // 删除缓存中的Token
         cacheService.remove("token:" + token);
+        if (existing != null) {
+            MongoQueryWrapper<SysRefreshToken> refreshWrapper = new MongoQueryWrapper<>();
+            refreshWrapper.eq(SysRefreshToken::getUserId, existing.getUserId());
+            sysRefreshTokenMapper.delete(refreshWrapper);
+        }
 
-        log.info("[Auth] 退出登录成功: token={}", token);
+        log.info("[Auth] 退出登录成功");
+    }
+
+    private void validateBootstrapToken(String suppliedToken) {
+        if (bootstrapToken == null || bootstrapToken.length() < 24) {
+            throw new BootstrapAuthorizationException("BOOTSTRAP_TOKEN must be configured with at least 24 characters before first registration");
+        }
+        byte[] expected = bootstrapToken.getBytes(StandardCharsets.UTF_8);
+        byte[] actual = suppliedToken == null ? new byte[0] : suppliedToken.getBytes(StandardCharsets.UTF_8);
+        if (!MessageDigest.isEqual(expected, actual)) {
+            throw new BootstrapAuthorizationException("首次注册需要有效的部署初始化令牌");
+        }
+    }
+
+    private void revokeUserTokens(Long userId) {
+        revokeAccessTokens(userId);
+        MongoQueryWrapper<SysRefreshToken> refreshWrapper = new MongoQueryWrapper<>();
+        refreshWrapper.eq(SysRefreshToken::getUserId, userId);
+        sysRefreshTokenMapper.delete(refreshWrapper);
+    }
+
+    private void revokeAccessTokens(Long userId) {
+        MongoQueryWrapper<SysLoginToken> wrapper = new MongoQueryWrapper<>();
+        wrapper.eq(SysLoginToken::getUserId, userId);
+        List<SysLoginToken> tokens = sysLoginTokenMapper.selectList(wrapper);
+        for (SysLoginToken token : tokens) {
+            if (token.getToken() != null) {
+                cacheService.remove("token:" + token.getToken());
+            }
+        }
+        sysLoginTokenMapper.delete(wrapper);
+    }
+
+    private String issueRefreshToken(Long userId) {
+        byte[] random = new byte[32];
+        secureRandom.nextBytes(random);
+        String plainToken = Base64.getUrlEncoder().withoutPadding().encodeToString(random);
+        SysRefreshToken refreshToken = new SysRefreshToken();
+        refreshToken.setUserId(userId);
+        refreshToken.setTokenHash(hashRefreshToken(plainToken));
+        refreshToken.setCreatedTime(LocalDateTime.now().format(FORMATTER));
+        refreshToken.setExpireTime(LocalDateTime.now().plusNanos(refreshExpirationMs * 1_000_000L).format(FORMATTER));
+        sysRefreshTokenMapper.insert(refreshToken);
+        return plainToken;
+    }
+
+    private String hashRefreshToken(String plainToken) {
+        if (plainToken == null || plainToken.isBlank()) {
+            return "";
+        }
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(plainToken.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+        } catch (Exception e) {
+            throw new IllegalStateException("无法计算refresh token摘要", e);
+        }
+    }
+
+    private void saveAccessToken(SysUser user, String token, String deviceId, String loginIp) {
+        long expirationMs = jwtUtil.getExpiration();
+        SysLoginToken loginToken = new SysLoginToken();
+        loginToken.setUserId(user.getId());
+        loginToken.setToken(token);
+        loginToken.setDeviceId(deviceId);
+        loginToken.setLoginIp(loginIp);
+        loginToken.setExpireTime(LocalDateTime.now().plusNanos(expirationMs * 1_000_000L).format(FORMATTER));
+        loginToken.setCreatedTime(LocalDateTime.now().format(FORMATTER));
+        loginToken.setUpdatedTime(LocalDateTime.now().format(FORMATTER));
+        sysLoginTokenMapper.insert(loginToken);
+        cacheService.put("token:" + token, user.getId(), expirationMs, TimeUnit.MILLISECONDS);
     }
 }

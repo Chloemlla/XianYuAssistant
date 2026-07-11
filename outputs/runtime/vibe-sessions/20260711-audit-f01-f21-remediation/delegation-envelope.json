@@ -1,0 +1,7 @@
+{
+  "runId": "20260711-audit-f01-f21-remediation",
+  "rootLane": "root_governed",
+  "requirements": "docs/requirements/2026-07-11-audit-f01-f21-remediation.md",
+  "plan": "docs/plans/2026-07-11-audit-f01-f21-execution-plan.md",
+  "childRules": ["bounded ownership", "no canonical requirement or plan edits", "local receipts only", "no full completion claims"]
+}

@@ -1,6 +1,7 @@
 package com.feijimiao.xianyuassistant.backup.handler;
 
 import com.feijimiao.xianyuassistant.backup.DataBackupHandler;
+import com.feijimiao.xianyuassistant.backup.BackupImportReporter;
 import com.feijimiao.xianyuassistant.entity.XianyuAccount;
 import com.feijimiao.xianyuassistant.entity.XianyuGoodsConfig;
 import com.feijimiao.xianyuassistant.mapper.XianyuAccountMapper;
@@ -98,6 +99,7 @@ public class AutoReplyBackupHandler implements DataBackupHandler {
                     goodsConfigMapper.update(existing);
                 }
             } catch (Exception e) {
+                BackupImportReporter.recordFailure(context, getModuleKey(), "autoReplyConfig", e);
                 log.warn("[AutoReplyBackup] 导入单条自动回复配置失败: {}", e.getMessage());
             }
         }

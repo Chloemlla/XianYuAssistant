@@ -1,0 +1,44 @@
+{
+  "runId": "20260711-audit-f01-f21-remediation",
+  "lane": "child_governed",
+  "task": "release-remediation-f09-f10-f20",
+  "status": "implemented-awaiting-workflow-verification",
+  "findings": {
+    "F09": [
+      "Docker copies backend source before replacing static with the current Vue build",
+      "runtime uses the Playwright Java 1.40.0 image with matching Chromium and native libraries",
+      "Docker build asserts the current frontend index and versioned JAR exist"
+    ],
+    "F10": [
+      "backend CI requires a non-empty test inventory and runs against MongoDB 8.0",
+      "frontend CI requires tests and runs type-check, non-mutating lint, unit tests, and production build",
+      "Docker publication depends on backend, frontend, and release-contract gates"
+    ],
+    "F20": [
+      "GHCR is the sole documented image channel",
+      "release version contract is 2.0.3",
+      "README, installer, and technical reference describe MongoDB and Atlas Vector Search",
+      "stale generated SQLite/MyBatis source indexes are retired"
+    ]
+  },
+  "staticVerification": [
+    "git diff --check passed",
+    "package.json and package-lock.json parse as JSON and report version 2.0.3",
+    "release-gate inputs contain no legacy Docker Hub, SQLite, MyBatis, or /app/dbdata references",
+    "backend storage gate contains no legacy production storage references",
+    "CI inventory currently detects backend and frontend tests",
+    "no links remain to retired generated pages"
+  ],
+  "notRunLocally": [
+    "Maven",
+    "npm",
+    "Docker",
+    "application tests",
+    "builds"
+  ],
+  "residualRisks": [
+    "GitHub Actions must verify YAML commands, Maven/npm tests, and Docker image assembly",
+    "Playwright runtime image is intentionally linux/amd64; arm64 publication is not claimed",
+    "test depth and behavior coverage depend on test sources delivered by the backend and frontend lanes"
+  ]
+}

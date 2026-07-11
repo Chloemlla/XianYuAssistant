@@ -1,0 +1,9 @@
+{
+  "runtime": "vibe",
+  "wrapper": "vibe-do-it",
+  "mode": "interactive_governed",
+  "lane": "root_governed",
+  "grade": "XL",
+  "runId": "20260711-audit-f01-f21-remediation",
+  "terminalStage": "phase_cleanup"
+}

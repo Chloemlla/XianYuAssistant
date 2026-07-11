@@ -6,6 +6,7 @@ import type { DeliveryRecordVO, DeliveryRecordQueryReq } from '@/api/order'
 import type { Account } from '@/types'
 import { showSuccess, showError, showConfirm, showInfo } from '@/utils'
 import { formatTime } from '@/utils'
+import { createLatestRequestGuard } from '@/utils/latestRequest'
 
 export interface DeliveryRecordItem extends DeliveryRecordVO {
   confirming?: boolean
@@ -15,11 +16,16 @@ export function useOrderManager() {
   const loading = ref(false)
   const orderList = ref<DeliveryRecordItem[]>([])
   const total = ref(0)
+  const loadError = ref('')
+  const lastUpdatedAt = ref<Date | null>(null)
+  const orderRequest = createLatestRequestGuard()
   const accounts = ref<Account[]>([])
 
   const goodsList = ref<GoodsItemWithConfig[]>([])
   const goodsTotal = ref(0)
   const goodsLoading = ref(false)
+  const goodsError = ref('')
+  const goodsRequest = createLatestRequestGuard()
   const goodsListRef = ref<HTMLElement | null>(null)
   const goodsCurrentPage = ref(1)
   const onlyOnSale = ref(true)
@@ -68,7 +74,9 @@ export function useOrderManager() {
       return
     }
 
+    const requestId = goodsRequest.begin()
     goodsLoading.value = true
+    goodsError.value = ''
     try {
       const params = {
         xianyuAccountId: queryParams.xianyuAccountId,
@@ -78,6 +86,7 @@ export function useOrderManager() {
       }
 
       const response = await getGoodsList(params)
+      if (!goodsRequest.isLatest(requestId)) return
       if (response.code === 0 || response.code === 200) {
         if (goodsCurrentPage.value === 1) {
           goodsList.value = response.data?.itemsWithConfig || []
@@ -90,10 +99,10 @@ export function useOrderManager() {
         throw new Error(response.msg || '获取商品列表失败')
       }
     } catch (error: any) {
-      console.error('加载商品列表失败:', error)
-      goodsList.value = []
+      if (!goodsRequest.isLatest(requestId)) return
+      goodsError.value = error instanceof Error ? error.message : '加载商品列表失败'
     } finally {
-      goodsLoading.value = false
+      if (goodsRequest.isLatest(requestId)) goodsLoading.value = false
     }
   }
 
@@ -158,23 +167,27 @@ export function useOrderManager() {
   }
 
   const loadOrders = async () => {
+    const requestId = orderRequest.begin()
     loading.value = true
+    loadError.value = ''
     try {
       const response = await queryDeliveryRecordList(queryParams)
+      if (!orderRequest.isLatest(requestId)) return
       orderList.value = (response.data?.records || []).map(item => ({
         ...item,
         confirming: false
       }))
       total.value = response.data?.total || 0
+      lastUpdatedAt.value = new Date()
     } catch (error: any) {
-      console.error('查询发货记录失败:', error)
+      if (!orderRequest.isLatest(requestId)) return
       // 只有在错误消息未显示过时才弹出提示（避免重复显示）
       if (!error.messageShown) {
         showError('查询发货记录失败: ' + (error.message || '未知错误'))
       }
-      orderList.value = []
+      loadError.value = error instanceof Error ? error.message : '查询发货记录失败'
     } finally {
-      loading.value = false
+      if (orderRequest.isLatest(requestId)) loading.value = false
     }
   }
 
@@ -240,6 +253,9 @@ export function useOrderManager() {
     dialogs,
     confirmTarget,
     totalPages,
+    loadError,
+    lastUpdatedAt,
+    goodsError,
     loadAccounts,
     loadOrders,
     loadGoods,

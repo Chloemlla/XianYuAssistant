@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, computed, onMounted, onUnmounted } from 'vue'
+import { ref, watch, nextTick, computed, onMounted, onUnmounted, toRef } from 'vue'
 import { getContextMessages } from '@/api/message'
 import type { ChatMessage } from '@/api/message'
 import { sendMessage as sendMessageApi } from '@/api/message'
@@ -11,6 +11,10 @@ import IconSend from '@/components/icons/IconSend.vue'
 import IconImage from '@/components/icons/IconImage.vue'
 import IconClose from '@/components/icons/IconClose.vue'
 import MultiImageUploader from '@/components/MultiImageUploader.vue'
+import { useVisibilityPolling } from '@/composables/useVisibilityPolling'
+import { useModalAccessibility } from '@/composables/useModalAccessibility'
+import { mergeChatMessages } from '@/utils/messageMerge'
+import { createLatestRequestGuard } from '@/utils/latestRequest'
 
 interface Props {
   visible: boolean
@@ -36,6 +40,11 @@ const showImageUploader = ref(false)
 const messageListRef = ref<HTMLElement | null>(null)
 const hasMore = ref(true)
 const loadingMore = ref(false)
+const loadError = ref('')
+const lastUpdatedAt = ref<Date | null>(null)
+const newMessageCount = ref(0)
+const modalRef = ref<HTMLElement | null>(null)
+const contextRequest = createLatestRequestGuard()
 
 const isMobile = ref(false)
 const checkScreenSize = () => {
@@ -49,7 +58,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkScreenSize)
-  stopRefresh()
 })
 
 const totalCount = computed(() => messages.value.length)
@@ -58,22 +66,26 @@ const handleClose = () => {
   emit('update:visible', false)
 }
 
+useModalAccessibility(toRef(props, 'visible'), modalRef, handleClose)
+
 const scrollToBottom = () => {
   nextTick(() => {
     if (messageListRef.value) {
       messageListRef.value.scrollTop = messageListRef.value.scrollHeight
+      newMessageCount.value = 0
     }
   })
 }
 
 const loadContext = async (append = false) => {
   if (!props.sid) return
+  const requestId = contextRequest.begin()
+  loadError.value = ''
   
   if (append) {
     loadingMore.value = true
   } else {
     loading.value = true
-    messages.value = []
     hasMore.value = true
   }
   
@@ -82,6 +94,7 @@ const loadContext = async (append = false) => {
     const offset = append ? messages.value.length : 0
     
     const res = await getContextMessages({ sid: props.sid, limit, offset })
+    if (!contextRequest.isLatest(requestId)) return
     const msgList = res?.data || []
     const newMessages = Array.isArray(msgList) ? msgList : []
     
@@ -92,15 +105,14 @@ const loadContext = async (append = false) => {
     }
     
     hasMore.value = newMessages.length >= limit
+    lastUpdatedAt.value = new Date()
     
     if (!append) {
       scrollToBottom()
     }
   } catch (error) {
-    console.error('加载上下文失败:', error)
-    if (!append) {
-      messages.value = []
-    }
+    if (!contextRequest.isLatest(requestId)) return
+    loadError.value = error instanceof Error ? error.message : '加载上下文失败'
   } finally {
     loading.value = false
     loadingMore.value = false
@@ -114,6 +126,12 @@ const handleScroll = () => {
   if (scrollTop < 50) {
     loadMore()
   }
+}
+
+const isNearBottom = () => {
+  const element = messageListRef.value
+  if (!element) return true
+  return element.scrollHeight - element.scrollTop - element.clientHeight < 80
 }
 
 const loadMore = async () => {
@@ -131,44 +149,44 @@ const loadMore = async () => {
   }
 }
 
-let refreshTimer: ReturnType<typeof setInterval> | null = null
-
-const startRefresh = () => {
-  stopRefresh()
-  refreshTimer = setInterval(() => {
-    if (props.visible && props.sid) {
-      refreshMessages()
-    }
-  }, 1000)
-}
-
-const stopRefresh = () => {
-  if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null }
-}
-
 const refreshMessages = async () => {
   if (!props.sid) return
   try {
+    const shouldFollow = isNearBottom()
     const res = await getContextMessages({ sid: props.sid, limit: 20, offset: 0 })
     const msgList = res?.data || []
     const newMessages = Array.isArray(msgList) ? msgList.reverse() : []
-    if (newMessages.length !== messages.value.length || JSON.stringify(newMessages) !== JSON.stringify(messages.value)) {
-      messages.value = newMessages
-      scrollToBottom()
+    const existingIds = new Set(messages.value.map(message => message.id))
+    const addedCount = newMessages.filter(message => !existingIds.has(message.id)).length
+    if (addedCount > 0) {
+      messages.value = mergeChatMessages(messages.value, newMessages)
+      if (shouldFollow) scrollToBottom()
+      else newMessageCount.value += addedCount
     }
-  } catch {
-    // 静默失败，不影响体验
+    loadError.value = ''
+    lastUpdatedAt.value = new Date()
+  } catch (error) {
+    loadError.value = error instanceof Error ? error.message : '刷新消息失败'
   }
 }
+
+const polling = useVisibilityPolling(refreshMessages, 1000, () => props.visible && !!props.sid)
+
+watch(() => props.sid, () => {
+  contextRequest.invalidate()
+  messages.value = []
+  newMessageCount.value = 0
+  lastUpdatedAt.value = null
+})
 
 watch(() => props.visible, (newVal) => {
   if (newVal && props.sid) {
     loadContext()
-    startRefresh()
+    polling.start()
   } else {
-    stopRefresh()
+    polling.stop()
   }
-})
+}, { immediate: true })
 
 const formatTime = (timestamp: string | number) => {
   const ts = Number(timestamp)
@@ -253,7 +271,8 @@ const handleSend = async () => {
     inputText.value = ''
     inputImageUrls.value = ''
     showImageUploader.value = false
-    await loadContext()
+    await refreshMessages()
+    scrollToBottom()
   } catch (error: any) {
     toast.error(error.message || '发送失败')
   } finally {
@@ -266,16 +285,16 @@ const handleSend = async () => {
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="visible" class="modal-overlay" @click.self="handleClose">
-        <div class="modal-container" :class="{ 'is-mobile': isMobile }">
+        <div ref="modalRef" class="modal-container" :class="{ 'is-mobile': isMobile }" role="dialog" aria-modal="true" aria-labelledby="context-dialog-title" tabindex="-1">
           <!-- Header -->
           <div class="modal-header">
             <div class="modal-header-left">
-              <span class="modal-title">上下文消息</span>
+              <span id="context-dialog-title" class="modal-title">上下文消息</span>
               <span v-if="goodsName" class="modal-goods">{{ goodsName }}</span>
             </div>
             <div class="modal-header-right">
               <span class="modal-count">{{ totalCount }}条</span>
-              <button class="modal-close" @click="handleClose">
+              <button class="modal-close" type="button" aria-label="关闭上下文消息" @click="handleClose">
                 <IconClose />
               </button>
             </div>
@@ -283,6 +302,11 @@ const handleSend = async () => {
 
           <!-- Body -->
           <div class="modal-body">
+            <div v-if="loadError" class="context-error" role="alert">
+              <span>{{ loadError }}</span>
+              <button type="button" @click="loadContext()">重试</button>
+            </div>
+            <div v-if="lastUpdatedAt" class="context-updated">最后更新：{{ lastUpdatedAt.toLocaleTimeString('zh-CN') }}</div>
             <div class="context-content" ref="messageListRef" @scroll="handleScroll">
               <div v-if="loading" class="loading-wrap">
                 <div class="loading-spinner"></div>
@@ -332,6 +356,9 @@ const handleSend = async () => {
                 </div>
               </template>
             </div>
+            <button v-if="newMessageCount > 0" type="button" class="new-message-btn" @click="scrollToBottom">
+              {{ newMessageCount }} 条新消息
+            </button>
           </div>
 
           <!-- Footer -->
@@ -354,12 +381,14 @@ const handleSend = async () => {
               <div class="input-btns">
                 <button
                   class="img-btn"
+                  type="button"
+                  aria-label="添加图片"
                   :class="{ 'img-btn--active': showImageUploader || inputImageUrls }"
                   @click="showImageUploader = !showImageUploader"
                 >
                   <IconImage />
                 </button>
-                <button class="send-btn" :class="{ 'is-loading': sending }" :disabled="sending || (!inputText.trim() && !inputImageUrls)" @click="handleSend">
+                <button class="send-btn" type="button" aria-label="发送消息" :class="{ 'is-loading': sending }" :disabled="sending || (!inputText.trim() && !inputImageUrls)" @click="handleSend">
                   <IconSend />
                 </button>
               </div>
@@ -405,6 +434,44 @@ const handleSend = async () => {
   max-width: 94vw;
   height: 88vh;
   border-radius: 20px;
+}
+
+.context-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 16px 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: #b42318;
+  background: rgba(255, 59, 48, 0.1);
+  font-size: 12px;
+}
+
+.context-error button,
+.new-message-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: #007aff;
+  background: rgba(0, 122, 255, 0.12);
+  cursor: pointer;
+}
+
+.context-updated {
+  padding: 0 18px 6px;
+  color: #86868b;
+  font-size: 11px;
+  text-align: right;
+}
+
+.new-message-btn {
+  position: absolute;
+  right: 24px;
+  bottom: 12px;
+  z-index: 2;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
 }
 
 /* Header */
@@ -475,6 +542,7 @@ const handleSend = async () => {
 
 /* Body */
 .modal-body {
+  position: relative;
   flex: 1;
   padding: 0 20px;
   overflow: hidden;

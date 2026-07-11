@@ -2,11 +2,16 @@ server:
   port: 12400
 
 app:
-  version: 1.1.8
+  version: 2.0.3
 
 # AI功能开关（默认开启，API Key从数据库xianyu_sys_setting表读取，未配置时AI功能自动降级）
 ai:
   enabled: true
+  limits:
+    max-prompt-characters: ${AI_MAX_PROMPT_CHARACTERS:8000}
+    max-concurrent-requests: ${AI_MAX_CONCURRENT_REQUESTS:4}
+    request-timeout-seconds: ${AI_REQUEST_TIMEOUT_SECONDS:45}
+    max-output-tokens: ${AI_MAX_OUTPUT_TOKENS:1024}
   vectorstore:
     mongodb:
       collection-name: ${MONGODB_VECTOR_COLLECTION:xianyu_vector_store}
@@ -14,8 +19,12 @@ ai:
 
 # JWT配置
 jwt:
-  secret: xianyu-assistant-jwt-secret-key-2026-04-22-very-long-secret-for-hmac-sha
-  expiration: 2592000000  # 30天（毫秒）
+  secret: ${JWT_SECRET:}
+  expiration: ${JWT_ACCESS_EXPIRATION_MS:900000}  # 15分钟（毫秒）
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS:604800000}  # 7天（毫秒）
+
+security:
+  bootstrap-token: ${BOOTSTRAP_TOKEN:}
 
 
 spring:
@@ -61,4 +70,4 @@ websocket:
   # 消息发送重试延迟（毫秒）
   message-retry-delay: 1000
   # 打印原始消息开关（解密后的消息）
-  print-raw-message: true
+  print-raw-message: false

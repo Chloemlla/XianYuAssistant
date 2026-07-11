@@ -2,6 +2,7 @@ package com.feijimiao.xianyuassistant.backup.handler;
 
 import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.backup.DataBackupHandler;
+import com.feijimiao.xianyuassistant.backup.BackupImportReporter;
 import com.feijimiao.xianyuassistant.entity.XianyuAccount;
 import com.feijimiao.xianyuassistant.entity.XianyuGoodsAutoDeliveryConfig;
 import com.feijimiao.xianyuassistant.mapper.XianyuAccountMapper;
@@ -114,6 +115,7 @@ public class AutoDeliveryBackupHandler implements DataBackupHandler {
                     autoDeliveryConfigMapper.updateById(config);
                 }
             } catch (Exception e) {
+                BackupImportReporter.recordFailure(context, getModuleKey(), "autoDeliveryConfig", e);
                 log.warn("[AutoDeliveryBackup] 导入单条自动发货配置失败: {}", e.getMessage());
             }
         }

@@ -42,6 +42,11 @@ public class QRLoginServiceImpl implements QRLoginService {
     
     @Autowired
     private com.feijimiao.xianyuassistant.service.AccountService accountService;
+
+    @Autowired
+    private com.feijimiao.xianyuassistant.concurrent.BoundedDelayScheduler delayScheduler;
+
+    private static final int MAX_CONCURRENT_QR_SESSIONS = 20;
     
     private static final String HOST = "https://passport.goofish.com";
     private static final String API_MINI_LOGIN = HOST + "/mini_login.htm";
@@ -108,7 +113,7 @@ public class QRLoginServiceImpl implements QRLoginService {
                     String[] parts = cookie.split(";")[0].split("=", 2);
                     if (parts.length == 2) {
                         session.getCookies().put(parts[0], parts[1]);
-                        log.debug("提取到Cookie: {} = {}", parts[0], parts[1].substring(0, Math.min(20, parts[1].length())));
+                        log.debug("提取到Cookie字段: {}", parts[0]);
                     }
                 }
                 
@@ -117,7 +122,7 @@ public class QRLoginServiceImpl implements QRLoginService {
                 String token = "";
                 if (mh5tk != null && mh5tk.contains("_")) {
                     token = mh5tk.split("_")[0];
-                    log.info("提取到_m_h5_tk token: {}", token.substring(0, Math.min(10, token.length())));
+                    log.info("提取到_m_h5_tk token: tokenLength={}", token.length());
                 } else {
                     log.warn("未找到_m_h5_tk，当前cookies: {}", session.getCookies().keySet());
                 }
@@ -276,6 +281,10 @@ public class QRLoginServiceImpl implements QRLoginService {
     @Override
     public QRLoginResponse generateQRCode() {
         try {
+            cleanupExpiredSessions();
+            if (sessions.size() >= MAX_CONCURRENT_QR_SESSIONS) {
+                return new QRLoginResponse(false, "二维码登录会话已达容量上限，请稍后重试");
+            }
             // 创建新会话
             String sessionId = UUID.randomUUID().toString();
             QRLoginSession session = new QRLoginSession(sessionId);
@@ -299,7 +308,7 @@ public class QRLoginServiceImpl implements QRLoginService {
             try (Response response = httpClient.newCall(request).execute()) {
                 if (response.isSuccessful()) {
                     String responseBody = response.body().string();
-                    log.debug("获取二维码接口原始响应: {}", responseBody);
+                    log.debug("获取二维码接口响应: responseLength={}", responseBody.length());
                     
                     JsonObject results = gson.fromJson(responseBody, JsonObject.class);
                     JsonObject content = results.getAsJsonObject("content");
@@ -324,7 +333,7 @@ public class QRLoginServiceImpl implements QRLoginService {
                         sessions.put(sessionId, session);
                         
                         // 启动状态监控
-                        new Thread(() -> monitorQRStatus(sessionId)).start();
+                        scheduleQrPoll(sessionId, 0);
                         
                         log.info("二维码生成成功: {}", sessionId);
                         return new QRLoginResponse(true, sessionId, qrDataUrl, null);
@@ -388,72 +397,39 @@ public class QRLoginServiceImpl implements QRLoginService {
     /**
      * 监控二维码状态
      */
-    private void monitorQRStatus(String sessionId) {
+    private void scheduleQrPoll(String sessionId, long delayMs) {
         try {
+            delayScheduler.schedule(() -> pollQrStatusOnce(sessionId), delayMs, TimeUnit.MILLISECONDS);
+        } catch (java.util.concurrent.RejectedExecutionException e) {
             QRLoginSession session = sessions.get(sessionId);
-            if (session == null) {
+            if (session != null) session.setStatus("expired");
+            log.warn("二维码轮询队列已满: sessionId={}", sessionId);
+        }
+    }
+
+    private void pollQrStatusOnce(String sessionId) {
+        QRLoginSession session = sessions.get(sessionId);
+        if (session == null) return;
+        if (session.isExpired()) {
+            session.setStatus("expired");
+            return;
+        }
+        try {
+            String status = pollQRCodeStatus(session);
+            if ("CONFIRMED".equals(status) || "EXPIRED".equals(status)) {
+                if ("EXPIRED".equals(status)) session.setStatus("expired");
                 return;
             }
-            
-            log.info("开始监控二维码状态: {}", sessionId);
-            
-            long maxWaitTime = 300000; // 5分钟
-            long startTime = System.currentTimeMillis();
-            
-            while (System.currentTimeMillis() - startTime < maxWaitTime) {
-                try {
-                    // 检查会话是否还存在
-                    if (!sessions.containsKey(sessionId)) {
-                        break;
-                    }
-                    
-                    // 轮询二维码状态
-                    String qrCodeStatus = pollQRCodeStatus(session);
-                    
-                    if ("CONFIRMED".equals(qrCodeStatus)) {
-                        // 登录确认
-                        log.info("扫码登录成功: {}, UNB: {}", sessionId, session.getUnb());
-                        break;
-                    } else if ("NEW".equals(qrCodeStatus)) {
-                        // 二维码未被扫描，继续轮询
-                    } else if ("EXPIRED".equals(qrCodeStatus)) {
-                        // 二维码已过期
-                        session.setStatus("expired");
-                        log.info("二维码已过期: {}", sessionId);
-                        break;
-                    } else if ("SCANED".equals(qrCodeStatus)) {
-                        // 二维码已被扫描，等待确认
-                        if ("waiting".equals(session.getStatus())) {
-                            session.setStatus("scanned");
-                            log.info("二维码已扫描，等待确认: {}", sessionId);
-                        }
-                    } else {
-                        // 用户取消确认
-                        session.setStatus("cancelled");
-                        log.info("用户取消登录: {}", sessionId);
-                        break;
-                    }
-                    
-                    Thread.sleep(800); // 每0.8秒检查一次
-                    
-                } catch (Exception e) {
-                    log.error("监控二维码状态异常", e);
-                    Thread.sleep(2000);
-                }
+            if ("SCANED".equals(status)) {
+                session.setStatus("scanned");
+            } else if (!"NEW".equals(status)) {
+                session.setStatus("cancelled");
+                return;
             }
-            
-            // 超时处理
-            if (session != null && !Arrays.asList("success", "expired", "cancelled", "verification_required").contains(session.getStatus())) {
-                session.setStatus("expired");
-                log.info("二维码监控超时，标记为过期: {}", sessionId);
-            }
-            
+            scheduleQrPoll(sessionId, 800);
         } catch (Exception e) {
-            log.error("监控二维码状态失败", e);
-            QRLoginSession session = sessions.get(sessionId);
-            if (session != null) {
-                session.setStatus("expired");
-            }
+            log.warn("二维码状态轮询失败: sessionId={}, error={}", sessionId, e.getMessage());
+            scheduleQrPoll(sessionId, 2000);
         }
     }
     
@@ -661,7 +637,7 @@ public class QRLoginServiceImpl implements QRLoginService {
             if (mH5Tk == null || mH5Tk.isEmpty()) {
                 log.warn("⚠️ Cookie中缺少_m_h5_tk字段！这可能导致后续API调用失败");
             } else {
-                log.info("✅ _m_h5_tk已包含: {}", mH5Tk.substring(0, Math.min(20, mH5Tk.length())));
+                log.info("✅ _m_h5_tk已包含");
             }
             
             // 格式化Cookie字符串

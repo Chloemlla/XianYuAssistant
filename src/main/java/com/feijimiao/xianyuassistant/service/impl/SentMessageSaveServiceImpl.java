@@ -114,9 +114,8 @@ public class SentMessageSaveServiceImpl implements SentMessageSaveService {
             int result = chatMessageMapper.insert(message);
             
             if (result > 0) {
-                log.info("【账号{}】[{}]消息入库成功: pnmId={}, cid={}, toId={}, xyGoodsId={}, text={}", 
-                        accountId, senderUserName, pnmId, cid, toId, xyGoodsId, 
-                        text.length() > 50 ? text.substring(0, 50) + "..." : text);
+                log.info("【账号{}】[{}]消息入库成功: pnmId={}, cid={}, toId={}, xyGoodsId={}, textLength={}",
+                        accountId, senderUserName, pnmId, cid, toId, xyGoodsId, text == null ? 0 : text.length());
             } else {
                 log.error("【账号{}】[{}]消息入库失败: pnmId={}", accountId, senderUserName, pnmId);
             }

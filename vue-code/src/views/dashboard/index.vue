@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useDashboard } from './useDashboard';
 import { getDataPanelStats, getDataPanelTrend, getRealtimeRevenue, getSalesRevenue } from '@/api/data-panel';
 import type { DataPanelStats, DataPanelTrend, SalesRevenueData } from '@/api/data-panel';
+import { useVisibilityPolling } from '@/composables/useVisibilityPolling'
 
 import IconAccount from '@/components/icons/IconAccount.vue';
 import IconPackage from '@/components/icons/IconPackage.vue';
@@ -109,7 +110,6 @@ const getToday = () => {
 
 const selectedDate = ref(getYesterday())
 const dateQuick = ref<'today' | 'yesterday'>('yesterday')
-let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 const loadDataPanel = async () => {
   dataPanelLoading.value = true
@@ -146,21 +146,23 @@ const setQuickDate = (quick: 'today' | 'yesterday') => {
 }
 
 const startRealtimeRefresh = () => {
-  stopRealtimeRefresh()
   if (dateQuick.value === 'today') {
-    refreshTimer = setInterval(() => {
-      getDataPanelStats(selectedDate.value).then(res => {
-        if (res && (res.code === 200 || res.code === 0) && res.data) {
-          dataPanelStats.value = res.data
-        }
-      }).catch(() => {})
-    }, 5000)
+    realtimePolling.start()
+  } else {
+    realtimePolling.stop()
   }
 }
 
 const stopRealtimeRefresh = () => {
-  if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null }
+  realtimePolling.stop()
 }
+
+const realtimePolling = useVisibilityPolling(async () => {
+  const res = await getDataPanelStats(selectedDate.value)
+  if (res && (res.code === 200 || res.code === 0) && res.data) {
+    dataPanelStats.value = res.data
+  }
+}, 5000, () => activeTab.value === 'data' && dateQuick.value === 'today')
 
 const deliveryTotal = computed(() => dataPanelStats.value.deliverySuccessCount + dataPanelStats.value.deliveryFailCount)
 const successRate = computed(() => {
@@ -234,7 +236,6 @@ const activeTab = ref<'guide' | 'data'>('guide')
 // === 实时销售额 ===
 const revenueValue = ref(0)
 const revenueDisplay = ref('0.00')
-let revenueTimer: ReturnType<typeof setInterval> | null = null
 
 const formatRevenue = (val: number): string => {
   return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -253,14 +254,14 @@ const loadRevenue = async () => {
 }
 
 const startRevenueRefresh = () => {
-  stopRevenueRefresh()
-  loadRevenue()
-  revenueTimer = setInterval(loadRevenue, 3000)
+  revenuePolling.start(true)
 }
 
 const stopRevenueRefresh = () => {
-  if (revenueTimer) { clearInterval(revenueTimer); revenueTimer = null }
+  revenuePolling.stop()
 }
+
+const revenuePolling = useVisibilityPolling(loadRevenue, 3000, () => activeTab.value === 'data')
 
 const switchTab = (tab: 'guide' | 'data') => {
   activeTab.value = tab

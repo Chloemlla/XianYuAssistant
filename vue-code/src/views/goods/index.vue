@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, inject, defineComponent, h } from 'vue'
+import { onMounted, ref, computed, inject, defineComponent, h, toRef } from 'vue'
 import { useGoodsManager } from './useGoodsManager'
 import './goods.css'
 import '@/styles/header-selectors.css'
@@ -13,6 +13,7 @@ import IconChevronRight from '@/components/icons/IconChevronRight.vue'
 
 import GoodsTable from './components/GoodsTable.vue'
 import GoodsDetail from './components/GoodsDetail.vue'
+import { useModalAccessibility } from '@/composables/useModalAccessibility'
 
 const {
   loading,
@@ -27,6 +28,8 @@ const {
   pageSize,
   total,
   totalPages,
+  loadError,
+  lastUpdatedAt,
   dialogs,
   selectedGoodsId,
   deleteTarget,
@@ -47,6 +50,8 @@ const {
   formatTime,
   syncSingleGoods
 } = useGoodsManager()
+const deleteDialogRef = ref<HTMLElement | null>(null)
+useModalAccessibility(toRef(dialogs, 'deleteConfirm'), deleteDialogRef, () => { dialogs.deleteConfirm = false })
 
 // 下拉刷新相关状态
 const pullRefreshState = ref<'idle' | 'pulling' | 'ready' | 'refreshing'>('idle')
@@ -197,6 +202,11 @@ const getPageButtons = () => {
 
 <template>
   <div class="goods">
+    <div v-if="loadError" class="goods__error-banner" role="alert">
+      <span>{{ loadError }}</span>
+      <button type="button" @click="loadGoods">重试</button>
+    </div>
+    <div v-if="lastUpdatedAt" class="goods__updated-at">最后更新：{{ lastUpdatedAt.toLocaleTimeString('zh-CN') }}</div>
     <!-- Header -->
     <div class="goods__header">
       <div class="goods__title-row desktop-only">
@@ -355,9 +365,9 @@ const getPageButtons = () => {
     <!-- Delete Confirm -->
     <Transition name="overlay-fade">
       <div v-if="dialogs.deleteConfirm" class="goods__dialog-overlay" @click.self="dialogs.deleteConfirm = false">
-        <div class="goods__dialog">
+        <div ref="deleteDialogRef" class="goods__dialog" role="dialog" aria-modal="true" aria-labelledby="goods-delete-title" tabindex="-1">
           <div class="goods__dialog-header">
-            <h3 class="goods__dialog-title">删除商品</h3>
+            <h3 id="goods-delete-title" class="goods__dialog-title">删除商品</h3>
           </div>
           <div class="goods__dialog-body">
             <p class="goods__dialog-text">
@@ -385,6 +395,32 @@ const getPageButtons = () => {
 </template>
 
 <style scoped>
+.goods__error-banner {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 12px 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: #b42318;
+  background: rgba(255, 59, 48, 0.1);
+  font-size: 12px;
+}
+
+.goods__error-banner button {
+  border: 0;
+  color: #007aff;
+  background: transparent;
+  cursor: pointer;
+}
+
+.goods__updated-at {
+  padding: 4px 16px 0;
+  color: #86868b;
+  font-size: 11px;
+  text-align: right;
+}
+
 .overlay-fade-enter-active,
 .overlay-fade-leave-active {
   transition: opacity 0.2s ease;

@@ -6,12 +6,15 @@ import com.feijimiao.xianyuassistant.controller.dto.CheckUserExistsRespDTO;
 import com.feijimiao.xianyuassistant.controller.dto.LoginReqDTO;
 import com.feijimiao.xianyuassistant.controller.dto.LoginRespDTO;
 import com.feijimiao.xianyuassistant.controller.dto.RegisterReqDTO;
+import com.feijimiao.xianyuassistant.controller.dto.RefreshTokenReqDTO;
 import com.feijimiao.xianyuassistant.service.AuthService;
 import com.feijimiao.xianyuassistant.service.bo.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import com.feijimiao.xianyuassistant.security.BootstrapAuthorizationException;
+import com.feijimiao.xianyuassistant.security.AlreadyInitializedException;
 
 /**
  * 登录控制器
@@ -70,13 +73,20 @@ public class LoginController {
             RegisterReqBO reqBO = new RegisterReqBO();
             reqBO.setUsername(reqDTO.getUsername().trim());
             reqBO.setPassword(reqDTO.getPassword());
+            reqBO.setBootstrapToken(reqDTO.getBootstrapToken());
 
             LoginRespBO respBO = authService.register(reqBO);
 
             LoginRespDTO respDTO = new LoginRespDTO();
             respDTO.setToken(respBO.getToken());
             respDTO.setUsername(respBO.getUsername());
+            respDTO.setRefreshToken(respBO.getRefreshToken());
             return ResultObject.success(respDTO);
+        } catch (BootstrapAuthorizationException e) {
+            log.warn("首次注册授权失败");
+            return ResultObject.failed(403, e.getMessage());
+        } catch (AlreadyInitializedException e) {
+            return ResultObject.failed(409, e.getMessage());
         } catch (Exception e) {
             log.error("注册失败", e);
             return ResultObject.failed(e.getMessage());
@@ -123,6 +133,7 @@ public class LoginController {
             LoginRespDTO respDTO = new LoginRespDTO();
             respDTO.setToken(respBO.getToken());
             respDTO.setUsername(respBO.getUsername());
+            respDTO.setRefreshToken(respBO.getRefreshToken());
             return ResultObject.success(respDTO);
         } catch (Exception e) {
             log.error("登录失败", e);
@@ -130,6 +141,24 @@ public class LoginController {
             String ip = getClientIp(request);
             authService.recordLoginFailure(ip);
             return ResultObject.failed(e.getMessage());
+        }
+    }
+
+    @PostMapping("/refresh")
+    public ResultObject<LoginRespDTO> refresh(@RequestBody RefreshTokenReqDTO reqDTO) {
+        try {
+            if (reqDTO == null || reqDTO.getRefreshToken() == null || reqDTO.getRefreshToken().isBlank()) {
+                return ResultObject.validateFailed("refreshToken不能为空");
+            }
+            LoginRespBO respBO = authService.refresh(reqDTO.getRefreshToken());
+            LoginRespDTO respDTO = new LoginRespDTO();
+            respDTO.setToken(respBO.getToken());
+            respDTO.setRefreshToken(respBO.getRefreshToken());
+            respDTO.setUsername(respBO.getUsername());
+            return ResultObject.success(respDTO);
+        } catch (Exception e) {
+            log.warn("刷新会话失败: {}", e.getMessage());
+            return ResultObject.failed("刷新会话失败");
         }
     }
 
