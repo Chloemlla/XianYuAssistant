@@ -54,6 +54,14 @@ public class MongoQueryWrapper<T> {
         return this;
     }
 
+    @SafeVarargs
+    public final MongoQueryWrapper<T> orderByAsc(SFunction<T, ?>... fields) {
+        for (SFunction<T, ?> field : fields) {
+            sort = sort.and(Sort.by(Sort.Direction.ASC, MongoFieldNames.from(field)));
+        }
+        return this;
+    }
+
     public MongoQueryWrapper<T> last(String expression) {
         if (expression != null && expression.trim().toUpperCase().startsWith("LIMIT ")) {
             limit = Integer.parseInt(expression.trim().substring(6).trim());
