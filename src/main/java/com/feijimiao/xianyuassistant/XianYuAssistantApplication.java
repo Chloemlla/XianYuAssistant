@@ -6,6 +6,7 @@ import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfigura
 import org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration;
 import org.springframework.ai.model.openai.autoconfigure.OpenAiImageAutoConfiguration;
 import org.springframework.ai.model.openai.autoconfigure.OpenAiModerationAutoConfiguration;
+import org.springframework.ai.vectorstore.mongodb.autoconfigure.MongoDBAtlasVectorStoreAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -19,7 +20,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
     OpenAiAudioSpeechAutoConfiguration.class,
     OpenAiAudioTranscriptionAutoConfiguration.class,
     OpenAiImageAutoConfiguration.class,
-    OpenAiModerationAutoConfiguration.class
+    OpenAiModerationAutoConfiguration.class,
+    MongoDBAtlasVectorStoreAutoConfiguration.class
 })
 public class XianYuAssistantApplication {
 
