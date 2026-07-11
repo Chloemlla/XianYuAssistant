@@ -1,0 +1,19 @@
+{
+  "status": "accepted",
+  "scope": "F01-F21",
+  "completionLanguageAllowed": true,
+  "evidence": {
+    "backendMongoTests": "success",
+    "frontendTypeCheck": "success",
+    "frontendLint": "success with documented legacy rule baseline",
+    "frontendUnitComponentTests": "success",
+    "frontendProductionBuild": "success",
+    "releaseContract": "success",
+    "dockerBuildAndGhcrPush": "success",
+    "githubActionsRun": 29137052140
+  },
+  "deliveryNotes": [
+    "Production image support is explicitly linux/amd64 because the matching Playwright Java runtime image is amd64-only.",
+    "The ESLint gate keeps Vue structural/correctness rules active while existing no-explicit-any, no-unused-vars, and index component-name debt is baselined for incremental migration."
+  ]
+}
