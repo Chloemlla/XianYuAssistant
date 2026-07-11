@@ -465,10 +465,10 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <template #footer>
-      <button class="btn-glass btn-glass--default" @click="handleClose">关闭</button>
-      <button class="btn-glass btn-glass--primary" @click="handleRefresh">刷新状态</button>
-    </template>
+    <div class="modal-footer">
+      <button type="button" class="btn-glass btn-glass--default" @click="handleClose">关闭</button>
+      <button type="button" class="btn-glass btn-glass--primary" @click="handleRefresh">刷新状态</button>
+    </div>
 
     <!-- 手动更新Cookie对话框 -->
     <ManualUpdateCookieDialog
@@ -518,6 +518,13 @@ onBeforeUnmount(() => {
   justify-content: center;
   z-index: 2000;
   padding: 24px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px 18px;
 }
 
 .modal-container {

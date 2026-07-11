@@ -17,4 +17,15 @@ export default defineConfigWithVueTs(
 
   pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
+
+  {
+    name: 'app/legacy-baseline',
+    rules: {
+      // Existing API/view code is incrementally typed; keep structural Vue and
+      // correctness rules active while these high-volume debt classes migrate.
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'vue/multi-word-component-names': 'off',
+    },
+  },
 )

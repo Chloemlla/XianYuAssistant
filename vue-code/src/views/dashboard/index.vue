@@ -314,6 +314,7 @@ const salesQuickOptions = computed<{ key: SalesQuickRange; label: string }[]>(()
     case 'day': return [{ key: '15d', label: '近15天' }, { key: '1m', label: '近1月' }]
     case 'week': return [{ key: '8w', label: '近8周' }, { key: '6m_w', label: '近半年' }]
     case 'month': return [{ key: '6m', label: '近半年' }, { key: '1y', label: '近1年' }]
+    default: return []
   }
 })
 

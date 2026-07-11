@@ -57,7 +57,10 @@ const startAutoRefresh = () => {
   if (autoRefresh.value) { refreshTimer = setInterval(loadOrders, refreshInterval.value * 1000) }
 }
 const stopAutoRefresh = () => { if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null } }
-const toggleAutoRefresh = () => { autoRefresh.value ? startAutoRefresh() : stopAutoRefresh() }
+const toggleAutoRefresh = () => {
+  if (autoRefresh.value) startAutoRefresh()
+  else stopAutoRefresh()
+}
 const onIntervalChange = () => { if (autoRefresh.value) startAutoRefresh() }
 
 const handleDeliver = async () => {
@@ -82,7 +85,10 @@ const startAutoDeliver = () => {
   }
 }
 const stopAutoDeliver = () => { if (deliverTimer) { clearInterval(deliverTimer); deliverTimer = null } }
-const toggleAutoDeliver = () => { autoDeliver.value ? startAutoDeliver() : stopAutoDeliver() }
+const toggleAutoDeliver = () => {
+  if (autoDeliver.value) startAutoDeliver()
+  else stopAutoDeliver()
+}
 
 const totalCount = computed(() => pendingOrders.value.length)
 const formatTime = (t: string) => { if (!t) return ''; return t.replace(/^\d{4}-/, '').replace(/-/g, '/') }
