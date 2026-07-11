@@ -1,20 +1,27 @@
 package com.feijimiao.xianyuassistant.entity;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
 /**
  * 闲鱼订单实体
  */
 @Data
+@Document(collection = "xianyu_order")
+@CompoundIndex(name = "idx_order_account_created", def = "{'xianyuAccountId': 1, 'orderCreateTime': -1}")
 public class XianyuOrder {
-    
+    @Id
     private Long id;
     
     // 关联信息
     private Long xianyuAccountId;       // 关联的闲鱼账号ID
     
     // 订单基本信息
+    @Indexed
     private String orderId;             // 订单ID，如：4502252017189032029
     private String xyGoodsId;           // 闲鱼商品ID
     private String goodsTitle;          // 商品标题

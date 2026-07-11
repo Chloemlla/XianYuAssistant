@@ -46,8 +46,8 @@ LABEL description="XianYuAssistant - 闲鱼自动化管理系统"
 
 WORKDIR /app
 
-# 创建数据目录
-RUN mkdir -p /app/dbdata /app/logs /app/ms-playwright
+# 创建运行时目录（业务数据由 MongoDB 持久化）
+RUN mkdir -p /app/logs /app/ms-playwright
 
 # 从构建阶段复制 JAR
 COPY --from=backend-build /app/target/XianYuAssistant-2.0.3.jar app.jar
@@ -59,6 +59,7 @@ EXPOSE 12400
 ENV JAVA_OPTS="-Xms256m -Xmx512m"
 ENV SERVER_PORT=12400
 ENV ALI_API_KEY=""
+ENV SPRING_DATA_MONGODB_URI="mongodb://mongo:27017/xianyu_assistant"
 
 # 启动命令
 ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -Dserver.port=${SERVER_PORT} -jar app.jar"]

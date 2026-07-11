@@ -1,0 +1,14 @@
+{
+  "stage": "skeleton_check",
+  "repository": "XianYuAssistant",
+  "branch": "main",
+  "head": "886d23f",
+  "worktree_clean_at_start": true,
+  "constraints": [
+    "no local build or test commands",
+    "no Flutter or Gradle",
+    "commit and push after implementation"
+  ],
+  "existing_storage": "SQLite + MyBatis-Plus + local SimpleVectorStore file",
+  "protocol_degradation": "SKILL.md referenced protocol markdown files that are absent from the installed vibe package"
+}

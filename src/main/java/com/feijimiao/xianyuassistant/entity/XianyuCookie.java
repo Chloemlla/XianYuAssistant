@@ -1,9 +1,9 @@
 package com.feijimiao.xianyuassistant.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 
 
@@ -11,18 +11,19 @@ import lombok.Data;
  * 闲鱼Cookie实体类
  */
 @Data
-@TableName("xianyu_cookie")
+@Document(collection = "xianyu_cookie")
 public class XianyuCookie {
     
     /**
      * 主键ID
      */
-    @TableId(type = IdType.AUTO)
+    @Id
     private Long id;
     
     /**
      * 关联的闲鱼账号ID
      */
+    @Indexed(unique = true)
     private Long xianyuAccountId;
     
     /**
@@ -38,6 +39,7 @@ public class XianyuCookie {
     /**
      * Cookie状态 1:有效 2:过期 3:失效
      */
+    @Indexed
     private Integer cookieStatus;
     
     /**
@@ -63,5 +65,6 @@ public class XianyuCookie {
     /**
      * Token过期时间戳（毫秒）
      */
+    @Indexed
     private Long tokenExpireTime;
 }

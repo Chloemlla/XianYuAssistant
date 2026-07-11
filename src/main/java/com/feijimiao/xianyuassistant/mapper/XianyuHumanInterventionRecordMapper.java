@@ -1,21 +1,21 @@
 package com.feijimiao.xianyuassistant.mapper;
 
 import com.feijimiao.xianyuassistant.entity.XianyuHumanInterventionRecord;
-import org.apache.ibatis.annotations.*;
+import com.feijimiao.xianyuassistant.persistence.AbstractMongoMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoIdGenerator;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
-import java.util.List;
-
-@Mapper
-public interface XianyuHumanInterventionRecordMapper {
-
-    @Insert("INSERT INTO xianyu_human_intervention_record (xianyu_account_id, xy_goods_id, s_id, end_time) " +
-            "VALUES (#{xianyuAccountId}, #{xyGoodsId}, #{sId}, #{endTime})")
-    @Options(useGeneratedKeys = true, keyProperty = "id")
-    int insert(XianyuHumanInterventionRecord record);
-
-    @Select("SELECT * FROM xianyu_human_intervention_record WHERE s_id = #{sId} AND end_time > datetime('now', 'localtime') ORDER BY end_time DESC LIMIT 1")
-    XianyuHumanInterventionRecord findActiveBySId(@Param("sId") String sId);
-
-    @Delete("DELETE FROM xianyu_human_intervention_record WHERE end_time < datetime('now', 'localtime')")
-    int cleanExpired();
+@Repository
+public class XianyuHumanInterventionRecordMapper extends AbstractMongoMapper<XianyuHumanInterventionRecord> {
+    private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    public XianyuHumanInterventionRecordMapper(MongoTemplate t, MongoIdGenerator ids) { super(t, ids, XianyuHumanInterventionRecord.class); }
+    public XianyuHumanInterventionRecord findActiveBySId(String sId) { return mongoTemplate.findOne(Query.query(Criteria.where("sId").is(sId).and("endTime").gt(now())).with(Sort.by(Sort.Direction.DESC,"endTime")), entityType); }
+    public int cleanExpired() { return Math.toIntExact(mongoTemplate.remove(Query.query(Criteria.where("endTime").lt(now())), entityType).getDeletedCount()); }
+    private String now() { return LocalDateTime.now().format(FORMAT); }
 }

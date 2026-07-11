@@ -1,6 +1,6 @@
 package com.feijimiao.xianyuassistant.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.feijimiao.xianyuassistant.entity.XianyuGoodsInfo;
 import com.feijimiao.xianyuassistant.mapper.XianyuGoodsInfoMapper;
@@ -53,7 +53,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
             }
             
             // 查询是否已存在
-            LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
             queryWrapper.eq(XianyuGoodsInfo::getXyGoodId, xyGoodId);
             XianyuGoodsInfo existingGoods = goodsInfoMapper.selectOne(queryWrapper);
             
@@ -133,7 +133,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
     @Override
     public XianyuGoodsInfo getByXyGoodId(String xyGoodId) {
         try {
-            LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
             queryWrapper.eq(XianyuGoodsInfo::getXyGoodId, xyGoodId);
             return goodsInfoMapper.selectOne(queryWrapper);
         } catch (Exception e) {
@@ -145,7 +145,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
     @Override
     public List<XianyuGoodsInfo> listByStatus(Integer status) {
         try {
-            LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
             queryWrapper.eq(XianyuGoodsInfo::getStatus, status);
             queryWrapper.orderByDesc(XianyuGoodsInfo::getUpdatedTime);
             return goodsInfoMapper.selectList(queryWrapper);
@@ -158,7 +158,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
     @Override
     public List<XianyuGoodsInfo> listByStatusAndAccountId(Integer status, Long xianyuAccountId) {
         try {
-            LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
             queryWrapper.eq(XianyuGoodsInfo::getStatus, status);
             if (xianyuAccountId != null) {
                 queryWrapper.eq(XianyuGoodsInfo::getXianyuAccountId, xianyuAccountId);
@@ -174,7 +174,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
     @Override
     public List<XianyuGoodsInfo> listByStatus(Integer status, int pageNum, int pageSize) {
         try {
-            LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
             queryWrapper.eq(XianyuGoodsInfo::getStatus, status);
             queryWrapper.orderByDesc(XianyuGoodsInfo::getUpdatedTime);
             
@@ -182,7 +182,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
             int offset = (pageNum - 1) * pageSize;
             
             // 使用MyBatis Plus的分页查询
-            return goodsInfoMapper.selectList(queryWrapper.last("LIMIT " + offset + ", " + pageSize));
+            return goodsInfoMapper.selectPage(queryWrapper, offset, pageSize);
         } catch (Exception e) {
             log.error("根据状态查询商品列表失败: status={}, pageNum={}, pageSize={}", status, pageNum, pageSize, e);
             return new java.util.ArrayList<>(); // 返回空列表而不是null
@@ -192,7 +192,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
     @Override
     public List<XianyuGoodsInfo> listByStatusAndAccountId(Integer status, Long xianyuAccountId, int pageNum, int pageSize) {
         try {
-            LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
             queryWrapper.eq(XianyuGoodsInfo::getStatus, status);
             if (xianyuAccountId != null) {
                 queryWrapper.eq(XianyuGoodsInfo::getXianyuAccountId, xianyuAccountId);
@@ -203,7 +203,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
             int offset = (pageNum - 1) * pageSize;
             
             // 使用MyBatis Plus的分页查询
-            return goodsInfoMapper.selectList(queryWrapper.last("LIMIT " + offset + ", " + pageSize));
+            return goodsInfoMapper.selectPage(queryWrapper, offset, pageSize);
         } catch (Exception e) {
             log.error("根据状态和账号ID查询商品列表失败: status={}, accountId={}, pageNum={}, pageSize={}", 
                     status, xianyuAccountId, pageNum, pageSize, e);
@@ -214,13 +214,13 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
     @Override
     public List<XianyuGoodsInfo> listByAccountId(Long xianyuAccountId, int pageNum, int pageSize) {
         try {
-            LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
             if (xianyuAccountId != null) {
                 queryWrapper.eq(XianyuGoodsInfo::getXianyuAccountId, xianyuAccountId);
             }
             queryWrapper.orderByDesc(XianyuGoodsInfo::getUpdatedTime);
             int offset = (pageNum - 1) * pageSize;
-            return goodsInfoMapper.selectList(queryWrapper.last("LIMIT " + offset + ", " + pageSize));
+            return goodsInfoMapper.selectPage(queryWrapper, offset, pageSize);
         } catch (Exception e) {
             log.error("根据账号ID查询商品列表失败: accountId={}, pageNum={}, pageSize={}", xianyuAccountId, pageNum, pageSize, e);
             return new java.util.ArrayList<>();
@@ -230,7 +230,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
     @Override
     public int countByStatusAndAccountId(Integer status, Long xianyuAccountId) {
         try {
-            LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
             queryWrapper.eq(XianyuGoodsInfo::getStatus, status);
             if (xianyuAccountId != null) {
                 queryWrapper.eq(XianyuGoodsInfo::getXianyuAccountId, xianyuAccountId);
@@ -245,7 +245,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
     @Override
     public int countByAccountId(Long xianyuAccountId) {
         try {
-            LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
             if (xianyuAccountId != null) {
                 queryWrapper.eq(XianyuGoodsInfo::getXianyuAccountId, xianyuAccountId);
             }
@@ -260,7 +260,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
     @Transactional(rollbackFor = Exception.class)
     public boolean updateDetailInfo(String xyGoodId, String detailInfo) {
         try {
-            LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
             queryWrapper.eq(XianyuGoodsInfo::getXyGoodId, xyGoodId);
             XianyuGoodsInfo existingGoods = goodsInfoMapper.selectOne(queryWrapper);
             
@@ -284,7 +284,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
     
     @Override
     public String getDetailInfoByGoodsId(String xyGoodId) {
-        LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
         queryWrapper.eq(XianyuGoodsInfo::getXyGoodId, xyGoodId);
         XianyuGoodsInfo goods = goodsInfoMapper.selectOne(queryWrapper);
         return goods != null ? goods.getDetailInfo() : null;
@@ -295,7 +295,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
     public boolean deleteGoodsInfo(Long xianyuAccountId, String xyGoodId) {
         try {
             // 查询商品信息
-            LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
             queryWrapper.eq(XianyuGoodsInfo::getXyGoodId, xyGoodId);
             queryWrapper.eq(XianyuGoodsInfo::getXianyuAccountId, xianyuAccountId);
             XianyuGoodsInfo existingGoods = goodsInfoMapper.selectOne(queryWrapper);
@@ -321,7 +321,7 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
     @Transactional(rollbackFor = Exception.class)
     public boolean updateSkuCount(String xyGoodId, int skuCount) {
         try {
-            LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
             queryWrapper.eq(XianyuGoodsInfo::getXyGoodId, xyGoodId);
             XianyuGoodsInfo existingGoods = goodsInfoMapper.selectOne(queryWrapper);
 
@@ -346,9 +346,9 @@ public class GoodsInfoServiceImpl implements GoodsInfoService {
     public void markOfflineIfNotInRemote(Long xianyuAccountId, Set<String> remoteItemIds) {
         if (xianyuAccountId == null || remoteItemIds == null) return;
         try {
-            LambdaQueryWrapper<XianyuGoodsInfo> queryWrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
             queryWrapper.eq(XianyuGoodsInfo::getXianyuAccountId, xianyuAccountId);
-            queryWrapper.in(XianyuGoodsInfo::getStatus, 0, 1);
+            queryWrapper.in(XianyuGoodsInfo::getStatus, List.of(0, 1));
             List<XianyuGoodsInfo> localItems = goodsInfoMapper.selectList(queryWrapper);
 
             int markedCount = 0;

@@ -1,9 +1,9 @@
 package com.feijimiao.xianyuassistant.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * 登录Token实体类
@@ -11,16 +11,18 @@ import lombok.Data;
  * @date 2026/4/22
  */
 @Data
-@TableName("sys_login_token")
+@Document(collection = "sys_login_token")
 public class SysLoginToken {
 
-    @TableId(type = IdType.AUTO)
+    @Id
     private Long id;
 
     /** 关联用户ID */
+    @Indexed
     private Long userId;
 
     /** JWT Token */
+    @Indexed
     private String token;
 
     /** 设备标识 */
@@ -30,6 +32,7 @@ public class SysLoginToken {
     private String loginIp;
 
     /** 过期时间 */
+    @Indexed
     private String expireTime;
 
     /** 创建时间 */

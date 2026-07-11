@@ -17,6 +17,7 @@ NC='\033[0m'
 INSTALL_DIR="${HOME}/xianyu-assistant"
 PORT="${PORT:-12400}"
 JAVA_OPTS="${JAVA_OPTS:--Xms256m -Xmx512m}"
+MONGODB_URI="${MONGODB_URI:-}"
 JDK_VERSION="21"
 
 # GitHub API
@@ -190,7 +191,12 @@ download_jar() {
 # 启动服务
 start_service() {
     cd "$INSTALL_DIR"
-    mkdir -p data logs
+    mkdir -p logs
+
+    if [ -z "$MONGODB_URI" ]; then
+        echo -e "${RED}请先设置 MONGODB_URI，例如 mongodb://127.0.0.1:27017/xianyu_assistant${NC}"
+        exit 1
+    fi
 
     # 停止旧进程
     if [ -f xianyu.pid ]; then
@@ -201,7 +207,7 @@ start_service() {
     echo ""
     echo -e "${YELLOW}正在启动服务...${NC}"
 
-    nohup java $JAVA_OPTS -Dserver.port=$PORT -jar xianyu-assistant.jar > logs/console.log 2>&1 &
+    nohup env SPRING_DATA_MONGODB_URI="$MONGODB_URI" java $JAVA_OPTS -Dserver.port=$PORT -jar xianyu-assistant.jar > logs/console.log 2>&1 &
     echo $! > xianyu.pid
 
     # 等待启动

@@ -1,59 +1,94 @@
 package com.feijimiao.xianyuassistant.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.feijimiao.xianyuassistant.entity.XianyuKamiItem;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import com.feijimiao.xianyuassistant.persistence.AbstractMongoMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoIdGenerator;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-@Mapper
-public interface XianyuKamiItemMapper extends BaseMapper<XianyuKamiItem> {
+@Repository
+public class XianyuKamiItemMapper extends AbstractMongoMapper<XianyuKamiItem> {
+    public XianyuKamiItemMapper(MongoTemplate mongoTemplate, MongoIdGenerator idGenerator) {
+        super(mongoTemplate, idGenerator, XianyuKamiItem.class);
+    }
 
-    @Select("SELECT * FROM xianyu_kami_item WHERE kami_config_id = #{kamiConfigId} AND status = 0 ORDER BY sort_order ASC LIMIT 1")
-    XianyuKamiItem findNextUnused(@Param("kamiConfigId") Long kamiConfigId);
+    public XianyuKamiItem findNextUnused(Long configId) {
+        return selectOne(new MongoQueryWrapper<XianyuKamiItem>()
+                .eq(XianyuKamiItem::getKamiConfigId, configId)
+                .eq(XianyuKamiItem::getStatus, 0)
+                .orderByAsc(XianyuKamiItem::getSortOrder));
+    }
 
-    @Select("SELECT * FROM xianyu_kami_item WHERE kami_config_id = #{kamiConfigId} AND status = 0 ORDER BY RANDOM() LIMIT 1")
-    XianyuKamiItem findRandomUnused(@Param("kamiConfigId") Long kamiConfigId);
+    public XianyuKamiItem findRandomUnused(Long configId) {
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.match(Criteria.where("kamiConfigId").is(configId).and("status").is(0)),
+                Aggregation.sample(1));
+        return mongoTemplate.aggregate(aggregation, mongoTemplate.getCollectionName(entityType), entityType)
+                .getUniqueMappedResult();
+    }
 
-    @Select("SELECT * FROM xianyu_kami_item WHERE kami_config_id = #{kamiConfigId} ORDER BY sort_order ASC")
-    List<XianyuKamiItem> findByConfigId(@Param("kamiConfigId") Long kamiConfigId);
+    public List<XianyuKamiItem> findByConfigId(Long configId) {
+        return selectList(baseConfigQuery(configId));
+    }
 
-    @Select("<script>" +
-            "SELECT * FROM xianyu_kami_item WHERE kami_config_id = #{kamiConfigId} " +
-            "<if test='status != null'>" +
-            "AND status = #{status} " +
-            "</if>" +
-            "<if test='keyword != null and keyword != \"\"'>" +
-            "AND kami_content LIKE '%' || #{keyword} || '%' " +
-            "</if>" +
-            "ORDER BY sort_order ASC" +
-            "</script>")
-    List<XianyuKamiItem> findByConfigIdWithFilter(
-            @Param("kamiConfigId") Long kamiConfigId,
-            @Param("status") Integer status,
-            @Param("keyword") String keyword);
+    public List<XianyuKamiItem> findByConfigIdWithFilter(Long configId, Integer status, String keyword) {
+        MongoQueryWrapper<XianyuKamiItem> wrapper = baseConfigQuery(configId).eq(status != null, XianyuKamiItem::getStatus, status);
+        if (keyword != null && !keyword.isBlank()) wrapper.like(XianyuKamiItem::getKamiContent, keyword);
+        return selectList(wrapper);
+    }
 
-    @Select("SELECT COUNT(*) FROM xianyu_kami_item WHERE kami_config_id = #{kamiConfigId} AND status = 0")
-    int countUnused(@Param("kamiConfigId") Long kamiConfigId);
+    public int countUnused(Long configId) {
+        return countByConfigIdAndStatus(configId, 0);
+    }
 
-    @Select("SELECT COUNT(*) FROM xianyu_kami_item WHERE kami_config_id = #{kamiConfigId} AND status = 1")
-    int countUsed(@Param("kamiConfigId") Long kamiConfigId);
+    public int countUsed(Long configId) {
+        return countByConfigIdAndStatus(configId, 1);
+    }
 
-    @Select("SELECT COUNT(*) FROM xianyu_kami_item WHERE kami_config_id = #{kamiConfigId}")
-    int countByConfigId(@Param("kamiConfigId") Long kamiConfigId);
+    public int countByConfigId(Long configId) {
+        return Math.toIntExact(selectCount(new MongoQueryWrapper<XianyuKamiItem>()
+                .eq(XianyuKamiItem::getKamiConfigId, configId)));
+    }
 
-    @Select("SELECT COUNT(*) FROM xianyu_kami_item WHERE kami_config_id = #{kamiConfigId} AND kami_content = #{kamiContent}")
-    int countByConfigIdAndContent(@Param("kamiConfigId") Long kamiConfigId, @Param("kamiContent") String kamiContent);
+    public int countByConfigIdAndContent(Long configId, String content) {
+        return Math.toIntExact(selectCount(new MongoQueryWrapper<XianyuKamiItem>()
+                .eq(XianyuKamiItem::getKamiConfigId, configId)
+                .eq(XianyuKamiItem::getKamiContent, content)));
+    }
 
-    @Update("UPDATE xianyu_kami_item SET status = 1, order_id = #{orderId}, used_time = datetime('now', 'localtime') WHERE id = #{id} AND status = 0")
-    int markUsed(@Param("id") Long id, @Param("orderId") String orderId);
+    public int markUsed(Long id, String orderId) {
+        Query query = Query.query(Criteria.where("_id").is(id).and("status").is(0));
+        Update update = new Update().set("status", 1).set("orderId", orderId).set("usedTime", LocalDateTime.now());
+        return Math.toIntExact(mongoTemplate.updateFirst(query, update, entityType).getModifiedCount());
+    }
 
-    @Update("UPDATE xianyu_kami_item SET status = 0, order_id = NULL, used_time = NULL WHERE id = #{id} AND status = 1")
-    int markUnused(@Param("id") Long id);
+    public int markUnused(Long id) {
+        Query query = Query.query(Criteria.where("_id").is(id).and("status").is(1));
+        Update update = new Update().set("status", 0).unset("orderId").unset("usedTime");
+        return Math.toIntExact(mongoTemplate.updateFirst(query, update, entityType).getModifiedCount());
+    }
 
-    @Select("SELECT * FROM xianyu_kami_item WHERE kami_config_id = #{kamiConfigId} AND status = #{status} ORDER BY sort_order ASC")
-    List<XianyuKamiItem> findByConfigIdAndStatus(@Param("kamiConfigId") Long kamiConfigId, @Param("status") Integer status);
+    public List<XianyuKamiItem> findByConfigIdAndStatus(Long configId, Integer status) {
+        return selectList(baseConfigQuery(configId).eq(XianyuKamiItem::getStatus, status));
+    }
+
+    private int countByConfigIdAndStatus(Long configId, Integer status) {
+        return Math.toIntExact(selectCount(new MongoQueryWrapper<XianyuKamiItem>()
+                .eq(XianyuKamiItem::getKamiConfigId, configId)
+                .eq(XianyuKamiItem::getStatus, status)));
+    }
+
+    private MongoQueryWrapper<XianyuKamiItem> baseConfigQuery(Long configId) {
+        return new MongoQueryWrapper<XianyuKamiItem>()
+                .eq(XianyuKamiItem::getKamiConfigId, configId)
+                .orderByAsc(XianyuKamiItem::getSortOrder);
+    }
 }

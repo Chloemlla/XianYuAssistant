@@ -129,7 +129,7 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
             log.info("【账号{}】开始刷新_m_h5_tk token... (重试次数: {})", accountId, retryCount);
 
             XianyuCookie cookie = cookieMapper.selectOne(
-                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<XianyuCookie>()
+                    new com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper<XianyuCookie>()
                             .eq(XianyuCookie::getXianyuAccountId, accountId)
             );
             if (cookie == null || cookie.getCookieText() == null) {
@@ -226,7 +226,7 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
             
             // 更新Cookie状态为过期
             cookieMapper.update(null,
-                    new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<XianyuCookie>()
+                    new com.feijimiao.xianyuassistant.persistence.MongoUpdateWrapper<XianyuCookie>()
                             .eq(XianyuCookie::getXianyuAccountId, accountId)
                             .set(XianyuCookie::getCookieStatus, 2)
             );
@@ -263,7 +263,7 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
             
             // 更新Cookie状态为过期
             cookieMapper.update(null,
-                    new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<XianyuCookie>()
+                    new com.feijimiao.xianyuassistant.persistence.MongoUpdateWrapper<XianyuCookie>()
                             .eq(XianyuCookie::getXianyuAccountId, accountId)
                             .set(XianyuCookie::getCookieStatus, 2)
             );
@@ -350,7 +350,7 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
     public boolean needsRefresh(Long accountId) {
         try {
             XianyuCookie cookie = cookieMapper.selectOne(
-                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<XianyuCookie>()
+                    new com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper<XianyuCookie>()
                             .eq(XianyuCookie::getXianyuAccountId, accountId)
             );
             if (cookie == null) {

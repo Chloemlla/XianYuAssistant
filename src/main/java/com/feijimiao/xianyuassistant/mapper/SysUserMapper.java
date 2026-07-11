@@ -1,14 +1,19 @@
 package com.feijimiao.xianyuassistant.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.feijimiao.xianyuassistant.entity.SysUser;
-import org.apache.ibatis.annotations.Mapper;
+import com.feijimiao.xianyuassistant.persistence.AbstractMongoMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoIdGenerator;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.stereotype.Repository;
 
 /**
  * 系统用户Mapper
  * @author IAMLZY
  * @date 2026/4/22
  */
-@Mapper
-public interface SysUserMapper extends BaseMapper<SysUser> {
+@Repository
+public class SysUserMapper extends AbstractMongoMapper<SysUser> {
+    public SysUserMapper(MongoTemplate mongoTemplate, MongoIdGenerator idGenerator) {
+        super(mongoTemplate, idGenerator, SysUser.class);
+    }
 }

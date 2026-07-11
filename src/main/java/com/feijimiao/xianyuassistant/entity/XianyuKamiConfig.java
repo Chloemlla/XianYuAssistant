@@ -1,17 +1,20 @@
 package com.feijimiao.xianyuassistant.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
 @Data
-@TableName("xianyu_kami_config")
+@Document(collection = "xianyu_kami_config")
 public class XianyuKamiConfig {
 
-    @TableId(type = IdType.AUTO)
+    @Id
     private Long id;
 
+    @Indexed
     private Long xianyuAccountId;
 
     private String aliasName;
@@ -28,9 +31,7 @@ public class XianyuKamiConfig {
 
     private Integer usedCount;
 
-    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime = LocalDateTime.now();
 
-    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime = LocalDateTime.now();
 }

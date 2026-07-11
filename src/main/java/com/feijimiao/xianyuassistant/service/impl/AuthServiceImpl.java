@@ -1,11 +1,11 @@
 package com.feijimiao.xianyuassistant.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.feijimiao.xianyuassistant.cache.CacheService;
 import com.feijimiao.xianyuassistant.entity.SysLoginToken;
 import com.feijimiao.xianyuassistant.entity.SysUser;
 import com.feijimiao.xianyuassistant.mapper.SysLoginTokenMapper;
 import com.feijimiao.xianyuassistant.mapper.SysUserMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.service.AuthService;
 import com.feijimiao.xianyuassistant.service.bo.*;
 import com.feijimiao.xianyuassistant.util.JwtUtil;
@@ -68,7 +68,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 检查用户名是否重复
-        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
+        MongoQueryWrapper<SysUser> wrapper = new MongoQueryWrapper<>();
         wrapper.eq(SysUser::getUsername, reqBO.getUsername());
         SysUser existing = sysUserMapper.selectOne(wrapper);
         if (existing != null) {
@@ -96,7 +96,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginRespBO login(LoginReqBO reqBO) {
         // 查找用户
-        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
+        MongoQueryWrapper<SysUser> wrapper = new MongoQueryWrapper<>();
         wrapper.eq(SysUser::getUsername, reqBO.getUsername());
         SysUser user = sysUserMapper.selectOne(wrapper);
 
@@ -117,7 +117,7 @@ public class AuthServiceImpl implements AuthService {
         String token = jwtUtil.generateToken(user.getId(), user.getUsername());
 
         // 单设备登录：删除该用户之前的所有Token（挤下线旧设备）
-        LambdaQueryWrapper<SysLoginToken> tokenWrapper = new LambdaQueryWrapper<>();
+        MongoQueryWrapper<SysLoginToken> tokenWrapper = new MongoQueryWrapper<>();
         tokenWrapper.eq(SysLoginToken::getUserId, user.getId());
         sysLoginTokenMapper.delete(tokenWrapper);
 
@@ -157,7 +157,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 缓存未命中，查数据库
-        LambdaQueryWrapper<SysLoginToken> wrapper = new LambdaQueryWrapper<>();
+        MongoQueryWrapper<SysLoginToken> wrapper = new MongoQueryWrapper<>();
         wrapper.eq(SysLoginToken::getToken, token);
         SysLoginToken loginToken = sysLoginTokenMapper.selectOne(wrapper);
 
@@ -249,7 +249,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 删除数据库中的Token
-        LambdaQueryWrapper<SysLoginToken> wrapper = new LambdaQueryWrapper<>();
+        MongoQueryWrapper<SysLoginToken> wrapper = new MongoQueryWrapper<>();
         wrapper.eq(SysLoginToken::getToken, token);
         sysLoginTokenMapper.delete(wrapper);
 

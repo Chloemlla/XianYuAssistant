@@ -1,7 +1,9 @@
 package com.feijimiao.xianyuassistant.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
@@ -9,13 +11,14 @@ import java.time.LocalDateTime;
  * 商品自动发货配置实体
  */
 @Data
-@TableName("xianyu_goods_auto_delivery_config")
+@Document(collection = "xianyu_goods_auto_delivery_config")
+@CompoundIndex(name = "idx_delivery_account_goods_sku", def = "{'xianyuAccountId': 1, 'xyGoodsId': 1, 'skuId': 1}")
 public class XianyuGoodsAutoDeliveryConfig {
     
     /**
      * 主键ID
      */
-    @TableId(type = IdType.AUTO)
+    @Id
     private Long id;
     
     /**
@@ -72,12 +75,10 @@ public class XianyuGoodsAutoDeliveryConfig {
     /**
      * 创建时间
      */
-    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime = LocalDateTime.now();
     
     /**
      * 更新时间
      */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime = LocalDateTime.now();
 }

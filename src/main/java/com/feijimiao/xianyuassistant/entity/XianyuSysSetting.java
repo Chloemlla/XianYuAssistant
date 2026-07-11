@@ -1,9 +1,9 @@
 package com.feijimiao.xianyuassistant.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * 系统配置实体类
@@ -11,13 +11,14 @@ import lombok.Data;
  * @date 2026/4/22
  */
 @Data
-@TableName("xianyu_sys_setting")
+@Document(collection = "xianyu_sys_setting")
 public class XianyuSysSetting {
 
-    @TableId(type = IdType.AUTO)
+    @Id
     private Long id;
 
     /** 配置键 */
+    @Indexed(unique = true)
     private String settingKey;
 
     /** 配置值 */

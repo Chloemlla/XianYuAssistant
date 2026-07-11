@@ -1,9 +1,9 @@
 package com.feijimiao.xianyuassistant.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 
 
@@ -11,13 +11,13 @@ import lombok.Data;
  * 闲鱼账号实体类
  */
 @Data
-@TableName("xianyu_account")
+@Document(collection = "xianyu_account")
 public class XianyuAccount {
     
     /**
      * 主键ID
      */
-    @TableId(type = IdType.AUTO)
+    @Id
     private Long id;
     
     /**
@@ -28,6 +28,7 @@ public class XianyuAccount {
     /**
      * UNB标识
      */
+    @Indexed
     private String unb;
     
     /**

@@ -8,8 +8,9 @@ app:
 ai:
   enabled: true
   vectorstore:
-    simple:
-          file-path: dbdata/vectorstore.json
+    mongodb:
+      collection-name: ${MONGODB_VECTOR_COLLECTION:xianyu_vector_store}
+      index-name: ${MONGODB_VECTOR_INDEX:xianyu_vector_index}
 
 # JWT配置
 jwt:
@@ -21,20 +22,14 @@ spring:
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
-  datasource:
-    url: jdbc:sqlite:dbdata/xianyu_assistant.db
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/xianyu_assistant}
+      auto-index-creation: true
   # AI配置说明：
   # - ai_api_key、ai_base_url、ai_model 配置在数据库 xianyu_sys_setting 表中
   # - 通过 DynamicAIChatClientManager 动态读取，支持热更新无需重启
   # - 默认值：base_url=https://dashscope.aliyuncs.com/compatible-mode, model=deepseek-v3
-
-# SimpleVectorStore配置（本地文件持久化）
-
-# MyBatis配置
-mybatis-plus:
-  type-handlers-package: com.feijimiao.xianyuassistant.config
-  configuration:
-    default-enum-type-handler: org.apache.ibatis.type.EnumOrdinalTypeHandler
 
 # WebSocket配置（参考Python代码）
 websocket:

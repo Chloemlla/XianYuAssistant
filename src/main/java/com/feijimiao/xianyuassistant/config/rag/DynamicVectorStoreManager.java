@@ -7,16 +7,13 @@ import org.springframework.ai.model.SimpleApiKey;
 import org.springframework.ai.openai.OpenAiEmbeddingModel;
 import org.springframework.ai.openai.OpenAiEmbeddingOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
-import org.springframework.ai.vectorstore.SimpleVectorStore;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.mongodb.atlas.MongoDBAtlasVectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -43,11 +40,17 @@ public class DynamicVectorStoreManager {
     private static final String DEFAULT_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode";
     private static final String DEFAULT_EMBEDDING_MODEL = "text-embedding-v3";
 
-    @Value("${ai.vectorstore.simple.file-path:dbdata/vectorstore.json}")
-    private String vectorStoreFilePath;
+    @Value("${ai.vectorstore.mongodb.collection-name:xianyu_vector_store}")
+    private String collectionName;
+
+    @Value("${ai.vectorstore.mongodb.index-name:xianyu_vector_index}")
+    private String indexName;
 
     @Autowired
     private SysSettingService sysSettingService;
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     /** 当前 VectorStore 实例 */
     private volatile VectorStore vectorStore;
@@ -161,18 +164,9 @@ public class DynamicVectorStoreManager {
         }
     }
 
-    /**
-     * 保存向量数据到文件
-     */
+    /** MongoDB 向量存储会在写入时立即持久化。 */
     public void saveToFile() {
-        if (vectorStore instanceof SimpleVectorStore) {
-            try {
-                ((SimpleVectorStore) vectorStore).save(new File(vectorStoreFilePath));
-                log.debug("[VectorStore] 向量数据已保存到: {}", vectorStoreFilePath);
-            } catch (Exception e) {
-                log.warn("[VectorStore] 保存向量数据失败: {}", e.getMessage());
-            }
-        }
+        log.trace("[VectorStore] MongoDB 向量数据无需文件保存");
     }
 
     /**
@@ -195,29 +189,11 @@ public class DynamicVectorStoreManager {
             OpenAiEmbeddingModel embeddingModel = new OpenAiEmbeddingModel(
                     openAiApi, MetadataMode.EMBED, embeddingOptions);
 
-            // 创建 SimpleVectorStore
-            SimpleVectorStore simpleVectorStore = SimpleVectorStore.builder(embeddingModel).build();
-
-            // 尝试从文件加载已有数据
-            Path path = Paths.get(vectorStoreFilePath);
-            if (Files.exists(path)) {
-                try {
-                    simpleVectorStore.load(new File(vectorStoreFilePath));
-                    log.info("[VectorStore] 成功从文件加载向量数据: {}", vectorStoreFilePath);
-                } catch (Exception e) {
-                    log.warn("[VectorStore] 加载向量数据失败，将创建新的向量存储: {}", e.getMessage());
-                }
-            } else {
-                // 确保父目录存在
-                try {
-                    Files.createDirectories(path.getParent());
-                    log.info("[VectorStore] 创建向量存储目录: {}", path.getParent());
-                } catch (Exception e) {
-                    log.warn("[VectorStore] 创建目录失败: {}", e.getMessage());
-                }
-            }
-
-            return simpleVectorStore;
+            return MongoDBAtlasVectorStore.builder(mongoTemplate, embeddingModel)
+                    .collectionName(collectionName)
+                    .vectorIndexName(indexName)
+                    .initializeSchema(true)
+                    .build();
 
         } catch (Exception e) {
             log.error("[VectorStore] 创建 VectorStore 失败", e);

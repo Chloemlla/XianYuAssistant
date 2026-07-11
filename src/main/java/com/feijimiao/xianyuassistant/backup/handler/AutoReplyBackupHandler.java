@@ -1,9 +1,12 @@
 package com.feijimiao.xianyuassistant.backup.handler;
 
 import com.feijimiao.xianyuassistant.backup.DataBackupHandler;
+import com.feijimiao.xianyuassistant.entity.XianyuAccount;
+import com.feijimiao.xianyuassistant.entity.XianyuGoodsConfig;
+import com.feijimiao.xianyuassistant.mapper.XianyuAccountMapper;
+import com.feijimiao.xianyuassistant.mapper.XianyuGoodsConfigMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -13,7 +16,10 @@ import java.util.*;
 public class AutoReplyBackupHandler implements DataBackupHandler {
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private XianyuGoodsConfigMapper goodsConfigMapper;
+
+    @Autowired
+    private XianyuAccountMapper accountMapper;
 
     @Override
     public String getModuleKey() {
@@ -27,21 +33,16 @@ public class AutoReplyBackupHandler implements DataBackupHandler {
 
     @Override
     public Map<String, Object> exportData() {
-        List<Map<String, Object>> configs = jdbcTemplate.queryForList(
-                "SELECT c.xy_goods_id, c.xianyu_auto_reply_on, c.xianyu_auto_reply_context_on, c.fixed_material, a.unb " +
-                "FROM xianyu_goods_config c " +
-                "LEFT JOIN xianyu_account a ON c.xianyu_account_id = a.id " +
-                "WHERE c.xianyu_auto_reply_on IS NOT NULL");
-
         List<Map<String, Object>> result = new ArrayList<>();
-        for (Map<String, Object> config : configs) {
-            if (config.get("unb") == null) continue;
+        for (XianyuGoodsConfig config : goodsConfigMapper.selectAllWithAutoReply()) {
+            XianyuAccount account = accountMapper.selectById(config.getXianyuAccountId());
+            if (account == null) continue;
             Map<String, Object> map = new LinkedHashMap<>();
-            map.put("unb", config.get("unb"));
-            map.put("xyGoodsId", config.get("xy_goods_id"));
-            map.put("autoReplyOn", config.get("xianyu_auto_reply_on"));
-            map.put("autoReplyContextOn", config.get("xianyu_auto_reply_context_on"));
-            map.put("fixedMaterial", config.get("fixed_material"));
+            map.put("unb", account.getUnb());
+            map.put("xyGoodsId", config.getXyGoodsId());
+            map.put("autoReplyOn", config.getXianyuAutoReplyOn());
+            map.put("autoReplyContextOn", config.getXianyuAutoReplyContextOn());
+            map.put("fixedMaterial", config.getFixedMaterial());
             result.add(map);
         }
 
@@ -81,18 +82,20 @@ public class AutoReplyBackupHandler implements DataBackupHandler {
                 Integer autoReplyContextOn = map.get("autoReplyContextOn") != null ? ((Number) map.get("autoReplyContextOn")).intValue() : null;
                 String fixedMaterial = (String) map.get("fixedMaterial");
 
-                List<Map<String, Object>> existing = jdbcTemplate.queryForList(
-                        "SELECT * FROM xianyu_goods_config WHERE xianyu_account_id = ? AND xy_goods_id = ?",
-                        accountId, xyGoodsId);
-
-                if (existing.isEmpty()) {
-                    jdbcTemplate.update(
-                            "INSERT INTO xianyu_goods_config (xianyu_account_id, xy_goods_id, xianyu_auto_reply_on, xianyu_auto_reply_context_on, fixed_material) VALUES (?, ?, ?, ?, ?)",
-                            accountId, xyGoodsId, autoReplyOn, autoReplyContextOn, fixedMaterial);
+                XianyuGoodsConfig existing = goodsConfigMapper.selectByAccountAndGoodsId(accountId, xyGoodsId);
+                if (existing == null) {
+                    XianyuGoodsConfig config = new XianyuGoodsConfig();
+                    config.setXianyuAccountId(accountId);
+                    config.setXyGoodsId(xyGoodsId);
+                    config.setXianyuAutoReplyOn(autoReplyOn);
+                    config.setXianyuAutoReplyContextOn(autoReplyContextOn);
+                    config.setFixedMaterial(fixedMaterial);
+                    goodsConfigMapper.insert(config);
                 } else {
-                    jdbcTemplate.update(
-                            "UPDATE xianyu_goods_config SET xianyu_auto_reply_on = ?, xianyu_auto_reply_context_on = ?, fixed_material = ? WHERE xianyu_account_id = ? AND xy_goods_id = ?",
-                            autoReplyOn, autoReplyContextOn, fixedMaterial, accountId, xyGoodsId);
+                    existing.setXianyuAutoReplyOn(autoReplyOn);
+                    existing.setXianyuAutoReplyContextOn(autoReplyContextOn);
+                    existing.setFixedMaterial(fixedMaterial);
+                    goodsConfigMapper.update(existing);
                 }
             } catch (Exception e) {
                 log.warn("[AutoReplyBackup] 导入单条自动回复配置失败: {}", e.getMessage());

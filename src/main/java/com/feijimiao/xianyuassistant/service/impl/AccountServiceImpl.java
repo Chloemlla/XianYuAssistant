@@ -1,6 +1,5 @@
 package com.feijimiao.xianyuassistant.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.feijimiao.xianyuassistant.entity.XianyuAccount;
 import com.feijimiao.xianyuassistant.entity.XianyuCookie;
 import com.feijimiao.xianyuassistant.entity.XianyuChatMessage;
@@ -14,6 +13,7 @@ import com.feijimiao.xianyuassistant.mapper.XianyuGoodsAutoDeliveryConfigMapper;
 import com.feijimiao.xianyuassistant.mapper.XianyuGoodsOrderMapper;
 import com.feijimiao.xianyuassistant.mapper.XianyuGoodsAutoReplyRecordMapper;
 import com.feijimiao.xianyuassistant.mapper.XianyuOperationLogMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.service.AccountService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,7 +113,7 @@ public class AccountServiceImpl implements AccountService {
                     accountNote, unb, mH5Tk != null);
 
             // 1. 检查账号是否已存在（根据UNB）
-            LambdaQueryWrapper<XianyuAccount> accountQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuAccount> accountQuery = new MongoQueryWrapper<>();
             accountQuery.eq(XianyuAccount::getUnb, unb);
             XianyuAccount existingAccount = accountMapper.selectOne(accountQuery);
 
@@ -140,7 +140,7 @@ public class AccountServiceImpl implements AccountService {
             }
 
             // 2. 保存或更新Cookie
-            LambdaQueryWrapper<XianyuCookie> cookieQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuCookie> cookieQuery = new MongoQueryWrapper<>();
             cookieQuery.eq(XianyuCookie::getXianyuAccountId, accountId);
             XianyuCookie existingCookie = cookieMapper.selectOne(cookieQuery);
 
@@ -184,7 +184,7 @@ public class AccountServiceImpl implements AccountService {
             log.info("根据账号ID获取Cookie: accountId={}", accountId);
 
             // 查询最新的有效Cookie
-            LambdaQueryWrapper<XianyuCookie> cookieQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuCookie> cookieQuery = new MongoQueryWrapper<>();
             cookieQuery.eq(XianyuCookie::getXianyuAccountId, accountId)
                     .eq(XianyuCookie::getCookieStatus, 1) // 只查询有效的Cookie
                     .orderByDesc(XianyuCookie::getCreatedTime)
@@ -209,7 +209,7 @@ public class AccountServiceImpl implements AccountService {
     public String getCookieByUnb(String unb) {
         try {
             // 1. 根据UNB查询账号
-            LambdaQueryWrapper<XianyuAccount> accountQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuAccount> accountQuery = new MongoQueryWrapper<>();
             accountQuery.eq(XianyuAccount::getUnb, unb);
             XianyuAccount account = accountMapper.selectOne(accountQuery);
 
@@ -219,7 +219,7 @@ public class AccountServiceImpl implements AccountService {
             }
 
             // 2. 查询Cookie
-            LambdaQueryWrapper<XianyuCookie> cookieQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuCookie> cookieQuery = new MongoQueryWrapper<>();
             cookieQuery.eq(XianyuCookie::getXianyuAccountId, account.getId())
                     .eq(XianyuCookie::getCookieStatus, 1) // 只查询有效的Cookie
                     .orderByDesc(XianyuCookie::getCreatedTime)
@@ -244,7 +244,7 @@ public class AccountServiceImpl implements AccountService {
     public String getCookieByAccountNote(String accountNote) {
         try {
             // 1. 根据账号备注查询账号
-            LambdaQueryWrapper<XianyuAccount> accountQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuAccount> accountQuery = new MongoQueryWrapper<>();
             accountQuery.eq(XianyuAccount::getAccountNote, accountNote);
             XianyuAccount account = accountMapper.selectOne(accountQuery);
 
@@ -254,7 +254,7 @@ public class AccountServiceImpl implements AccountService {
             }
 
             // 2. 查询Cookie
-            LambdaQueryWrapper<XianyuCookie> cookieQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuCookie> cookieQuery = new MongoQueryWrapper<>();
             cookieQuery.eq(XianyuCookie::getXianyuAccountId, account.getId())
                     .eq(XianyuCookie::getCookieStatus, 1)
                     .orderByDesc(XianyuCookie::getCreatedTime)
@@ -282,7 +282,7 @@ public class AccountServiceImpl implements AccountService {
             log.info("更新Cookie: accountId={}", accountId);
 
             // 查询现有Cookie
-            LambdaQueryWrapper<XianyuCookie> cookieQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuCookie> cookieQuery = new MongoQueryWrapper<>();
             cookieQuery.eq(XianyuCookie::getXianyuAccountId, accountId);
             XianyuCookie cookie = cookieMapper.selectOne(cookieQuery);
 
@@ -320,7 +320,7 @@ public class AccountServiceImpl implements AccountService {
             log.info("根据账号ID获取m_h5_tk: accountId={}", accountId);
 
             // 查询Cookie记录
-            LambdaQueryWrapper<XianyuCookie> cookieQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuCookie> cookieQuery = new MongoQueryWrapper<>();
             cookieQuery.eq(XianyuCookie::getXianyuAccountId, accountId)
                     .eq(XianyuCookie::getCookieStatus, 1)
                     .orderByDesc(XianyuCookie::getCreatedTime)
@@ -353,7 +353,7 @@ public class AccountServiceImpl implements AccountService {
             log.info("根据账号备注获取账号ID: accountNote={}", accountNote);
 
             // 查询账号
-            LambdaQueryWrapper<XianyuAccount> accountQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuAccount> accountQuery = new MongoQueryWrapper<>();
             accountQuery.eq(XianyuAccount::getAccountNote, accountNote);
             XianyuAccount account = accountMapper.selectOne(accountQuery);
 
@@ -377,7 +377,7 @@ public class AccountServiceImpl implements AccountService {
             log.info("根据UNB获取账号ID: unb={}", unb);
 
             // 查询账号
-            LambdaQueryWrapper<XianyuAccount> accountQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuAccount> accountQuery = new MongoQueryWrapper<>();
             accountQuery.eq(XianyuAccount::getUnb, unb);
             XianyuAccount account = accountMapper.selectOne(accountQuery);
 
@@ -408,7 +408,7 @@ public class AccountServiceImpl implements AccountService {
             log.info("更新Cookie状态: accountId={}, cookieStatus={}, sendNotify={}", accountId, cookieStatus, sendNotify);
 
             // 查询Cookie记录
-            LambdaQueryWrapper<XianyuCookie> cookieQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuCookie> cookieQuery = new MongoQueryWrapper<>();
             cookieQuery.eq(XianyuCookie::getXianyuAccountId, accountId);
             XianyuCookie cookie = cookieMapper.selectOne(cookieQuery);
 
@@ -459,7 +459,7 @@ public class AccountServiceImpl implements AccountService {
             log.info("删除聊天消息数据: accountId={}, 删除数量={}", accountId, chatMessageCount);
             
             // 2. 删除闲鱼商品信息表数据
-            LambdaQueryWrapper<XianyuGoodsInfo> goodsInfoQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsInfo> goodsInfoQuery = new MongoQueryWrapper<>();
             goodsInfoQuery.eq(XianyuGoodsInfo::getXianyuAccountId, accountId);
             int goodsInfoCount = goodsInfoMapper.delete(goodsInfoQuery);
             log.info("删除商品信息数据: accountId={}, 删除数量={}", accountId, goodsInfoCount);
@@ -485,7 +485,7 @@ public class AccountServiceImpl implements AccountService {
             log.info("删除操作记录数据: accountId={}, 删除数量={}", accountId, operationLogCount);
             
             // 8. 删除Cookie数据
-            LambdaQueryWrapper<XianyuCookie> cookieQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuCookie> cookieQuery = new MongoQueryWrapper<>();
             cookieQuery.eq(XianyuCookie::getXianyuAccountId, accountId);
             int cookieCount = cookieMapper.delete(cookieQuery);
             log.info("删除Cookie数据: accountId={}, 删除数量={}", accountId, cookieCount);
@@ -524,7 +524,7 @@ public class AccountServiceImpl implements AccountService {
             String mH5Tk = extractMH5TkFromCookie(cookieText);
 
             // 3. 查询现有Cookie
-            LambdaQueryWrapper<XianyuCookie> cookieQuery = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuCookie> cookieQuery = new MongoQueryWrapper<>();
             cookieQuery.eq(XianyuCookie::getXianyuAccountId, accountId);
             XianyuCookie cookie = cookieMapper.selectOne(cookieQuery);
 

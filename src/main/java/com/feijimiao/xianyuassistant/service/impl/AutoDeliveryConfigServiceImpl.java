@@ -1,6 +1,6 @@
 package com.feijimiao.xianyuassistant.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.common.ResultObject;
 import com.feijimiao.xianyuassistant.entity.XianyuGoodsAutoDeliveryConfig;
 import com.feijimiao.xianyuassistant.mapper.XianyuGoodsAutoDeliveryConfigMapper;
@@ -161,7 +161,7 @@ public class AutoDeliveryConfigServiceImpl implements AutoDeliveryConfigService 
     @Override
     public ResultObject<Void> deleteConfig(Long xianyuAccountId, String xyGoodsId) {
         try {
-            LambdaQueryWrapper<XianyuGoodsAutoDeliveryConfig> wrapper = new LambdaQueryWrapper<>();
+            MongoQueryWrapper<XianyuGoodsAutoDeliveryConfig> wrapper = new MongoQueryWrapper<>();
             wrapper.eq(XianyuGoodsAutoDeliveryConfig::getXianyuAccountId, xianyuAccountId)
                    .eq(XianyuGoodsAutoDeliveryConfig::getXyGoodsId, xyGoodsId);
             

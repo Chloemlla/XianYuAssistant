@@ -1,6 +1,6 @@
 package com.feijimiao.xianyuassistant.backup.handler;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.backup.DataBackupHandler;
 import com.feijimiao.xianyuassistant.entity.XianyuAccount;
 import com.feijimiao.xianyuassistant.entity.XianyuKamiConfig;
@@ -107,7 +107,7 @@ public class KamiBackupHandler implements DataBackupHandler {
                         continue;
                     }
 
-                    LambdaQueryWrapper<XianyuKamiConfig> wrapper = new LambdaQueryWrapper<>();
+                    MongoQueryWrapper<XianyuKamiConfig> wrapper = new MongoQueryWrapper<>();
                     wrapper.eq(XianyuKamiConfig::getXianyuAccountId, accountId)
                            .eq(XianyuKamiConfig::getAliasName, aliasName);
                     XianyuKamiConfig existing = kamiConfigMapper.selectOne(wrapper);
@@ -157,7 +157,7 @@ public class KamiBackupHandler implements DataBackupHandler {
                         continue;
                     }
 
-                    LambdaQueryWrapper<XianyuKamiItem> wrapper = new LambdaQueryWrapper<>();
+                    MongoQueryWrapper<XianyuKamiItem> wrapper = new MongoQueryWrapper<>();
                     wrapper.eq(XianyuKamiItem::getKamiConfigId, configId)
                            .eq(XianyuKamiItem::getKamiContent, kamiContent);
                     XianyuKamiItem existing = kamiItemMapper.selectOne(wrapper);

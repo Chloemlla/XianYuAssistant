@@ -1,135 +1,33 @@
 package com.feijimiao.xianyuassistant.mapper;
 
 import com.feijimiao.xianyuassistant.entity.XianyuChatMessage;
-import org.apache.ibatis.annotations.*;
+import com.feijimiao.xianyuassistant.persistence.AbstractMongoMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoIdGenerator;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-/**
- * 闲鱼聊天消息Mapper
- */
-@Mapper
-public interface XianyuChatMessageMapper {
-    
-    /**
-     * 插入聊天消息
-     */
-    @Insert("INSERT INTO xianyu_chat_message (" +
-            "xianyu_account_id, lwp, pnm_id, s_id, " +
-            "content_type, msg_content, " +
-            "sender_user_name, sender_user_id, sender_app_v, sender_os_type, " +
-            "reminder_url, xy_goods_id, complete_msg, message_time" +
-            ") VALUES (" +
-            "#{xianyuAccountId}, #{lwp}, #{pnmId}, #{sId}, " +
-            "#{contentType}, #{msgContent}, " +
-            "#{senderUserName}, #{senderUserId}, #{senderAppV}, #{senderOsType}, " +
-            "#{reminderUrl}, #{xyGoodsId}, #{completeMsg}, #{messageTime}" +
-            ")")
-    @Options(useGeneratedKeys = true, keyProperty = "id")
-    int insert(XianyuChatMessage message);
-    
-    /**
-     * 根据pnm_id查询（防止重复）
-     */
-    @Select("SELECT * FROM xianyu_chat_message " +
-            "WHERE xianyu_account_id = #{accountId} AND pnm_id = #{pnmId}")
-    XianyuChatMessage findByPnmId(@Param("accountId") Long accountId, 
-                                  @Param("pnmId") String pnmId);
-    
-    /**
-     * 查询账号的所有消息
-     */
-    @Select("SELECT * FROM xianyu_chat_message " +
-            "WHERE xianyu_account_id = #{accountId} " +
-            "ORDER BY message_time DESC " +
-            "LIMIT #{limit} OFFSET #{offset}")
-    List<XianyuChatMessage> findByAccountId(@Param("accountId") Long accountId,
-                                            @Param("limit") int limit,
-                                            @Param("offset") int offset);
-    
-    /**
-     * 根据s_id查询会话的消息
-     */
-    @Select("SELECT * FROM xianyu_chat_message " +
-            "WHERE s_id = #{sId} " +
-            "ORDER BY message_time ASC")
-    List<XianyuChatMessage> findBySId(@Param("sId") String sId);
-    
-    /**
-     * 根据发送者ID查询消息
-     */
-    @Select("SELECT * FROM xianyu_chat_message " +
-            "WHERE sender_user_id = #{senderUserId} " +
-            "ORDER BY message_time DESC")
-    List<XianyuChatMessage> findBySenderUserId(@Param("senderUserId") String senderUserId);
-    
-    /**
-     * 根据账号ID删除消息
-     */
-    @Delete("DELETE FROM xianyu_chat_message WHERE xianyu_account_id = #{accountId}")
-    int deleteByAccountId(@Param("accountId") Long accountId);
-    
-    /**
-     * 分页查询消息（支持按xy_goods_id过滤和sender_user_id过滤）
-     *
-     * @param accountId 账号ID（必选）
-     * @param xyGoodsId 商品ID（可选，为null时不过滤）
-     * @param senderUserId 发送者用户ID（可选，为null时不过滤）
-     * @param limit 每页数量
-     * @param offset 偏移量
-     * @return 消息列表
-     */
-    @Select("<script>" +
-            "SELECT * FROM xianyu_chat_message " +
-            "WHERE xianyu_account_id = #{accountId} " +
-            "<if test='xyGoodsId != null and xyGoodsId != \"\"'>" +
-            "AND xy_goods_id = #{xyGoodsId} " +
-            "</if>" +
-            "<if test='senderUserId != null and senderUserId != \"\"'>" +
-            "AND sender_user_id != #{senderUserId} " +
-            "</if>" +
-            "ORDER BY message_time DESC " +
-            "LIMIT #{limit} OFFSET #{offset}" +
-            "</script>")
-    List<XianyuChatMessage> findMessagesByPage(@Param("accountId") Long accountId,
-                                               @Param("xyGoodsId") String xyGoodsId,
-                                               @Param("senderUserId") String senderUserId,
-                                               @Param("limit") int limit,
-                                               @Param("offset") int offset);
-    
-    /**
-     * 统计消息总数（支持按xy_goods_id过滤和sender_user_id过滤）
-     *
-     * @param accountId 账号ID（必选）
-     * @param xyGoodsId 商品ID（可选，为null时不过滤）
-     * @param senderUserId 发送者用户ID（可选，为null时不过滤）
-     * @return 消息总数
-     */
-    @Select("<script>" +
-            "SELECT COUNT(*) FROM xianyu_chat_message " +
-            "WHERE xianyu_account_id = #{accountId} " +
-            "<if test='xyGoodsId != null and xyGoodsId != \"\"'>" +
-            "AND xy_goods_id = #{xyGoodsId} " +
-            "</if>" +
-            "<if test='senderUserId != null and senderUserId != \"\"'>" +
-            "AND sender_user_id != #{senderUserId} " +
-            "</if>" +
-            "</script>")
-    int countMessages(@Param("accountId") Long accountId,
-                     @Param("xyGoodsId") String xyGoodsId,
-                     @Param("senderUserId") String senderUserId);
-    
-    /**
-     * 根据会话ID查询最近N条消息（支持分页）
-     *
-     * @param sId 会话ID
-     * @param limit 限制条数
-     * @param offset 偏移量
-     * @return 消息列表
-     */
-    @Select("SELECT * FROM xianyu_chat_message " +
-            "WHERE s_id = #{sId} " +
-            "ORDER BY message_time DESC " +
-            "LIMIT #{limit} OFFSET #{offset}")
-    List<XianyuChatMessage> findRecentBySId(@Param("sId") String sId, @Param("limit") int limit, @Param("offset") int offset);
+@Repository
+public class XianyuChatMessageMapper extends AbstractMongoMapper<XianyuChatMessage> {
+    public XianyuChatMessageMapper(MongoTemplate template, MongoIdGenerator ids) { super(template, ids, XianyuChatMessage.class); }
+
+    public XianyuChatMessage findByPnmId(Long accountId, String pnmId) { return mongoTemplate.findOne(Query.query(Criteria.where("xianyuAccountId").is(accountId).and("pnmId").is(pnmId)), entityType); }
+    public List<XianyuChatMessage> findByAccountId(Long accountId, int limit, int offset) { return mongoTemplate.find(Query.query(Criteria.where("xianyuAccountId").is(accountId)).with(Sort.by(Sort.Direction.DESC, "messageTime")).skip(offset).limit(limit), entityType); }
+    public List<XianyuChatMessage> findBySId(String sId) { return mongoTemplate.find(Query.query(Criteria.where("sId").is(sId)).with(Sort.by(Sort.Direction.ASC, "messageTime")), entityType); }
+    public List<XianyuChatMessage> findBySenderUserId(String senderUserId) { return mongoTemplate.find(Query.query(Criteria.where("senderUserId").is(senderUserId)).with(Sort.by(Sort.Direction.DESC, "messageTime")), entityType); }
+    public int deleteByAccountId(Long accountId) { return Math.toIntExact(mongoTemplate.remove(Query.query(Criteria.where("xianyuAccountId").is(accountId)), entityType).getDeletedCount()); }
+    public List<XianyuChatMessage> findMessagesByPage(Long accountId, String xyGoodsId, String senderUserId, int limit, int offset) { Query q = messageQuery(accountId, xyGoodsId, senderUserId).with(Sort.by(Sort.Direction.DESC, "messageTime")).skip(offset).limit(limit); return mongoTemplate.find(q, entityType); }
+    public int countMessages(Long accountId, String xyGoodsId, String senderUserId) { return Math.toIntExact(mongoTemplate.count(messageQuery(accountId, xyGoodsId, senderUserId), entityType)); }
+    public List<XianyuChatMessage> findRecentBySId(String sId, int limit, int offset) { return mongoTemplate.find(Query.query(Criteria.where("sId").is(sId)).with(Sort.by(Sort.Direction.DESC, "messageTime")).skip(offset).limit(limit), entityType); }
+
+    private Query messageQuery(Long accountId, String xyGoodsId, String senderUserId) {
+        Criteria c = Criteria.where("xianyuAccountId").is(accountId);
+        if (xyGoodsId != null && !xyGoodsId.isBlank()) c.and("xyGoodsId").is(xyGoodsId);
+        if (senderUserId != null && !senderUserId.isBlank()) c.and("senderUserId").ne(senderUserId);
+        return Query.query(c);
+    }
 }

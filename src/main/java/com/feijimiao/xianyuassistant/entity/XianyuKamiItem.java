@@ -1,15 +1,18 @@
 package com.feijimiao.xianyuassistant.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
 @Data
-@TableName("xianyu_kami_item")
+@Document(collection = "xianyu_kami_item")
+@CompoundIndex(name = "idx_kami_config_status_order", def = "{'kamiConfigId': 1, 'status': 1, 'sortOrder': 1}")
 public class XianyuKamiItem {
 
-    @TableId(type = IdType.AUTO)
+    @Id
     private Long id;
 
     private Long kamiConfigId;
@@ -24,6 +27,5 @@ public class XianyuKamiItem {
 
     private Integer sortOrder;
 
-    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime = LocalDateTime.now();
 }

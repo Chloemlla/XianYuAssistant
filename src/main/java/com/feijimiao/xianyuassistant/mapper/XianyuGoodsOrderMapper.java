@@ -1,209 +1,49 @@
 package com.feijimiao.xianyuassistant.mapper;
 
 import com.feijimiao.xianyuassistant.entity.XianyuGoodsOrder;
-import org.apache.ibatis.annotations.*;
-
+import com.feijimiao.xianyuassistant.persistence.AbstractMongoMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoIdGenerator;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Repository;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.regex.Pattern;
 
-/**
- * 商品订单Mapper
- */
-@Mapper
-public interface XianyuGoodsOrderMapper {
-    
-    @Insert("INSERT INTO xianyu_goods_order (xianyu_account_id, xianyu_goods_id, xy_goods_id, pnm_id, order_id, buyer_user_id, buyer_user_name, sid, content, state, fail_reason, confirm_state, goods_title, sku_name, order_create_time, pay_success_time, consign_time, total_price, buy_num) " +
-            "VALUES (#{xianyuAccountId}, #{xianyuGoodsId}, #{xyGoodsId}, #{pnmId}, #{orderId}, #{buyerUserId}, #{buyerUserName}, #{sid}, #{content}, #{state}, #{failReason}, #{confirmState}, #{goodsTitle}, #{skuName}, #{orderCreateTime}, #{paySuccessTime}, #{consignTime}, #{totalPrice}, #{buyNum})")
-    @Options(useGeneratedKeys = true, keyProperty = "id")
-    int insert(XianyuGoodsOrder record);
-    
-    @Select("SELECT * FROM xianyu_goods_order WHERE xianyu_account_id = #{accountId} ORDER BY create_time DESC")
-    List<XianyuGoodsOrder> selectByAccountId(@Param("accountId") Long accountId);
-    
-    @Delete("DELETE FROM xianyu_goods_order WHERE xianyu_account_id = #{accountId}")
-    int deleteByAccountId(@Param("accountId") Long accountId);
-    
-    @Select("<script>" +
-            "SELECT r.*, " +
-            "g.title as goods_title " +
-            "FROM xianyu_goods_order r " +
-            "LEFT JOIN xianyu_goods g ON r.xy_goods_id = g.xy_good_id " +
-            "WHERE r.xianyu_account_id = #{accountId} " +
-            "<if test='xyGoodsId != null and xyGoodsId != \"\"'>" +
-            "AND r.xy_goods_id = #{xyGoodsId} " +
-            "</if>" +
-            "<if test='keyword != null and keyword != \"\"'>" +
-            "AND (g.title LIKE '%' || #{keyword} || '%' OR r.sku_name LIKE '%' || #{keyword} || '%' OR r.buyer_user_name LIKE '%' || #{keyword} || '%' OR r.content LIKE '%' || #{keyword} || '%') " +
-            "</if>" +
-            "ORDER BY r.create_time DESC " +
-            "LIMIT #{limit} OFFSET #{offset}" +
-            "</script>")
-    @Results({
-        @Result(property = "id", column = "id"),
-        @Result(property = "xianyuAccountId", column = "xianyu_account_id"),
-        @Result(property = "xianyuGoodsId", column = "xianyu_goods_id"),
-        @Result(property = "xyGoodsId", column = "xy_goods_id"),
-        @Result(property = "pnmId", column = "pnm_id"),
-        @Result(property = "orderId", column = "order_id"),
-        @Result(property = "buyerUserId", column = "buyer_user_id"),
-        @Result(property = "buyerUserName", column = "buyer_user_name"),
-        @Result(property = "sid", column = "sid"),
-        @Result(property = "content", column = "content"),
-        @Result(property = "state", column = "state"),
-        @Result(property = "failReason", column = "fail_reason"),
-        @Result(property = "confirmState", column = "confirm_state"),
-        @Result(property = "createTime", column = "create_time"),
-        @Result(property = "goodsTitle", column = "goods_title"),
-        @Result(property = "skuName", column = "sku_name"),
-        @Result(property = "orderCreateTime", column = "order_create_time"),
-        @Result(property = "paySuccessTime", column = "pay_success_time"),
-        @Result(property = "consignTime", column = "consign_time"),
-        @Result(property = "totalPrice", column = "total_price"),
-        @Result(property = "buyNum", column = "buy_num")
-    })
-    List<XianyuGoodsOrder> selectByAccountIdWithPage(
-            @Param("accountId") Long accountId,
-            @Param("xyGoodsId") String xyGoodsId,
-            @Param("keyword") String keyword,
-            @Param("limit") int limit,
-            @Param("offset") int offset);
-    
-    @Select("<script>" +
-            "SELECT COUNT(*) FROM xianyu_goods_order r " +
-            "LEFT JOIN xianyu_goods g ON r.xy_goods_id = g.xy_good_id " +
-            "WHERE r.xianyu_account_id = #{accountId} " +
-            "<if test='xyGoodsId != null and xyGoodsId != \"\"'>" +
-            "AND r.xy_goods_id = #{xyGoodsId} " +
-            "</if>" +
-            "<if test='keyword != null and keyword != \"\"'>" +
-            "AND (g.title LIKE '%' || #{keyword} || '%' OR r.sku_name LIKE '%' || #{keyword} || '%' OR r.buyer_user_name LIKE '%' || #{keyword} || '%' OR r.content LIKE '%' || #{keyword} || '%') " +
-            "</if>" +
-            "</script>")
-    long countByAccountId(@Param("accountId") Long accountId, @Param("xyGoodsId") String xyGoodsId, @Param("keyword") String keyword);
-    
-    @Update("UPDATE xianyu_goods_order SET state = #{state} WHERE id = #{id}")
-    int updateState(@Param("id") Long id, @Param("state") Integer state);
-    
-    @Update("UPDATE xianyu_goods_order SET state = #{state}, content = #{content} WHERE id = #{id}")
-    int updateStateAndContent(@Param("id") Long id, @Param("state") Integer state, @Param("content") String content);
-
-    @Update("UPDATE xianyu_goods_order SET state = #{state}, content = #{content}, fail_reason = #{failReason} WHERE id = #{id}")
-    int updateStateContentAndFailReason(@Param("id") Long id, @Param("state") Integer state, @Param("content") String content, @Param("failReason") String failReason);
-    
-    @Select("SELECT * FROM xianyu_goods_order WHERE xianyu_account_id = #{accountId} AND xy_goods_id = #{xyGoodsId} AND order_id = #{orderId} LIMIT 1")
-    XianyuGoodsOrder selectByOrderId(@Param("accountId") Long accountId, @Param("xyGoodsId") String xyGoodsId, @Param("orderId") String orderId);
-
-    @Select("SELECT * FROM xianyu_goods_order WHERE xianyu_account_id = #{accountId} AND order_id = #{orderId} LIMIT 1")
-    XianyuGoodsOrder selectByAccountIdAndOrderId(@Param("accountId") Long accountId, @Param("orderId") String orderId);
-    
-    @Update("UPDATE xianyu_goods_order SET confirm_state = 1 WHERE xianyu_account_id = #{accountId} AND order_id = #{orderId}")
-    int updateConfirmState(@Param("accountId") Long accountId, @Param("orderId") String orderId);
-    
-    @Select("SELECT * FROM xianyu_goods_order WHERE xianyu_account_id = #{accountId} AND pnm_id = #{pnmId}")
-    XianyuGoodsOrder selectByPnmId(@Param("accountId") Long accountId, @Param("pnmId") String pnmId);
-
-    @Select("SELECT COUNT(*) FROM xianyu_goods_order WHERE date(create_time) = date('now', '-1 day', 'localtime')")
-    int countYesterdayOrders();
-
-    @Select("SELECT COUNT(*) FROM xianyu_goods_order WHERE state = 1")
-    int countDeliverySuccess();
-
-    @Select("SELECT COUNT(*) FROM xianyu_goods_order WHERE state = -1")
-    int countDeliveryFail();
-
-    @Select("SELECT COUNT(*) FROM xianyu_goods_order")
-    int countAllOrders();
-
-    @Select("SELECT COUNT(*) FROM xianyu_goods_order WHERE date(create_time) = #{date}")
-    int countOrdersByDate(@Param("date") String date);
-
-    @Select("<script>" +
-            "SELECT r.*, g.title as goods_title " +
-            "FROM xianyu_goods_order r " +
-            "LEFT JOIN xianyu_goods g ON r.xy_goods_id = g.xy_good_id " +
-            "WHERE 1=1 " +
-            "<if test='accountId != null'>" +
-            "AND r.xianyu_account_id = #{accountId} " +
-            "</if>" +
-            "<if test='xyGoodsId != null and xyGoodsId != \"\"'>" +
-            "AND r.xy_goods_id = #{xyGoodsId} " +
-            "</if>" +
-            "<if test='orderStatus != null'>" +
-            "AND r.state = #{orderStatus} " +
-            "</if>" +
-            "<if test='keyword != null and keyword != \"\"'>" +
-            "AND (g.title LIKE '%' || #{keyword} || '%' OR r.sku_name LIKE '%' || #{keyword} || '%' OR r.buyer_user_name LIKE '%' || #{keyword} || '%' OR r.content LIKE '%' || #{keyword} || '%') " +
-            "</if>" +
-            "ORDER BY r.create_time DESC " +
-            "LIMIT #{limit} OFFSET #{offset}" +
-            "</script>")
-    @Results({
-        @Result(property = "id", column = "id"),
-        @Result(property = "xianyuAccountId", column = "xianyu_account_id"),
-        @Result(property = "xianyuGoodsId", column = "xianyu_goods_id"),
-        @Result(property = "xyGoodsId", column = "xy_goods_id"),
-        @Result(property = "pnmId", column = "pnm_id"),
-        @Result(property = "orderId", column = "order_id"),
-        @Result(property = "buyerUserId", column = "buyer_user_id"),
-        @Result(property = "buyerUserName", column = "buyer_user_name"),
-        @Result(property = "sid", column = "sid"),
-        @Result(property = "content", column = "content"),
-        @Result(property = "state", column = "state"),
-        @Result(property = "failReason", column = "fail_reason"),
-        @Result(property = "confirmState", column = "confirm_state"),
-        @Result(property = "createTime", column = "create_time"),
-        @Result(property = "goodsTitle", column = "goods_title"),
-        @Result(property = "skuName", column = "sku_name"),
-        @Result(property = "orderCreateTime", column = "order_create_time"),
-        @Result(property = "paySuccessTime", column = "pay_success_time"),
-        @Result(property = "consignTime", column = "consign_time"),
-        @Result(property = "totalPrice", column = "total_price"),
-        @Result(property = "buyNum", column = "buy_num")
-    })
-    List<XianyuGoodsOrder> selectByConditionWithPage(
-            @Param("accountId") Long accountId,
-            @Param("xyGoodsId") String xyGoodsId,
-            @Param("orderStatus") Integer orderStatus,
-            @Param("keyword") String keyword,
-            @Param("limit") int limit,
-            @Param("offset") int offset);
-
-    @Select("<script>" +
-            "SELECT COUNT(*) FROM xianyu_goods_order r " +
-            "LEFT JOIN xianyu_goods g ON r.xy_goods_id = g.xy_good_id " +
-            "WHERE 1=1 " +
-            "<if test='accountId != null'>" +
-            "AND r.xianyu_account_id = #{accountId} " +
-            "</if>" +
-            "<if test='xyGoodsId != null and xyGoodsId != \"\"'>" +
-            "AND r.xy_goods_id = #{xyGoodsId} " +
-            "</if>" +
-            "<if test='orderStatus != null'>" +
-            "AND r.state = #{orderStatus} " +
-            "</if>" +
-            "<if test='keyword != null and keyword != \"\"'>" +
-            "AND (g.title LIKE '%' || #{keyword} || '%' OR r.sku_name LIKE '%' || #{keyword} || '%' OR r.buyer_user_name LIKE '%' || #{keyword} || '%' OR r.content LIKE '%' || #{keyword} || '%') " +
-            "</if>" +
-            "</script>")
-    long countByCondition(@Param("accountId") Long accountId, @Param("xyGoodsId") String xyGoodsId, @Param("orderStatus") Integer orderStatus, @Param("keyword") String keyword);
-
-    @Select("SELECT COUNT(*) FROM xianyu_goods_order WHERE state = 1 AND date(create_time) = #{date}")
-    int countDeliverySuccessByDate(@Param("date") String date);
-
-    @Select("SELECT COUNT(*) FROM xianyu_goods_order WHERE state = -1 AND date(create_time) = #{date}")
-    int countDeliveryFailByDate(@Param("date") String date);
-
-    @Select("SELECT COALESCE(SUM(CAST(total_price AS REAL)), 0) FROM xianyu_goods_order WHERE state = 1 AND confirm_state = 1")
-    double sumDeliverySuccessAmount();
-
-    @Update("UPDATE xianyu_goods_order SET sku_name = #{skuName} WHERE id = #{id}")
-    int updateSkuName(@Param("id") Long id, @Param("skuName") String skuName);
-
-    @Update("UPDATE xianyu_goods_order SET buyer_user_name = #{buyerUserName}, order_create_time = #{orderCreateTime}, pay_success_time = #{paySuccessTime}, consign_time = #{consignTime}, sku_name = #{skuName}, goods_title = #{goodsTitle}, total_price = #{totalPrice}, buy_num = #{buyNum} WHERE id = #{id}")
-    int updateOrderDetail(@Param("id") Long id, @Param("buyerUserName") String buyerUserName, @Param("orderCreateTime") String orderCreateTime, @Param("paySuccessTime") String paySuccessTime, @Param("consignTime") String consignTime, @Param("skuName") String skuName, @Param("goodsTitle") String goodsTitle, @Param("totalPrice") String totalPrice, @Param("buyNum") Integer buyNum);
-
-    @Select("SELECT COALESCE(SUM(CAST(total_price AS REAL)), 0) FROM xianyu_goods_order WHERE state = 1 AND confirm_state = 1 AND date(create_time) = #{date}")
-    double sumDeliverySuccessAmountByDate(@Param("date") String date);
-
-    @Select("SELECT COALESCE(SUM(CAST(total_price AS REAL)), 0) FROM xianyu_goods_order WHERE state = 1 AND confirm_state = 1 AND date(create_time) >= #{startDate} AND date(create_time) <= #{endDate}")
-    double sumDeliverySuccessAmountByDateRange(@Param("startDate") String startDate, @Param("endDate") String endDate);
+@Repository
+public class XianyuGoodsOrderMapper extends AbstractMongoMapper<XianyuGoodsOrder> {
+    public XianyuGoodsOrderMapper(MongoTemplate t, MongoIdGenerator ids) { super(t, ids, XianyuGoodsOrder.class); }
+    public List<XianyuGoodsOrder> selectByAccountId(Long a){return mongoTemplate.find(Query.query(Criteria.where("xianyuAccountId").is(a)).with(Sort.by(Sort.Direction.DESC,"createTime")),entityType);}
+    public int deleteByAccountId(Long a){return Math.toIntExact(mongoTemplate.remove(Query.query(Criteria.where("xianyuAccountId").is(a)),entityType).getDeletedCount());}
+    public List<XianyuGoodsOrder> selectByAccountIdWithPage(Long a,String g,String k,int l,int o){return mongoTemplate.find(filter(a,g,null,k).with(Sort.by(Sort.Direction.DESC,"createTime")).skip(o).limit(l),entityType);}
+    public long countByAccountId(Long a,String g,String k){return mongoTemplate.count(filter(a,g,null,k),entityType);}
+    public int updateState(Long id,Integer s){return update(id,new Update().set("state",s));}
+    public int updateStateAndContent(Long id,Integer s,String c){return update(id,new Update().set("state",s).set("content",c));}
+    public int updateStateContentAndFailReason(Long id,Integer s,String c,String f){return update(id,new Update().set("state",s).set("content",c).set("failReason",f));}
+    public XianyuGoodsOrder selectByOrderId(Long a,String g,String o){return mongoTemplate.findOne(Query.query(Criteria.where("xianyuAccountId").is(a).and("xyGoodsId").is(g).and("orderId").is(o)),entityType);}
+    public XianyuGoodsOrder selectByAccountIdAndOrderId(Long a,String o){return mongoTemplate.findOne(Query.query(Criteria.where("xianyuAccountId").is(a).and("orderId").is(o)),entityType);}
+    public int updateConfirmState(Long a,String o){return Math.toIntExact(mongoTemplate.updateMulti(Query.query(Criteria.where("xianyuAccountId").is(a).and("orderId").is(o)),new Update().set("confirmState",1),entityType).getModifiedCount());}
+    public XianyuGoodsOrder selectByPnmId(Long a,String p){return mongoTemplate.findOne(Query.query(Criteria.where("xianyuAccountId").is(a).and("pnmId").is(p)),entityType);}
+    public int countYesterdayOrders(){return countOrdersByDate(LocalDate.now().minusDays(1).toString());}
+    public int countDeliverySuccess(){return countState(1,null);}
+    public int countDeliveryFail(){return countState(-1,null);}
+    public int countAllOrders(){return Math.toIntExact(mongoTemplate.count(new Query(),entityType));}
+    public int countOrdersByDate(String d){return Math.toIntExact(mongoTemplate.count(dateQuery(d),entityType));}
+    public List<XianyuGoodsOrder> selectByConditionWithPage(Long a,String g,Integer s,String k,int l,int o){return mongoTemplate.find(filter(a,g,s,k).with(Sort.by(Sort.Direction.DESC,"createTime")).skip(o).limit(l),entityType);}
+    public long countByCondition(Long a,String g,Integer s,String k){return mongoTemplate.count(filter(a,g,s,k),entityType);}
+    public int countDeliverySuccessByDate(String d){return countState(1,d);}
+    public int countDeliveryFailByDate(String d){return countState(-1,d);}
+    public double sumDeliverySuccessAmount(){return sum(null,null);}
+    public int updateSkuName(Long id,String sku){return update(id,new Update().set("skuName",sku));}
+    public int updateOrderDetail(Long id,String buyer,String created,String paid,String consign,String sku,String title,String price,Integer num){Update u=new Update().set("buyerUserName",buyer).set("orderCreateTime",created).set("paySuccessTime",paid).set("consignTime",consign).set("goodsTitle",title).set("totalPrice",price).set("buyNum",num); if(sku!=null)u.set("skuName",sku); return update(id,u);}
+    public double sumDeliverySuccessAmountByDate(String d){return sum(d,d);}
+    public double sumDeliverySuccessAmountByDateRange(String start,String end){return sum(start,end);}
+    private int update(Long id,Update u){return Math.toIntExact(mongoTemplate.updateFirst(Query.query(Criteria.where("_id").is(id)),u,entityType).getModifiedCount());}
+    private Query dateQuery(String d){return Query.query(Criteria.where("createTime").regex("^"+Pattern.quote(d)));}
+    private int countState(int s,String d){Query q=Query.query(Criteria.where("state").is(s)); if(d!=null)q.addCriteria(Criteria.where("createTime").regex("^"+Pattern.quote(d))); return Math.toIntExact(mongoTemplate.count(q,entityType));}
+    private Query filter(Long a,String g,Integer s,String k){Criteria c=new Criteria(); java.util.List<Criteria> all=new java.util.ArrayList<>(); if(a!=null)all.add(Criteria.where("xianyuAccountId").is(a)); if(g!=null&&!g.isBlank())all.add(Criteria.where("xyGoodsId").is(g)); if(s!=null)all.add(Criteria.where("state").is(s)); if(k!=null&&!k.isBlank()){Pattern p=Pattern.compile(Pattern.quote(k),Pattern.CASE_INSENSITIVE); all.add(new Criteria().orOperator(Criteria.where("goodsTitle").regex(p),Criteria.where("skuName").regex(p),Criteria.where("buyerUserName").regex(p),Criteria.where("content").regex(p)));} return all.isEmpty()?new Query():Query.query(c.andOperator(all));}
+    private double sum(String start,String end){Query q=Query.query(Criteria.where("state").is(1).and("confirmState").is(1)); if(start!=null)q.addCriteria(Criteria.where("createTime").gte(start).lt(LocalDate.parse(end).plusDays(1).toString())); return mongoTemplate.find(q,entityType).stream().mapToDouble(x->{try{return Double.parseDouble(x.getTotalPrice());}catch(Exception e){return 0;}}).sum();}
 }

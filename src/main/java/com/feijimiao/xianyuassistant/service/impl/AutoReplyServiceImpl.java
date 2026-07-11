@@ -1,6 +1,6 @@
 package com.feijimiao.xianyuassistant.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.feijimiao.xianyuassistant.config.rag.DynamicAIChatClientManager;
 import com.feijimiao.xianyuassistant.entity.XianyuGoodsAutoReplyRecord;
@@ -102,7 +102,7 @@ public class AutoReplyServiceImpl implements AutoReplyService {
             
             // 2. 获取商品本地ID
             XianyuGoodsInfo goodsInfo = goodsInfoMapper.selectOne(
-                    new LambdaQueryWrapper<XianyuGoodsInfo>()
+                    new MongoQueryWrapper<XianyuGoodsInfo>()
                             .eq(XianyuGoodsInfo::getXyGoodId, xyGoodsId)
                             .eq(XianyuGoodsInfo::getXianyuAccountId, accountId)
             );
@@ -191,7 +191,7 @@ public class AutoReplyServiceImpl implements AutoReplyService {
                 }
                 
                 XianyuGoodsInfo goodsInfoForContext = goodsInfoMapper.selectOne(
-                    new LambdaQueryWrapper<XianyuGoodsInfo>().eq(XianyuGoodsInfo::getXyGoodId, xyGoodsId)
+                    new MongoQueryWrapper<XianyuGoodsInfo>().eq(XianyuGoodsInfo::getXyGoodId, xyGoodsId)
                 );
                 if (goodsInfoForContext != null && goodsInfoForContext.getDetailInfo() != null && !goodsInfoForContext.getDetailInfo().isEmpty()) {
                     triggerContext.setGoodsDetail(goodsInfoForContext.getDetailInfo());

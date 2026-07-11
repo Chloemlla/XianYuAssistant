@@ -1,6 +1,6 @@
 package com.feijimiao.xianyuassistant.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.entity.XianyuGoodsSkuProperty;
 import com.feijimiao.xianyuassistant.mapper.XianyuGoodsSkuPropertyMapper;
 import com.feijimiao.xianyuassistant.service.GoodsSkuPropertyService;
@@ -24,7 +24,7 @@ public class GoodsSkuPropertyServiceImpl implements GoodsSkuPropertyService {
 
     @Override
     public List<XianyuGoodsSkuProperty> listByXyGoodsId(String xyGoodsId) {
-        LambdaQueryWrapper<XianyuGoodsSkuProperty> wrapper = new LambdaQueryWrapper<>();
+        MongoQueryWrapper<XianyuGoodsSkuProperty> wrapper = new MongoQueryWrapper<>();
         wrapper.eq(XianyuGoodsSkuProperty::getXyGoodsId, xyGoodsId);
         wrapper.orderByAsc(XianyuGoodsSkuProperty::getPropertySortOrder);
         wrapper.orderByAsc(XianyuGoodsSkuProperty::getValueSortOrder);
@@ -49,7 +49,7 @@ public class GoodsSkuPropertyServiceImpl implements GoodsSkuPropertyService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteByXyGoodsId(String xyGoodsId) {
-        LambdaQueryWrapper<XianyuGoodsSkuProperty> wrapper = new LambdaQueryWrapper<>();
+        MongoQueryWrapper<XianyuGoodsSkuProperty> wrapper = new MongoQueryWrapper<>();
         wrapper.eq(XianyuGoodsSkuProperty::getXyGoodsId, xyGoodsId);
         mapper.delete(wrapper);
     }

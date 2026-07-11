@@ -1,16 +1,22 @@
 package com.feijimiao.xianyuassistant.entity;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * 商品配置实体类
  */
 @Data
+@Document(collection = "xianyu_goods_config")
+@CompoundIndex(name = "uk_goods_config_account_goods", def = "{'xianyuAccountId': 1, 'xyGoodsId': 1}", unique = true)
 public class XianyuGoodsConfig {
     
     /**
      * 主键ID
      */
+    @Id
     private Long id;
     
     /**

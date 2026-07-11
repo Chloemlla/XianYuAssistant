@@ -1,15 +1,16 @@
 package com.feijimiao.xianyuassistant.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
-@TableName("xianyu_goods_sku")
+@Document(collection = "xianyu_goods_sku")
+@CompoundIndex(name = "uk_goods_sku", def = "{'xyGoodsId': 1, 'skuId': 1}", unique = true)
 public class XianyuGoodsSku {
 
-    @TableId(type = IdType.ASSIGN_ID)
+    @Id
     private String id;
 
     private String xyGoodsId;

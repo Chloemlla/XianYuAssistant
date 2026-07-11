@@ -1,0 +1,115 @@
+{
+  "run_id": "20260711-mongodb-storage",
+  "lane": "/root/audit_queries",
+  "envelope_validation": {
+    "status": "validated",
+    "allowed_phase": "Wave 1 read-only storage audit",
+    "requirement": "docs/requirements/2026-07-11-mongodb-storage-migration.md",
+    "plan": "docs/plans/2026-07-11-mongodb-storage-migration-execution-plan.md",
+    "scope_compliance": {
+      "business_code_modified": false,
+      "canonical_artifacts_modified": false,
+      "builds_or_tests_run": false,
+      "only_receipt_written": true
+    }
+  },
+  "audit_summary": {
+    "persistent_entities": 21,
+    "mapper_interfaces": 21,
+    "base_mapper_only_interfaces": 9,
+    "custom_sql_interfaces": 12,
+    "jdbc_runtime_components": [
+      "backup/handler/AutoReplyBackupHandler.java uses JdbcTemplate for rule/content restore",
+      "config/DatabaseConfig.java creates and initializes the SQLite DataSource/schema",
+      "config/DatabaseInitListener.java introspects SQLite tables, columns, indexes and triggers",
+      "utils/DatabaseChecker.java checks the database through JdbcTemplate",
+      "config/MybatisConfig.java and CustomLocalDateTimeTypeHandler.java are JDBC/MyBatis-specific"
+    ],
+    "transactional_methods_found": 17
+  },
+  "entity_inventory": [
+    {"entity":"SysUser","id":"Long AUTO","relationships":[],"required_indexes":["unique(username)"]},
+    {"entity":"SysLoginToken","id":"Long AUTO","relationships":["userId -> SysUser"],"required_indexes":["userId","token","expireTime"]},
+    {"entity":"XianyuAccount","id":"Long AUTO","relationships":[],"required_indexes":["unb (current schema non-unique; service lookups expect single result)"]},
+    {"entity":"XianyuCookie","id":"Long AUTO","relationships":["xianyuAccountId -> XianyuAccount"],"required_indexes":["xianyuAccountId (make unique if one-cookie-per-account remains invariant)","cookieStatus","tokenExpireTime"]},
+    {"entity":"XianyuGoodsInfo","id":"Long ASSIGN_ID","relationships":["xianyuAccountId -> XianyuAccount"],"required_indexes":["unique(xyGoodId)","xianyuAccountId","status"]},
+    {"entity":"XianyuChatMessage","id":"Long generated","relationships":["xianyuAccountId -> XianyuAccount","xyGoodsId logical -> XianyuGoodsInfo.xyGoodId"],"required_indexes":["unique(xianyuAccountId,pnmId)","(xianyuAccountId,messageTime desc)","sId+messageTime","senderUserId","xyGoodsId"]},
+    {"entity":"XianyuGoodsConfig","id":"Long generated","relationships":["xianyuAccountId -> XianyuAccount","xianyuGoodsId/xyGoodsId logical -> goods"],"required_indexes":["unique(xianyuAccountId,xyGoodsId)"]},
+    {"entity":"XianyuGoodsAutoDeliveryConfig","id":"Long AUTO","relationships":["xianyuAccountId -> XianyuAccount","xianyuGoodsId/xyGoodsId logical -> goods","kamiConfigIds is a serialized multi-reference"],"required_indexes":["unique(xianyuAccountId,xyGoodsId,normalized skuId)","xianyuAccountId+createTime desc"]},
+    {"entity":"XianyuGoodsOrder","id":"Long generated","relationships":["xianyuAccountId -> XianyuAccount","xyGoodsId logical -> goods"],"required_indexes":["unique(xianyuAccountId,pnmId)","unique candidate (xianyuAccountId,orderId)","xianyuAccountId+createTime desc","state+confirmState+createTime"]},
+    {"entity":"XianyuGoodsAutoReplyRecord","id":"Long generated","relationships":["xianyuAccountId -> XianyuAccount","xyGoodsId logical -> goods"],"required_indexes":["unique(xianyuAccountId,sId,pnmId)","xianyuAccountId+xyGoodsId+createTime desc","createTime","state"]},
+    {"entity":"XianyuOperationLog","id":"Long AUTO","relationships":["xianyuAccountId -> XianyuAccount"],"required_indexes":["xianyuAccountId+createTime desc","operationType","operationModule","operationStatus","createTime TTL candidate if retention applies"]},
+    {"entity":"XianyuSysSetting","id":"Long AUTO","relationships":[],"required_indexes":["unique(settingKey)"]},
+    {"entity":"XianyuKamiConfig","id":"Long AUTO","relationships":["xianyuAccountId -> XianyuAccount"],"required_indexes":["xianyuAccountId+createTime desc"]},
+    {"entity":"XianyuKamiItem","id":"Long AUTO","relationships":["kamiConfigId -> XianyuKamiConfig","orderId logical -> order"],"required_indexes":["kamiConfigId+status+sortOrder","kamiConfigId+kamiContent","status"]},
+    {"entity":"XianyuKamiUsageRecord","id":"Long AUTO","relationships":["kamiConfigId -> XianyuKamiConfig","kamiItemId -> XianyuKamiItem","xianyuAccountId -> XianyuAccount","orderId logical -> order"],"required_indexes":["unique(kamiItemId,orderId)","kamiConfigId","orderId","xianyuAccountId"]},
+    {"entity":"XianyuKeywordReplyRule","id":"Long generated","relationships":["xianyuAccountId -> XianyuAccount","xyGoodsId logical -> goods"],"required_indexes":["partial unique(xianyuAccountId,xyGoodsId,keyword) where isFallback=0","xianyuAccountId+xyGoodsId+isFallback","matchMode+keyword"]},
+    {"entity":"XianyuKeywordReplyContent","id":"Long generated","relationships":["ruleId -> XianyuKeywordReplyRule"],"required_indexes":["ruleId"]},
+    {"entity":"XianyuGoodsSku","id":"String ASSIGN_ID","relationships":["xyGoodsId logical -> goods","xianyuAccountId -> XianyuAccount"],"required_indexes":["unique(xyGoodsId,skuId)","xyGoodsId","skuId"]},
+    {"entity":"XianyuGoodsSkuProperty","id":"String ASSIGN_ID","relationships":["xyGoodsId logical -> goods","xianyuAccountId logical -> XianyuAccount"],"required_indexes":["unique(xyGoodsId,propertyId,valueId)","xyGoodsId"]},
+    {"entity":"XianyuHumanInterventionRecord","id":"Long generated","relationships":["xianyuAccountId logical -> XianyuAccount","xyGoodsId logical -> goods"],"required_indexes":["sId+endTime desc","endTime TTL candidate"]},
+    {"entity":"XianyuOrder","id":"Long generated","relationships":["xianyuAccountId logical -> XianyuAccount","xyGoodsId logical -> goods"],"required_indexes":["orderId","xianyuAccountId+orderCreateTime desc","orderStatus"]}
+  ],
+  "mapper_inventory": {
+    "base_mapper_only": ["SysLoginTokenMapper","SysUserMapper","XianyuAccountMapper","XianyuCookieMapper","XianyuGoodsInfoMapper","XianyuGoodsSkuMapper","XianyuGoodsSkuPropertyMapper","XianyuKamiUsageRecordMapper","XianyuSysSettingMapper"],
+    "custom_methods": {
+      "XianyuChatMessageMapper": ["insert","findByPnmId","findByAccountId","findBySId","findBySenderUserId","deleteByAccountId","findMessagesByPage","countMessages","findRecentBySId"],
+      "XianyuGoodsAutoDeliveryConfigMapper": ["findByAccountIdAndGoodsIdAndSkuId","findByAccountIdAndGoodsIdNoSku","findByAccountIdAndGoodsId","findByAccountId","deleteByAccountId"],
+      "XianyuGoodsAutoReplyRecordMapper": ["insert","updateStateAndContent","updateTriggerContext","selectByAccountId","selectLatestByAccountIdAndSId","deleteByAccountId","selectByAccountIdAndGoodsId","countByAccountIdAndGoodsId","countYesterdayAiReplies","countAllReplies","countAiRepliesByDate"],
+      "XianyuGoodsConfigMapper": ["selectByAccountAndGoodsId","selectByAccountId","insert","update","updateFixedMaterial","deleteByAccountId"],
+      "XianyuGoodsOrderMapper": ["insert","selectByAccountId","deleteByAccountId","selectByAccountIdWithPage","countByAccountId","updateState","updateStateAndContent","updateStateContentAndFailReason","selectByOrderId","selectByAccountIdAndOrderId","updateConfirmState","selectByPnmId","countYesterdayOrders","countDeliverySuccess","countDeliveryFail","countAllOrders","countOrdersByDate","selectByConditionWithPage","countByCondition","countDeliverySuccessByDate","countDeliveryFailByDate","sumDeliverySuccessAmount","updateSkuName","updateOrderDetail","sumDeliverySuccessAmountByDate","sumDeliverySuccessAmountByDateRange"],
+      "XianyuHumanInterventionRecordMapper": ["insert","findActiveBySId","cleanExpired"],
+      "XianyuKamiConfigMapper": ["findByAccountId"],
+      "XianyuKamiItemMapper": ["findNextUnused","findRandomUnused","findByConfigId","findByConfigIdWithFilter","countUnused","countUsed","countByConfigId","countByConfigIdAndContent","markUsed","markUnused","findByConfigIdAndStatus"],
+      "XianyuKeywordReplyContentMapper": ["selectByRuleId","deleteByRuleId"],
+      "XianyuKeywordReplyRuleMapper": ["selectByAccountAndGoodsId","selectByKeyword","selectFallback","matchExact","matchFuzzy","deleteById"],
+      "XianyuOperationLogMapper": ["selectByPage","countByCondition","deleteByAccountId"],
+      "XianyuOrderMapper": ["queryOrderList"]
+    }
+  },
+  "query_update_semantics": [
+    "Preserve zero-based LIMIT/OFFSET paging and descending create/message/order time ordering; Spring Pageable is page-based and needs explicit offset adaptation where callers pass raw offsets.",
+    "Order search joins goods title and searches title, skuName, buyerUserName and content with SQL LIKE; Mongo needs aggregation/$lookup or denormalized goodsTitle plus escaped case policy.",
+    "Keyword fuzzy matching is message LIKE '%' || stored keyword || '%'; a normal Mongo regex query cannot directly express every-document keyword containment efficiently. Implement bounded candidate retrieval or a dedicated matching strategy.",
+    "Daily dashboard counts currently use SQLite date(...,'localtime') over string timestamps. Store BSON dates and calculate Asia/Shanghai day boundaries explicitly.",
+    "Revenue currently casts totalPrice String to REAL. Convert to numeric/Decimal128 or preserve a carefully tested conversion aggregation.",
+    "Auto-delivery no-SKU uniqueness normalizes null and empty skuId to the same key. Use a normalized field or partial unique indexes; plain compound unique indexing changes null/missing behavior.",
+    "Kami markUsed/markUnused are compare-and-set updates on status. Preserve as findAndModify/update-first with status predicate and inspect modifiedCount.",
+    "Human intervention active lookup and cleanup compare string datetimes to SQLite localtime. Replace with BSON Date and TTL/manual expiration query.",
+    "BaseMapper selectOne assumptions require uniqueness for username, settingKey, account cookie, xyGoodId and account/goods configs; Mongo repositories must not silently accept duplicates.",
+    "Bulk replacement of SKUs/properties deletes all by xyGoodsId then inserts ordered rows; retain atomicity or use embedded arrays/versioned replacement."
+  ],
+  "usage_inventory": {
+    "direct_controller_mapper_usage": ["AccountController","AIChatController","DashboardController","DataPanelController","ItemController","OrderController","WebSocketController"],
+    "high_fanout_services": ["AccountServiceImpl","GoodsInfoServiceImpl","AutoDeliveryServiceImpl","AutoReplyServiceImpl","OrderServiceImpl","KamiConfigServiceImpl","KeywordReplyServiceImpl","ChatMessageServiceImpl","TokenRefreshServiceImpl","WebSocketTokenServiceImpl","PendingOrderPollService","ApiDeliveryScheduler"],
+    "other_persistence_callers": ["ChatMessageEventSaveListener","ChatMessageEventAutoDeliveryListener","ReplyConfigProvider","ReplyStrategyResolver","AIReplyStrategy","KeywordWithAIPolishStrategy","KamiDeliveryStrategy","AccountDisplayNameUtils","OperationLogUtils"],
+    "wrapper_usage": "LambdaQueryWrapper/LambdaUpdateWrapper occurs across 23 production files, including controllers and backup handlers; migration cannot be isolated to mapper interfaces.",
+    "backup_usage": ["AccountBackupHandler","GoodsBackupHandler","AutoDeliveryBackupHandler","KamiBackupHandler","SystemSettingBackupHandler use BaseMapper wrappers/upserts","AutoReplyBackupHandler uses JdbcTemplate and explicit delete/insert ordering"]
+  },
+  "risky_transaction_areas": [
+    "AccountServiceImpl.deleteAccountAndRelatedData manually deletes approximately ten account-owned domains before deleting the account. Mongo requires a replica-set transaction or idempotent cascade orchestration; verify every new collection is included.",
+    "Account save/update couples XianyuAccount and XianyuCookie. Preserve all-or-nothing behavior and add an account-cookie uniqueness invariant.",
+    "Kami acquisition uses a JVM ReentrantLock plus conditional markUsed, then usage records/config counts elsewhere. JVM locks do not protect multiple instances; use atomic findAndModify and a transaction for item, usage record and counters.",
+    "KamiConfigService catches exceptions inside @Transactional methods and returns failure objects, which can allow partial commits because no exception escapes. Correct rollback semantics during migration.",
+    "Goods SKU/property save performs delete-then-insert replacement. Multi-document Mongo transactions need replica-set deployment; embedding is an alternative if document size is bounded.",
+    "KeywordReplyService deletes contents then rule and creates rule then contents without @Transactional. Partial rule/content state is currently possible and should be fixed or embedded.",
+    "Order flows frequently execute select-then-insert/update and update state then confirm state without a transaction. Enforce unique account/order and account/pnm keys and use atomic upserts.",
+    "Backup restore performs multi-record upserts/deletes and cross-entity natural-key remapping. Define per-module transaction/idempotency and deterministic ID/reference remapping.",
+    "Batch goods save catches per-item exceptions inside a transactional outer method, so partial success is intentional. Preserve that product behavior rather than accidentally rolling back the batch."
+  ],
+  "schema_discrepancies": [
+    "XianyuOrder/XianyuOrderMapper reference xianyu_order, but schema.sql does not create that table.",
+    "XianyuOrderMapper joins xianyu_goods_auto_delivery_record, but no matching entity, mapper or CREATE TABLE exists; the active order API uses XianyuGoodsOrderMapper instead, so confirm whether XianyuOrder is dead code before creating a collection.",
+    "Several entities store timestamps as String while others use Long or LocalDateTime; normalize BSON date representation without changing JSON/API serialization.",
+    "XianyuGoodsAutoDeliveryConfig.kamiConfigIds is serialized text; migrate to a typed list of references/IDs.",
+    "The schema has SQL update-time triggers. Mongo auditing callbacks must replace trigger behavior."
+  ],
+  "actionable_findings": [
+    "Define repositories by domain, but reserve MongoTemplate custom implementations for order aggregation/search, dashboard date/revenue aggregation, keyword matching, raw-offset paging and atomic kami acquisition.",
+    "Use stable Long/String business IDs initially to avoid changing APIs and references; add a dedicated Mongo _id mapping strategy rather than exposing ObjectId changes.",
+    "Create compound/partial unique indexes before enabling writes, especially message, auto-reply, goods-config, auto-delivery-config, goods-order, SKU/property, keyword-rule and kami-usage invariants.",
+    "Require replica-set MongoDB if cross-document transactions are retained; otherwise redesign tightly coupled data (rule+contents, goods+SKUs/properties) as embedded documents.",
+    "Resolve the duplicate order models and missing xianyu_order/auto_delivery_record schema before implementation so dead SQL is not migrated as a second order source of truth.",
+    "Move persistence out of controllers and backup handlers into domain services/repositories so transaction and index semantics have one implementation path."
+  ]
+}

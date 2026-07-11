@@ -5,6 +5,7 @@ import com.feijimiao.xianyuassistant.entity.XianyuGoodsInfo;
 import com.feijimiao.xianyuassistant.mapper.XianyuAccountMapper;
 import com.feijimiao.xianyuassistant.mapper.XianyuGoodsInfoMapper;
 import com.feijimiao.xianyuassistant.controller.dto.DashboardStatsRespDTO;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -40,20 +41,17 @@ public class DashboardController {
             
             // 获取在售商品数 (status = 0)
             int sellingItemCount = goodsMapper.selectCount(
-                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<XianyuGoodsInfo>()
-                    .eq("status", 0)
+                new MongoQueryWrapper<XianyuGoodsInfo>().eq(XianyuGoodsInfo::getStatus, 0)
             ).intValue();
             
             // 获取已下架商品数 (status = 1)
             int offShelfItemCount = goodsMapper.selectCount(
-                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<XianyuGoodsInfo>()
-                    .eq("status", 1)
+                new MongoQueryWrapper<XianyuGoodsInfo>().eq(XianyuGoodsInfo::getStatus, 1)
             ).intValue();
             
             // 获取已售出商品数 (status = 2)
             int soldItemCount = goodsMapper.selectCount(
-                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<XianyuGoodsInfo>()
-                    .eq("status", 2)
+                new MongoQueryWrapper<XianyuGoodsInfo>().eq(XianyuGoodsInfo::getStatus, 2)
             ).intValue();
             
             // 构造响应数据

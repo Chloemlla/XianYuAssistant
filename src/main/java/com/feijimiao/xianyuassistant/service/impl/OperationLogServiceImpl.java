@@ -1,6 +1,5 @@
 package com.feijimiao.xianyuassistant.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.feijimiao.xianyuassistant.entity.XianyuOperationLog;
 import com.feijimiao.xianyuassistant.mapper.XianyuOperationLogMapper;
@@ -122,10 +121,7 @@ public class OperationLogServiceImpl implements OperationLogService {
         try {
             long threshold = System.currentTimeMillis() - (days * 24L * 60 * 60 * 1000);
             
-            LambdaQueryWrapper<XianyuOperationLog> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.lt(XianyuOperationLog::getCreateTime, threshold);
-            
-            int deleted = operationLogMapper.delete(queryWrapper);
+            int deleted = operationLogMapper.deleteOlderThan(threshold);
             log.info("已删除{}天前的操作日志: {}条", days, deleted);
             return deleted;
         } catch (Exception e) {

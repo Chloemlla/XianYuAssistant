@@ -1,0 +1,128 @@
+{
+  "run_id": "20260711-mongodb-storage",
+  "lane": "/root/audit_aux_storage",
+  "stage": "Wave 1 read-only storage audit",
+  "delegation_validation": {
+    "status": "accepted",
+    "envelope": "outputs/runtime/vibe-sessions/20260711-mongodb-storage/delegation-envelope.json",
+    "inherited_requirement": "docs/requirements/2026-07-11-mongodb-storage-migration.md",
+    "inherited_plan": "docs/plans/2026-07-11-mongodb-storage-migration-execution-plan.md",
+    "scope_matches": true,
+    "rules_observed": [
+      "canonical requirement and plan were read only",
+      "no build or test command was run",
+      "no business code was modified",
+      "only this bounded validation receipt was written"
+    ]
+  },
+  "summary": {
+    "must_move_to_mongodb": [
+      "All six backup handlers must replace MyBatis mappers, LambdaQueryWrapper/custom SQL and numeric foreign-key restoration with domain Mongo repositories or MongoTemplate upserts while preserving module keys and JSON payload fields.",
+      "AI RAG persistence must replace SimpleVectorStore plus dbdata/vectorstore.json with a MongoDB Atlas Vector Store-backed collection; remove saveToFile/load/file-path and directory creation.",
+      "Image and other business URL fields already stored in relational rows must become ordinary fields in their Mongo documents."
+    ],
+    "must_move_to_gridfs": [],
+    "gridfs_decision": "No current business binary is persisted locally. Multipart images are read into memory, compressed in memory and uploaded directly to the Xianyu CDN; only returned URLs are persisted. GridFS is therefore not required for current behavior. Introduce GridFsTemplate only if a local/fallback binary retention feature is added.",
+    "must_not_move": [
+      "logs/ and generated log ZIP downloads are operational artifacts, not business persistence",
+      "Playwright browser installations and java.io.tmpdir cleanup are runtime caches/temp files",
+      "LocalMapCacheServiceImpl values are explicitly process-local TTL caches",
+      "Vue localStorage contains the auth token and username for client session continuity",
+      "static resources, documentation images and build artifacts"
+    ]
+  },
+  "findings": [
+    {
+      "area": "backup_restore",
+      "evidence": [
+        "src/main/java/com/feijimiao/xianyuassistant/controller/DataBackupController.java:55",
+        "src/main/java/com/feijimiao/xianyuassistant/service/impl/DataBackupServiceImpl.java:41",
+        "src/main/java/com/feijimiao/xianyuassistant/backup/handler/AccountBackupHandler.java:36"
+      ],
+      "current_behavior": "POST /api/backup/export and /api/backup/import exchange one JSON string in the existing DTO envelope. Six modules are registered: account, autoDelivery, autoReply, goods, kami and systemSetting. Handlers export selected records and restore with lookup-then-insert/update semantics; the account module supplies UNB-to-account identity context used by dependent data.",
+      "migration_action": "Keep controller, DTO, BO, module keys, exported field names, selective-module behavior and partial-success response unchanged. Replace each handler's mapper access with small domain repositories and MongoTemplate where composite upsert logic is needed. Restore references by stable business keys such as unb, xyGoodsId, skuId and aliasName, then assign Mongo document IDs; do not expose Mongo IDs in the backup contract. Add unique/compound indexes supporting those lookups. Preserve per-module failure accounting; transactions are optional and require a replica set if adopted.",
+      "api_impact": "none"
+    },
+    {
+      "area": "image_uploads",
+      "evidence": [
+        "src/main/java/com/feijimiao/xianyuassistant/controller/ImageUploadController.java:28",
+        "src/main/java/com/feijimiao/xianyuassistant/controller/ImageUploadController.java:53",
+        "src/main/java/com/feijimiao/xianyuassistant/service/impl/ImageUploadServiceImpl.java:268"
+      ],
+      "current_behavior": "POST /api/image/upload reads MultipartFile bytes, and /api/image/uploadFromUrl downloads bytes; ImageUploadServiceImpl processes bytes in memory and sends multipart data to the external Xianyu CDN. No upload directory, FileOutputStream or local retained image was found.",
+      "migration_action": "Keep both APIs and CDN workflow unchanged. Persist returned CDN URLs in Mongo domain documents. Do not add GridFS merely for transient request bytes.",
+      "api_impact": "none"
+    },
+    {
+      "area": "ai_vector_store",
+      "evidence": [
+        "src/main/resources/application.yaml:12",
+        "src/main/java/com/feijimiao/xianyuassistant/config/rag/DynamicVectorStoreManager.java:46",
+        "src/main/java/com/feijimiao/xianyuassistant/config/rag/DynamicVectorStoreManager.java:167",
+        "src/main/java/com/feijimiao/xianyuassistant/service/impl/AIServiceImpl.java:567"
+      ],
+      "current_behavior": "DynamicVectorStoreManager builds an in-memory SimpleVectorStore, loads dbdata/vectorstore.json, saves the whole store after add/delete, and rebuilds the in-memory instance when embedding settings change. RAG data is filtered by metadata goodsId; list-by-goods currently abuses similaritySearch with an empty query and topK 100.",
+      "migration_action": "Use Spring AI MongoDB Atlas Vector Store for add/search/delete and retain metadata.goodsId and createTime. Remove SimpleVectorStoreConfig, vectorStoreFilePath, saveToFile and file load/directory code. Preserve dynamic embedding configuration by rebuilding only the client/store object while reusing the Mongo collection. Implement list-by-goodsId with MongoTemplate against the vector collection instead of empty-query similarity search, so listing is complete and does not depend on embedding/topK. Keep /ai RAG controller contracts and document IDs stable.",
+      "deployment_condition": "Spring AI's MongoDB Atlas Vector Store requires an Atlas-compatible vector-search deployment and vector search index. A plain MongoDB deployment without the required vector-search capability cannot preserve current similaritySearch semantics.",
+      "api_impact": "none"
+    },
+    {
+      "area": "caches",
+      "evidence": [
+        "src/main/java/com/feijimiao/xianyuassistant/cache/LocalMapCacheServiceImpl.java:20",
+        "src/main/java/com/feijimiao/xianyuassistant/service/impl/AuthServiceImpl.java:141",
+        "src/main/java/com/feijimiao/xianyuassistant/controller/DataPanelController.java:49"
+      ],
+      "current_behavior": "ConcurrentHashMap holds token shortcuts, login-attempt counters and dashboard response caches with TTLs. It does not survive restart.",
+      "migration_action": "Leave process-local by default because the frozen requirement excludes pure caches. MongoDB TTL collections are only an optional later choice for multi-instance shared rate-limit/session-cache behavior, not required for the storage migration.",
+      "api_impact": "none"
+    },
+    {
+      "area": "filesystem_and_dbdata",
+      "evidence": [
+        "src/main/java/com/feijimiao/xianyuassistant/controller/DataBackupController.java:96",
+        "src/main/java/com/feijimiao/xianyuassistant/config/PlaywrightManager.java:152",
+        "Dockerfile:50",
+        "install.sh:193",
+        ".gitignore:37"
+      ],
+      "current_behavior": "The remaining filesystem roles are logs/log ZIP creation, Playwright browser cache/temp cleanup, SQLite/vector dbdata, and installer/runtime directory creation. DataBackupController writes logs/<date>.zip and does not delete it after response.",
+      "migration_action": "Eliminate application dbdata usage and remove /app/dbdata creation or volume expectations after SQLite/vector migration. Retain logs and ms-playwright as operational filesystem paths. Prefer streaming the log ZIP or a temporary file with cleanup to avoid accumulating archives; do not put logs in MongoDB/GridFS. Remove the unused installer data directory if no remaining feature consumes it. Historical ignore rules may remain but must not imply a runtime dependency.",
+      "api_impact": "GET /api/backup/log-dates and log-download remain unchanged"
+    }
+  ],
+  "required_dependencies_and_configuration": {
+    "dependencies": [
+      "org.springframework.boot:spring-boot-starter-data-mongodb",
+      "org.springframework.ai:spring-ai-starter-vector-store-mongodb-atlas when ai.enabled=true",
+      "GridFS needs no separate driver beyond Spring Data MongoDB; only add GridFsTemplate-based code if retained business binaries are introduced"
+    ],
+    "remove_or_replace": [
+      "org.springframework.ai:spring-ai-vector-store when it is present only for SimpleVectorStore",
+      "ai.vectorstore.simple.file-path",
+      "dbdata/vectorstore.json save/load code",
+      "Docker /app/dbdata directory assumptions"
+    ],
+    "configuration": [
+      "spring.data.mongodb.uri from an environment variable such as MONGODB_URI",
+      "spring.data.mongodb.database from MONGODB_DATABASE or encode the database in the URI",
+      "spring.ai.vectorstore.mongodb.collection-name",
+      "spring.ai.vectorstore.mongodb.index-name",
+      "spring.ai.vectorstore.mongodb.initialize-schema as appropriate for the target Atlas permissions",
+      "a vector index whose dimensions and similarity metric match the configured embedding model",
+      "metadata filter/index support for goodsId and a normal Mongo index on metadata.goodsId for direct listing"
+    ]
+  },
+  "risks": [
+    "Restoring dependent modules before account identity resolution can orphan references; enforce deterministic handler ordering or resolve references independently by stable keys.",
+    "Changing embedding model dimensions without rebuilding the Atlas vector index/collection will break writes or searches.",
+    "The current topK 100 RAG listing can silently omit data; migration should correct the internal query while preserving the response API.",
+    "Backup JSON contains cookies, API-related settings and card secrets; migration must not log payload contents."
+  ],
+  "verification": {
+    "method": "read-only source and configuration audit with UTF-8 PowerShell and rg",
+    "builds_or_tests_run": false,
+    "result": "actionable auxiliary-storage migration scope identified"
+  }
+}

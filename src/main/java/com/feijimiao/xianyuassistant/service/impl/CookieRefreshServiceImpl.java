@@ -1,7 +1,7 @@
 package com.feijimiao.xianyuassistant.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoUpdateWrapper;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.Cookie;
@@ -126,7 +126,7 @@ public class CookieRefreshServiceImpl implements CookieRefreshService {
             log.info("【账号{}】开始{}登录状态... (重试次数: {}/2)", accountId, logPrefix, retryCount);
 
             XianyuCookie cookie = cookieMapper.selectOne(
-                    new LambdaQueryWrapper<XianyuCookie>()
+                    new MongoQueryWrapper<XianyuCookie>()
                             .eq(XianyuCookie::getXianyuAccountId, accountId)
                             .orderByDesc(XianyuCookie::getCreatedTime)
                             .last("LIMIT 1")
@@ -197,7 +197,7 @@ public class CookieRefreshServiceImpl implements CookieRefreshService {
                     
                     // 标记为失效（风控）
                     cookieMapper.update(null,
-                            new LambdaUpdateWrapper<XianyuCookie>()
+                            new MongoUpdateWrapper<XianyuCookie>()
                                     .eq(XianyuCookie::getXianyuAccountId, accountId)
                                     .set(XianyuCookie::getCookieStatus, 3) // 3表示失效（风控）
                     );
@@ -249,7 +249,7 @@ public class CookieRefreshServiceImpl implements CookieRefreshService {
                         String updatedTime = java.time.LocalDateTime.now().format(
                                 java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
                         cookieMapper.update(null,
-                                new LambdaUpdateWrapper<XianyuCookie>()
+                                new MongoUpdateWrapper<XianyuCookie>()
                                         .eq(XianyuCookie::getXianyuAccountId, accountId)
                                         .set(XianyuCookie::getCookieText, newCookieStr)
                                         .set(XianyuCookie::getCookieStatus, 1)
@@ -269,7 +269,7 @@ public class CookieRefreshServiceImpl implements CookieRefreshService {
                             String updatedTime = java.time.LocalDateTime.now().format(
                                     java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
                             cookieMapper.update(null,
-                                    new LambdaUpdateWrapper<XianyuCookie>()
+                                    new MongoUpdateWrapper<XianyuCookie>()
                                             .eq(XianyuCookie::getXianyuAccountId, accountId)
                                             .set(XianyuCookie::getCookieStatus, 1)
                                             .set(XianyuCookie::getUpdatedTime, updatedTime)
@@ -415,7 +415,7 @@ public class CookieRefreshServiceImpl implements CookieRefreshService {
         }
 
         XianyuCookie cookie = cookieMapper.selectOne(
-                new LambdaQueryWrapper<XianyuCookie>()
+                new MongoQueryWrapper<XianyuCookie>()
                         .eq(XianyuCookie::getXianyuAccountId, accountId)
                         .orderByDesc(XianyuCookie::getCreatedTime)
                         .last("LIMIT 1")
@@ -495,7 +495,7 @@ public class CookieRefreshServiceImpl implements CookieRefreshService {
             String newMh5Tk = refreshedCookieMap.get("_m_h5_tk");
 
             cookieMapper.update(null,
-                    new LambdaUpdateWrapper<XianyuCookie>()
+                    new MongoUpdateWrapper<XianyuCookie>()
                             .eq(XianyuCookie::getXianyuAccountId, accountId)
                             .set(XianyuCookie::getCookieText, refreshedCookieText)
                             .set(XianyuCookie::getCookieStatus, 1)

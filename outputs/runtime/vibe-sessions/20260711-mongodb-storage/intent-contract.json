@@ -1,0 +1,8 @@
+{
+  "goal": "Replace all runtime business persistence with MongoDB",
+  "deliverable": "MongoDB-backed Spring Boot application preserving existing API contracts",
+  "autonomy_mode": "inferred-with-repository-constraints",
+  "acceptance_source": "docs/requirements/2026-07-11-mongodb-storage-migration.md",
+  "completion_policy": "Do not claim verified completion before GitHub Actions succeeds",
+  "non_goals": ["Vue redesign", "static asset migration", "automatic SQLite history importer"]
+}

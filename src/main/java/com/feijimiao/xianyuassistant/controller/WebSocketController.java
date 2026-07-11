@@ -113,8 +113,8 @@ public class WebSocketController {
             com.feijimiao.xianyuassistant.mapper.XianyuCookieMapper cookieMapper = 
                     applicationContext.getBean(com.feijimiao.xianyuassistant.mapper.XianyuCookieMapper.class);
             
-            com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.feijimiao.xianyuassistant.entity.XianyuCookie> cookieQuery = 
-                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+            com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper<com.feijimiao.xianyuassistant.entity.XianyuCookie> cookieQuery =
+                    new com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper<>();
             cookieQuery.eq(com.feijimiao.xianyuassistant.entity.XianyuCookie::getXianyuAccountId, xianyuAccountId)
                     .orderByDesc(com.feijimiao.xianyuassistant.entity.XianyuCookie::getCreatedTime)
                     .last("LIMIT 1");
@@ -342,8 +342,8 @@ public class WebSocketController {
             com.feijimiao.xianyuassistant.mapper.XianyuCookieMapper cookieMapper =
                     applicationContext.getBean(com.feijimiao.xianyuassistant.mapper.XianyuCookieMapper.class);
 
-            com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.feijimiao.xianyuassistant.entity.XianyuCookie> cookieQuery =
-                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+            com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper<com.feijimiao.xianyuassistant.entity.XianyuCookie> cookieQuery =
+                    new com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper<>();
             cookieQuery.eq(com.feijimiao.xianyuassistant.entity.XianyuCookie::getXianyuAccountId, reqDTO.getXianyuAccountId())
                     .orderByDesc(com.feijimiao.xianyuassistant.entity.XianyuCookie::getCreatedTime)
                     .last("LIMIT 1");

@@ -1,9 +1,9 @@
 package com.feijimiao.xianyuassistant.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * 系统用户实体类
@@ -11,13 +11,14 @@ import lombok.Data;
  * @date 2026/4/22
  */
 @Data
-@TableName("sys_user")
+@Document(collection = "sys_user")
 public class SysUser {
 
-    @TableId(type = IdType.AUTO)
+    @Id
     private Long id;
 
     /** 用户名 */
+    @Indexed(unique = true)
     private String username;
 
     /** 密码（BCrypt加密） */

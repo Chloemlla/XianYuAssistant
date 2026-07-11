@@ -1,18 +1,19 @@
 package com.feijimiao.xianyuassistant.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * 操作记录实体
  */
 @Data
-@TableName("xianyu_operation_log")
+@Document(collection = "xianyu_operation_log")
+@CompoundIndex(name = "idx_operation_account_created", def = "{'xianyuAccountId': 1, 'createTime': -1}")
 public class XianyuOperationLog {
     
-    @TableId(type = IdType.AUTO)
+    @Id
     private Long id;
     
     /**

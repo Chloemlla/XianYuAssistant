@@ -1,29 +1,21 @@
 package com.feijimiao.xianyuassistant.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.feijimiao.xianyuassistant.entity.XianyuKeywordReplyRule;
-import org.apache.ibatis.annotations.*;
-
+import com.feijimiao.xianyuassistant.persistence.AbstractMongoMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoIdGenerator;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
 import java.util.List;
 
-@Mapper
-public interface XianyuKeywordReplyRuleMapper extends BaseMapper<XianyuKeywordReplyRule> {
-
-    @Select("SELECT * FROM xianyu_keyword_reply_rule WHERE xianyu_account_id = #{accountId} AND xy_goods_id = #{xyGoodsId}")
-    List<XianyuKeywordReplyRule> selectByAccountAndGoodsId(@Param("accountId") Long accountId, @Param("xyGoodsId") String xyGoodsId);
-
-    @Select("SELECT * FROM xianyu_keyword_reply_rule WHERE xianyu_account_id = #{accountId} AND xy_goods_id = #{xyGoodsId} AND keyword = #{keyword} AND is_fallback = 0")
-    XianyuKeywordReplyRule selectByKeyword(@Param("accountId") Long accountId, @Param("xyGoodsId") String xyGoodsId, @Param("keyword") String keyword);
-
-    @Select("SELECT * FROM xianyu_keyword_reply_rule WHERE xianyu_account_id = #{accountId} AND xy_goods_id = #{xyGoodsId} AND is_fallback = 1")
-    XianyuKeywordReplyRule selectFallback(@Param("accountId") Long accountId, @Param("xyGoodsId") String xyGoodsId);
-
-    @Select("SELECT * FROM xianyu_keyword_reply_rule WHERE xianyu_account_id = #{accountId} AND xy_goods_id = #{xyGoodsId} AND match_mode = 2 AND keyword = #{message} AND is_fallback = 0")
-    List<XianyuKeywordReplyRule> matchExact(@Param("accountId") Long accountId, @Param("xyGoodsId") String xyGoodsId, @Param("message") String message);
-
-    @Select("SELECT * FROM xianyu_keyword_reply_rule WHERE xianyu_account_id = #{accountId} AND xy_goods_id = #{xyGoodsId} AND match_mode = 1 AND #{message} LIKE '%' || keyword || '%' AND is_fallback = 0")
-    List<XianyuKeywordReplyRule> matchFuzzy(@Param("accountId") Long accountId, @Param("xyGoodsId") String xyGoodsId, @Param("message") String message);
-
-    @Delete("DELETE FROM xianyu_keyword_reply_rule WHERE id = #{id}")
-    int deleteById(@Param("id") Long id);
+@Repository
+public class XianyuKeywordReplyRuleMapper extends AbstractMongoMapper<XianyuKeywordReplyRule> {
+    public XianyuKeywordReplyRuleMapper(MongoTemplate t, MongoIdGenerator ids) { super(t, ids, XianyuKeywordReplyRule.class); }
+    public List<XianyuKeywordReplyRule> selectByAccountAndGoodsId(Long a, String g) { return mongoTemplate.find(base(a, g), entityType); }
+    public XianyuKeywordReplyRule selectByKeyword(Long a, String g, String k) { Query q=base(a,g); q.addCriteria(Criteria.where("keyword").is(k).and("isFallback").is(0)); return mongoTemplate.findOne(q, entityType); }
+    public XianyuKeywordReplyRule selectFallback(Long a, String g) { Query q=base(a,g); q.addCriteria(Criteria.where("isFallback").is(1)); return mongoTemplate.findOne(q, entityType); }
+    public List<XianyuKeywordReplyRule> matchExact(Long a, String g, String m) { Query q=base(a,g); q.addCriteria(Criteria.where("matchMode").is(2).and("keyword").is(m).and("isFallback").is(0)); return mongoTemplate.find(q, entityType); }
+    public List<XianyuKeywordReplyRule> matchFuzzy(Long a, String g, String m) { return mongoTemplate.find(base(a,g), entityType).stream().filter(r -> Integer.valueOf(1).equals(r.getMatchMode()) && !Integer.valueOf(1).equals(r.getIsFallback()) && r.getKeyword()!=null && m.contains(r.getKeyword())).toList(); }
+    private Query base(Long a, String g) { return Query.query(Criteria.where("xianyuAccountId").is(a).and("xyGoodsId").is(g)); }
 }

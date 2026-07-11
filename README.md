@@ -101,6 +101,7 @@
 
 #### 环境要求
 - Docker 20.10+
+- MongoDB 8.0+；AI 知识库向量检索需要 MongoDB Atlas Vector Search
 
 #### 一键部署脚本
 
@@ -109,7 +110,7 @@
 docker run -d \
   --name xianyu-assistant \
   -p 12400:12400 \
-  -v $(pwd)/data/dbdata:/app/dbdata \
+  -e SPRING_DATA_MONGODB_URI="mongodb://host.docker.internal:27017/xianyu_assistant" \
   -v $(pwd)/data/logs:/app/logs \
   --restart unless-stopped \
   iamlzy/xianyuassistant:latest
@@ -120,7 +121,7 @@ docker run -d \
 docker run -d `
   --name xianyu-assistant `
   -p 12400:12400 `
-  -v ${PWD}/data/dbdata:/app/dbdata `
+  -e SPRING_DATA_MONGODB_URI="mongodb://host.docker.internal:27017/xianyu_assistant" `
   -v ${PWD}/data/logs:/app/logs `
   --restart unless-stopped `
   iamlzy/xianyuassistant:latest
@@ -135,7 +136,7 @@ docker run -d \
   --name xianyu-assistant \
   -p 12400:12400 \
   -e JAVA_OPTS="-Xms256m -Xmx512m" \
-  -v /your/path/dbdata:/app/dbdata \
+  -e SPRING_DATA_MONGODB_URI="mongodb://mongo:27017/xianyu_assistant" \
   -v /your/path/logs:/app/logs \
   --restart unless-stopped \
   iamlzy/xianyuassistant:latest
@@ -146,20 +147,16 @@ docker run -d \
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `-p 12400:12400` | 12400:12400 | 端口映射（物理机端口:容器端口） |
-| `-v /app/dbdata` | - | 数据库数据目录（SQLite + 向量数据库） |
 | `-v /app/logs` | - | 应用日志目录 |
 | `-e JAVA_OPTS` | -Xms256m -Xmx512m | JVM内存参数 |
 | `-e SERVER_PORT` | 12400 | Spring Boot服务端口（容器内部） |
+| `-e SPRING_DATA_MONGODB_URI` | `mongodb://mongo:27017/xianyu_assistant` | MongoDB 连接 URI，生产环境必须显式配置 |
 
-> **数据目录说明**:
-> - `dbdata/xianyu_assistant.db` - SQLite数据库（账号、商品、订单、配置等）
-> - `dbdata/vectorstore.json` - 向量数据库（AI知识库向量数据）
-> - `logs/xianyu-assistant.log` - 应用运行日志
+> **数据存储说明**：账号、商品、订单、配置、备份恢复数据及 AI 向量文档均存储在 MongoDB；`logs/xianyu-assistant.log` 仍为应用运行日志。
 
 > ⚠️ **重要提示**:
-> - 容器内路径（`/app/dbdata` 和 `/app/logs`）不能修改
-> - 物理机路径一旦设置不要随意更改，否则会导致数据丢失
-> - 升级版本时请使用相同的物理机路径，确保数据正确迁移
+> - 请妥善保存 MongoDB 数据卷并定期执行数据库备份
+> - 不要把包含账号密码的 MongoDB URI 提交到仓库或输出到日志
 
 #### 常用命令
 

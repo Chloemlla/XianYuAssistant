@@ -1,16 +1,26 @@
 package com.feijimiao.xianyuassistant.entity;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * 商品自动回复记录实体类
  */
 @Data
+@Document(collection = "xianyu_goods_auto_reply_record")
+@CompoundIndexes({
+        @CompoundIndex(name = "uk_auto_reply_account_session_pnm", def = "{'xianyuAccountId': 1, 'sId': 1, 'pnmId': 1}", unique = true),
+        @CompoundIndex(name = "idx_auto_reply_goods_time", def = "{'xianyuAccountId': 1, 'xyGoodsId': 1, 'createTime': -1}")
+})
 public class XianyuGoodsAutoReplyRecord {
     
     /**
      * 主键ID
      */
+    @Id
     private Long id;
     
     /**

@@ -1,9 +1,14 @@
 package com.feijimiao.xianyuassistant.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.feijimiao.xianyuassistant.entity.XianyuGoodsSkuProperty;
-import org.apache.ibatis.annotations.Mapper;
+import com.feijimiao.xianyuassistant.persistence.AbstractMongoMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoIdGenerator;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.stereotype.Repository;
 
-@Mapper
-public interface XianyuGoodsSkuPropertyMapper extends BaseMapper<XianyuGoodsSkuProperty> {
+@Repository
+public class XianyuGoodsSkuPropertyMapper extends AbstractMongoMapper<XianyuGoodsSkuProperty> {
+    public XianyuGoodsSkuPropertyMapper(MongoTemplate mongoTemplate, MongoIdGenerator idGenerator) {
+        super(mongoTemplate, idGenerator, XianyuGoodsSkuProperty.class);
+    }
 }

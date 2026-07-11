@@ -1,6 +1,6 @@
 package com.feijimiao.xianyuassistant.event.chatMessageEvent.lister;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.entity.XianyuGoodsOrder;
 import com.feijimiao.xianyuassistant.entity.XianyuGoodsInfo;
 import com.feijimiao.xianyuassistant.event.chatMessageEvent.ChatMessageData;
@@ -106,9 +106,9 @@ public class ChatMessageEventAutoDeliveryListener {
     }
 
     private Long resolveXianyuGoodsId(Long accountId, String xyGoodsId) {
-        QueryWrapper<XianyuGoodsInfo> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("xy_good_id", xyGoodsId);
-        queryWrapper.eq("xianyu_account_id", accountId);
+        MongoQueryWrapper<XianyuGoodsInfo> queryWrapper = new MongoQueryWrapper<>();
+        queryWrapper.eq(XianyuGoodsInfo::getXyGoodId, xyGoodsId);
+        queryWrapper.eq(XianyuGoodsInfo::getXianyuAccountId, accountId);
         XianyuGoodsInfo goodsInfo = goodsInfoMapper.selectOne(queryWrapper);
         if (goodsInfo == null) {
             log.warn("【账号{}】未找到商品信息: xyGoodsId={}", accountId, xyGoodsId);

@@ -1,13 +1,23 @@
 package com.feijimiao.xianyuassistant.entity;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * 商品订单实体类
  */
 @Data
+@Document(collection = "xianyu_goods_order")
+@CompoundIndexes({
+        @CompoundIndex(name = "uk_goods_order_account_pnm", def = "{'xianyuAccountId': 1, 'pnmId': 1}", unique = true),
+        @CompoundIndex(name = "idx_goods_order_account_created", def = "{'xianyuAccountId': 1, 'createTime': -1}"),
+        @CompoundIndex(name = "idx_goods_order_account_order", def = "{'xianyuAccountId': 1, 'orderId': 1}")
+})
 public class XianyuGoodsOrder {
-    
+    @Id
     private Long id;
     
     private Long xianyuAccountId;

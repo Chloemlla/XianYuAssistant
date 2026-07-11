@@ -1,73 +1,21 @@
 package com.feijimiao.xianyuassistant.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.feijimiao.xianyuassistant.entity.XianyuOperationLog;
-import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-
+import com.feijimiao.xianyuassistant.persistence.AbstractMongoMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoIdGenerator;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
 import java.util.List;
 
-/**
- * 操作记录 Mapper
- */
-@Mapper
-public interface XianyuOperationLogMapper extends BaseMapper<XianyuOperationLog> {
-    
-    /**
-     * 分页查询操作记录
-     */
-    @Select("<script>" +
-            "SELECT * FROM xianyu_operation_log " +
-            "WHERE xianyu_account_id = #{accountId} " +
-            "<if test='operationType != null and operationType != \"\"'>" +
-            "  AND operation_type = #{operationType} " +
-            "</if>" +
-            "<if test='operationModule != null and operationModule != \"\"'>" +
-            "  AND operation_module = #{operationModule} " +
-            "</if>" +
-            "<if test='operationStatus != null'>" +
-            "  AND operation_status = #{operationStatus} " +
-            "</if>" +
-            "ORDER BY create_time DESC " +
-            "LIMIT #{pageSize} OFFSET #{offset}" +
-            "</script>")
-    List<XianyuOperationLog> selectByPage(
-            @Param("accountId") Long accountId,
-            @Param("operationType") String operationType,
-            @Param("operationModule") String operationModule,
-            @Param("operationStatus") Integer operationStatus,
-            @Param("pageSize") Integer pageSize,
-            @Param("offset") Integer offset
-    );
-    
-    /**
-     * 统计操作记录数量
-     */
-    @Select("<script>" +
-            "SELECT COUNT(*) FROM xianyu_operation_log " +
-            "WHERE xianyu_account_id = #{accountId} " +
-            "<if test='operationType != null and operationType != \"\"'>" +
-            "  AND operation_type = #{operationType} " +
-            "</if>" +
-            "<if test='operationModule != null and operationModule != \"\"'>" +
-            "  AND operation_module = #{operationModule} " +
-            "</if>" +
-            "<if test='operationStatus != null'>" +
-            "  AND operation_status = #{operationStatus} " +
-            "</if>" +
-            "</script>")
-    Integer countByCondition(
-            @Param("accountId") Long accountId,
-            @Param("operationType") String operationType,
-            @Param("operationModule") String operationModule,
-            @Param("operationStatus") Integer operationStatus
-    );
-    
-    /**
-     * 根据账号ID删除操作记录
-     */
-    @Delete("DELETE FROM xianyu_operation_log WHERE xianyu_account_id = #{accountId}")
-    int deleteByAccountId(@Param("accountId") Long accountId);
+@Repository
+public class XianyuOperationLogMapper extends AbstractMongoMapper<XianyuOperationLog> {
+    public XianyuOperationLogMapper(MongoTemplate t, MongoIdGenerator ids) { super(t, ids, XianyuOperationLog.class); }
+    public List<XianyuOperationLog> selectByPage(Long a, String type, String module, Integer status, Integer size, Integer offset) { return mongoTemplate.find(filter(a,type,module,status).with(Sort.by(Sort.Direction.DESC,"createTime")).skip(offset).limit(size), entityType); }
+    public Integer countByCondition(Long a, String type, String module, Integer status) { return Math.toIntExact(mongoTemplate.count(filter(a,type,module,status), entityType)); }
+    public int deleteByAccountId(Long a) { return Math.toIntExact(mongoTemplate.remove(Query.query(Criteria.where("xianyuAccountId").is(a)), entityType).getDeletedCount()); }
+    public int deleteOlderThan(long cutoff) { return Math.toIntExact(mongoTemplate.remove(Query.query(Criteria.where("createTime").lt(cutoff)), entityType).getDeletedCount()); }
+    private Query filter(Long a,String t,String m,Integer s){ Criteria c=Criteria.where("xianyuAccountId").is(a); if(t!=null&&!t.isBlank())c.and("operationType").is(t); if(m!=null&&!m.isBlank())c.and("operationModule").is(m); if(s!=null)c.and("operationStatus").is(s); return Query.query(c); }
 }

@@ -1,26 +1,27 @@
 package com.feijimiao.xianyuassistant.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * 闲鱼商品信息实体类
  */
 @Data
-@TableName("xianyu_goods")
+@Document(collection = "xianyu_goods")
 public class XianyuGoodsInfo {
     
     /**
      * 主键ID（雪花ID）
      */
-    @TableId(type = IdType.ASSIGN_ID)
+    @Id
     private Long id;
     
     /**
      * 闲鱼商品ID
      */
+    @Indexed(unique = true)
     private String xyGoodId;
     
     /**

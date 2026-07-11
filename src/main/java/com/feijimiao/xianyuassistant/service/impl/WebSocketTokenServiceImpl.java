@@ -1,7 +1,7 @@
 package com.feijimiao.xianyuassistant.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoUpdateWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.feijimiao.xianyuassistant.entity.XianyuAccount;
 import com.feijimiao.xianyuassistant.entity.XianyuCookie;
@@ -149,7 +149,7 @@ public class WebSocketTokenServiceImpl implements WebSocketTokenService {
     private String getLatestCookieFromDb(Long accountId) {
         try {
             XianyuCookie cookie = xianyuCookieMapper.selectOne(
-                    new LambdaQueryWrapper<XianyuCookie>()
+                    new MongoQueryWrapper<XianyuCookie>()
                             .eq(XianyuCookie::getXianyuAccountId, accountId)
                             .orderByDesc(XianyuCookie::getCreatedTime)
                             .last("LIMIT 1")
@@ -201,7 +201,7 @@ public class WebSocketTokenServiceImpl implements WebSocketTokenService {
 
             // 2. 先从数据库检查是否有有效的 Token
             XianyuCookie cookieEntity = xianyuCookieMapper.selectOne(
-                    new LambdaQueryWrapper<XianyuCookie>()
+                    new MongoQueryWrapper<XianyuCookie>()
                             .eq(XianyuCookie::getXianyuAccountId, accountId)
             );
 
@@ -667,7 +667,7 @@ public class WebSocketTokenServiceImpl implements WebSocketTokenService {
             // 更新数据库中的Cookie
             if (!newCookieStr.equals(currentCookieStr)) {
                 xianyuCookieMapper.update(null,
-                        new LambdaUpdateWrapper<XianyuCookie>()
+                        new MongoUpdateWrapper<XianyuCookie>()
                                 .eq(XianyuCookie::getXianyuAccountId, accountId)
                                 .set(XianyuCookie::getCookieText, newCookieStr)
                                 .set(XianyuCookie::getCookieStatus, 1)
@@ -676,7 +676,7 @@ public class WebSocketTokenServiceImpl implements WebSocketTokenService {
                 // 如果_m_h5_tk更新了，也更新mH5Tk字段
                 if (mh5tkUpdated && newMh5tk != null) {
                     xianyuCookieMapper.update(null,
-                            new LambdaUpdateWrapper<XianyuCookie>()
+                            new MongoUpdateWrapper<XianyuCookie>()
                                     .eq(XianyuCookie::getXianyuAccountId, accountId)
                                     .set(XianyuCookie::getMH5Tk, newMh5tk)
                     );
@@ -752,7 +752,7 @@ public class WebSocketTokenServiceImpl implements WebSocketTokenService {
             log.info("【账号{}】清除数据库中的Token缓存", accountId);
 
             xianyuCookieMapper.update(null,
-                    new LambdaUpdateWrapper<XianyuCookie>()
+                    new MongoUpdateWrapper<XianyuCookie>()
                             .eq(XianyuCookie::getXianyuAccountId, accountId)
                             .set(XianyuCookie::getTokenExpireTime, 0L)
             );
@@ -855,7 +855,7 @@ public class WebSocketTokenServiceImpl implements WebSocketTokenService {
     private void updateCookieStatus(Long accountId, Integer status, boolean sendNotify) {
         try {
             XianyuCookie currentCookie = xianyuCookieMapper.selectOne(
-                    new LambdaQueryWrapper<XianyuCookie>()
+                    new MongoQueryWrapper<XianyuCookie>()
                             .eq(XianyuCookie::getXianyuAccountId, accountId)
                             .orderByDesc(XianyuCookie::getCreatedTime)
                             .last("LIMIT 1")
@@ -863,7 +863,7 @@ public class WebSocketTokenServiceImpl implements WebSocketTokenService {
             Integer oldStatus = currentCookie != null ? currentCookie.getCookieStatus() : null;
 
             xianyuCookieMapper.update(null,
-                    new LambdaUpdateWrapper<XianyuCookie>()
+                    new MongoUpdateWrapper<XianyuCookie>()
                             .eq(XianyuCookie::getXianyuAccountId, accountId)
                             .set(XianyuCookie::getCookieStatus, status)
             );
@@ -892,7 +892,7 @@ public class WebSocketTokenServiceImpl implements WebSocketTokenService {
             long expireTime = System.currentTimeMillis() + TOKEN_VALID_DURATION;
 
             int updated = xianyuCookieMapper.update(null,
-                    new LambdaUpdateWrapper<XianyuCookie>()
+                    new MongoUpdateWrapper<XianyuCookie>()
                             .eq(XianyuCookie::getXianyuAccountId, accountId)
                             .set(XianyuCookie::getWebsocketToken, token)
                             .set(XianyuCookie::getTokenExpireTime, expireTime)

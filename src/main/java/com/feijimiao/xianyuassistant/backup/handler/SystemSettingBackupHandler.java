@@ -1,6 +1,6 @@
 package com.feijimiao.xianyuassistant.backup.handler;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.backup.DataBackupHandler;
 import com.feijimiao.xianyuassistant.entity.XianyuSysSetting;
 import com.feijimiao.xianyuassistant.mapper.XianyuSysSettingMapper;
@@ -38,7 +38,7 @@ public class SystemSettingBackupHandler implements DataBackupHandler {
 
     @Override
     public Map<String, Object> exportData() {
-        LambdaQueryWrapper<XianyuSysSetting> wrapper = new LambdaQueryWrapper<>();
+        MongoQueryWrapper<XianyuSysSetting> wrapper = new MongoQueryWrapper<>();
         wrapper.in(XianyuSysSetting::getSettingKey, BACKUP_KEYS);
         List<XianyuSysSetting> settings = sysSettingMapper.selectList(wrapper);
 
@@ -63,7 +63,7 @@ public class SystemSettingBackupHandler implements DataBackupHandler {
 
                 if (settingKey == null || !BACKUP_KEYS.contains(settingKey)) continue;
 
-                LambdaQueryWrapper<XianyuSysSetting> wrapper = new LambdaQueryWrapper<>();
+                MongoQueryWrapper<XianyuSysSetting> wrapper = new MongoQueryWrapper<>();
                 wrapper.eq(XianyuSysSetting::getSettingKey, settingKey);
                 XianyuSysSetting existing = sysSettingMapper.selectOne(wrapper);
 

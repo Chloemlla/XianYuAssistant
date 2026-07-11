@@ -1,9 +1,9 @@
 package com.feijimiao.xianyuassistant.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.feijimiao.xianyuassistant.config.rag.DynamicAIChatClientManager;
 import com.feijimiao.xianyuassistant.entity.XianyuSysSetting;
 import com.feijimiao.xianyuassistant.mapper.XianyuSysSettingMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.service.SysSettingService;
 import com.feijimiao.xianyuassistant.service.bo.*;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +44,7 @@ public class SysSettingServiceImpl implements SysSettingService {
             return null;
         }
 
-        LambdaQueryWrapper<XianyuSysSetting> wrapper = new LambdaQueryWrapper<>();
+        MongoQueryWrapper<XianyuSysSetting> wrapper = new MongoQueryWrapper<>();
         wrapper.eq(XianyuSysSetting::getSettingKey, settingKey.trim());
         XianyuSysSetting setting = sysSettingMapper.selectOne(wrapper);
 
@@ -57,7 +57,7 @@ public class SysSettingServiceImpl implements SysSettingService {
             return null;
         }
 
-        LambdaQueryWrapper<XianyuSysSetting> wrapper = new LambdaQueryWrapper<>();
+        MongoQueryWrapper<XianyuSysSetting> wrapper = new MongoQueryWrapper<>();
         wrapper.eq(XianyuSysSetting::getSettingKey, reqBO.getSettingKey().trim());
         XianyuSysSetting setting = sysSettingMapper.selectOne(wrapper);
 
@@ -97,7 +97,7 @@ public class SysSettingServiceImpl implements SysSettingService {
         String now = LocalDateTime.now().format(FORMATTER);
 
         // 查询是否已存在
-        LambdaQueryWrapper<XianyuSysSetting> wrapper = new LambdaQueryWrapper<>();
+        MongoQueryWrapper<XianyuSysSetting> wrapper = new MongoQueryWrapper<>();
         wrapper.eq(XianyuSysSetting::getSettingKey, reqBO.getSettingKey().trim());
         XianyuSysSetting existing = sysSettingMapper.selectOne(wrapper);
 
@@ -133,7 +133,7 @@ public class SysSettingServiceImpl implements SysSettingService {
             throw new RuntimeException("配置键不能为空");
         }
 
-        LambdaQueryWrapper<XianyuSysSetting> wrapper = new LambdaQueryWrapper<>();
+        MongoQueryWrapper<XianyuSysSetting> wrapper = new MongoQueryWrapper<>();
         wrapper.eq(XianyuSysSetting::getSettingKey, settingKey.trim());
         sysSettingMapper.delete(wrapper);
         log.info("[SysSetting] 删除配置成功: key={}", settingKey);

@@ -1,0 +1,149 @@
+{
+  "run_id": "20260711-mongodb-storage",
+  "lane": "/root/audit_delivery",
+  "validated_at": "2026-07-11",
+  "delegation_validation": {
+    "status": "accepted",
+    "envelope": "outputs/runtime/vibe-sessions/20260711-mongodb-storage/delegation-envelope.json",
+    "requirement": "docs/requirements/2026-07-11-mongodb-storage-migration.md",
+    "plan": "docs/plans/2026-07-11-mongodb-storage-migration-execution-plan.md",
+    "allowed_phase": "Wave 1 read-only storage audit",
+    "scope_match": true,
+    "constraints_observed": [
+      "No canonical requirement or plan files modified",
+      "No business code modified",
+      "No local build or test commands executed",
+      "Only this bounded audit receipt was written"
+    ]
+  },
+  "audit_scope": [
+    "pom.xml",
+    "src/main/resources/application.yaml",
+    "Dockerfile",
+    "install.sh",
+    ".github/workflows/build.yml",
+    ".github/workflows/docs.yml",
+    "README.md",
+    "docs/index.md",
+    "docs/technical-reference/*.md",
+    "src/main/resources/sql/README.md"
+  ],
+  "findings": [
+    {
+      "severity": "critical",
+      "area": "dependencies",
+      "evidence": [
+        "pom.xml:91",
+        "pom.xml:97",
+        "pom.xml:152"
+      ],
+      "summary": "The backend still declares MyBatis-Plus, sqlite-jdbc, and the file-backed Spring AI vector-store module, with no Spring Data MongoDB starter.",
+      "recommendation": "Replace MyBatis-Plus and sqlite-jdbc with spring-boot-starter-data-mongodb. If vector data is in migration scope, select a MongoDB-compatible Spring AI vector-store dependency supported by the pinned Spring AI 1.1.4 BOM; do not retain SimpleVectorStore as a production persistence fallback."
+    },
+    {
+      "severity": "critical",
+      "area": "application configuration",
+      "evidence": [
+        "src/main/resources/application.yaml:10",
+        "src/main/resources/application.yaml:24",
+        "src/main/resources/application.yaml:33"
+      ],
+      "summary": "Default configuration still points to jdbc:sqlite:dbdata/xianyu_assistant.db, persists vectors to dbdata/vectorstore.json, and configures MyBatis type handlers.",
+      "recommendation": "Use spring.data.mongodb.uri=${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/xianyu_assistant} as the single authoritative connection setting. If a separate database property is retained, use spring.data.mongodb.database=${SPRING_DATA_MONGODB_DATABASE:xianyu_assistant} and ensure URI/database precedence is documented. Remove datasource, mybatis-plus, and SimpleVectorStore file-path settings after their consumers are migrated."
+    },
+    {
+      "severity": "high",
+      "area": "container runtime",
+      "evidence": [
+        "Dockerfile:49",
+        "Dockerfile:60",
+        "README.md:112",
+        "README.md:149"
+      ],
+      "summary": "The runtime image creates /app/dbdata and deployment examples mount it as the SQLite/vector database volume. The image exposes no MongoDB connection contract or health check.",
+      "recommendation": "Stop presenting /app/dbdata as a database volume. Keep only genuinely local transient/log paths. Document and pass SPRING_DATA_MONGODB_URI (and optionally SPRING_DATA_MONGODB_DATABASE). Provide a Docker Compose example with an application service depending on a mongo service, a named /data/db volume, a MongoDB healthcheck, and credentials supplied via environment or secrets rather than baked into the image."
+    },
+    {
+      "severity": "critical",
+      "area": "installer",
+      "evidence": [
+        "install.sh:17",
+        "install.sh:177",
+        "install.sh:187"
+      ],
+      "summary": "The JAR installer only accepts port and JVM options, creates local data/log directories, and starts the application without MongoDB URI or database configuration. A migrated application would fail or accidentally use an unsafe default when installed this way.",
+      "recommendation": "Require or interactively collect MONGODB_URI (recommended external name) and export it to Spring as SPRING_DATA_MONGODB_URI before launching. Optionally accept MONGODB_DATABASE. Validate that the URI is non-empty without printing credentials, persist settings in a permission-restricted environment file or service definition, and update restart instructions so later launches retain them."
+    },
+    {
+      "severity": "critical",
+      "area": "GitHub Actions verification",
+      "evidence": [
+        ".github/workflows/build.yml:25",
+        ".github/workflows/build.yml:59",
+        ".github/workflows/docs.yml:24"
+      ],
+      "summary": "The only backend delivery gate is a multi-platform Docker build whose Dockerfile packages with -DskipTests. There is no Maven test job, MongoDB service container, Mongo-backed application context check, or post-build container startup check.",
+      "recommendation": "Add a backend verification job on ubuntu-latest with a MongoDB service (pinned major version), health options using mongosh ping, SPRING_DATA_MONGODB_URI targeting the service, JDK 21 setup, and ./mvnw test (or verify). Add at least one context/repository integration test that creates indexes and performs CRUD against the service. Make the Docker publish job depend on this job. Retain docker/build-push-action for image verification and optionally load a single amd64 image in a non-publish smoke job, run it against MongoDB, and poll an application health endpoint. All build/test execution must remain in Actions."
+    },
+    {
+      "severity": "high",
+      "area": "documentation",
+      "evidence": [
+        "README.md:155",
+        "README.md:196",
+        "README.md:324",
+        "docs/index.md:22",
+        "docs/technical-reference/01-architecture-and-stack.md:16",
+        "docs/technical-reference/02-backend-and-api.md:57",
+        "docs/technical-reference/03-core-workflows.md:49",
+        "docs/technical-reference/04-data-and-configuration.md:3",
+        "docs/technical-reference/05-frontend-deployment-and-risks.md:57",
+        "src/main/resources/sql/README.md:57"
+      ],
+      "summary": "User and technical documentation consistently describes SQLite, MyBatis-Plus, SQL schema initialization, dbdata persistence, and file-backed vectors as current architecture and operational requirements.",
+      "recommendation": "Update installation, architecture, persistence, operations, backup/restore, scaling, monitoring, and testing sections together. Remove SQL schema initialization instructions once code is removed. State MongoDB version/edition requirements, URI examples with redacted credentials, database/index bootstrap behavior, backup/restore semantics, and whether Atlas is mandatory for vector search. Regenerate source-index documentation after migration so generated MyBatis/SQLite references do not remain authoritative."
+    },
+    {
+      "severity": "medium",
+      "area": "local storage classification",
+      "evidence": [
+        "src/main/java/com/feijimiao/xianyuassistant/config/rag/DynamicVectorStoreManager.java:46",
+        "src/main/java/com/feijimiao/xianyuassistant/controller/DataBackupController.java:100",
+        "src/main/java/com/feijimiao/xianyuassistant/service/impl/ImageUploadServiceImpl.java:70"
+      ],
+      "summary": "The vector store is definitely local persistent business data. Log ZIP creation is operational/transient, while image upload bytes are forwarded to the Goofish CDN and do not appear to be retained locally.",
+      "recommendation": "Migrate vector persistence to the selected MongoDB vector implementation. Do not move logs or temporary ZIP files into MongoDB solely to satisfy the migration wording. GridFS is only needed if a later audit finds application-owned binary objects retained locally; the current image upload path alone does not justify it."
+    }
+  ],
+  "recommended_delivery_contract": {
+    "runtime_environment": [
+      "SPRING_DATA_MONGODB_URI (required in production; includes hosts, credentials, replica set/TLS options, and may include database)",
+      "SPRING_DATA_MONGODB_DATABASE (optional only when database is not encoded in the URI)",
+      "Do not log the URI or store credentials in repository files"
+    ],
+    "docker_service": {
+      "image": "mongo:<pinned-supported-major>",
+      "persistence": "named volume mounted at /data/db",
+      "healthcheck": "mongosh --quiet --eval 'db.adminCommand({ ping: 1 })'",
+      "application_connection": "mongodb://<credentials>@mongo:27017/xianyu_assistant?authSource=admin"
+    },
+    "ci_gates": [
+      "MongoDB service becomes healthy",
+      "Maven test/verify executes on GitHub Actions with MongoDB URI injected",
+      "Mongo repository/index CRUD integration coverage passes",
+      "Docker image builds only after backend verification",
+      "Optional container smoke test reaches application health endpoint while connected to MongoDB",
+      "Static residual scan rejects sqlite-jdbc, mybatis-plus, jdbc:sqlite, spring.datasource, dbdata/xianyu_assistant.db, and vectorstore.json in production code/config/deployment docs"
+    ]
+  },
+  "verification": {
+    "method": "read-only UTF-8 PowerShell inspection and rg residual audit",
+    "builds_or_tests_run": false,
+    "result": "audit_complete",
+    "completion_claim_allowed": "Audit findings are complete; full MongoDB migration completion is not claimable until GitHub Actions provides successful build, test, and container evidence."
+  },
+  "governance_notes": [
+    "The installed vibe SKILL.md references protocols/runtime.md and protocols/review.md, but those files were absent at the referenced location; the main skill contract and root delegation envelope were used as authority.",
+    "No specialist dispatch was needed for this bounded read-only delivery audit."
+  ]
+}

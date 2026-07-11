@@ -1,9 +1,14 @@
 package com.feijimiao.xianyuassistant.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.feijimiao.xianyuassistant.entity.XianyuKamiUsageRecord;
-import org.apache.ibatis.annotations.Mapper;
+import com.feijimiao.xianyuassistant.persistence.AbstractMongoMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoIdGenerator;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.stereotype.Repository;
 
-@Mapper
-public interface XianyuKamiUsageRecordMapper extends BaseMapper<XianyuKamiUsageRecord> {
+@Repository
+public class XianyuKamiUsageRecordMapper extends AbstractMongoMapper<XianyuKamiUsageRecord> {
+    public XianyuKamiUsageRecordMapper(MongoTemplate mongoTemplate, MongoIdGenerator idGenerator) {
+        super(mongoTemplate, idGenerator, XianyuKamiUsageRecord.class);
+    }
 }

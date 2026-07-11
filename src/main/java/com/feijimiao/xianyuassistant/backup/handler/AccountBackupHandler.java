@@ -1,6 +1,6 @@
 package com.feijimiao.xianyuassistant.backup.handler;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.backup.DataBackupHandler;
 import com.feijimiao.xianyuassistant.entity.XianyuAccount;
 import com.feijimiao.xianyuassistant.entity.XianyuCookie;
@@ -82,7 +82,7 @@ public class AccountBackupHandler implements DataBackupHandler {
                     String unb = (String) map.get("unb");
                     if (unb == null) continue;
 
-                    LambdaQueryWrapper<XianyuAccount> wrapper = new LambdaQueryWrapper<>();
+                    MongoQueryWrapper<XianyuAccount> wrapper = new MongoQueryWrapper<>();
                     wrapper.eq(XianyuAccount::getUnb, unb);
                     XianyuAccount existing = accountMapper.selectOne(wrapper);
 
@@ -125,7 +125,7 @@ public class AccountBackupHandler implements DataBackupHandler {
                     if (unb == null || !unbToAccountId.containsKey(unb)) continue;
 
                     Long accountId = unbToAccountId.get(unb);
-                    LambdaQueryWrapper<XianyuCookie> wrapper = new LambdaQueryWrapper<>();
+                    MongoQueryWrapper<XianyuCookie> wrapper = new MongoQueryWrapper<>();
                     wrapper.eq(XianyuCookie::getXianyuAccountId, accountId);
                     XianyuCookie existing = cookieMapper.selectOne(wrapper);
 

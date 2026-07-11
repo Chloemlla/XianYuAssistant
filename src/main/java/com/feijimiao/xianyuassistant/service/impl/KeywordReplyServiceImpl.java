@@ -1,6 +1,5 @@
 package com.feijimiao.xianyuassistant.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.feijimiao.xianyuassistant.entity.XianyuGoodsConfig;
 import com.feijimiao.xianyuassistant.entity.XianyuKeywordReplyContent;
 import com.feijimiao.xianyuassistant.entity.XianyuKeywordReplyRule;

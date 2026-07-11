@@ -1,12 +1,17 @@
 package com.feijimiao.xianyuassistant.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.feijimiao.xianyuassistant.entity.XianyuAccount;
-import org.apache.ibatis.annotations.Mapper;
+import com.feijimiao.xianyuassistant.persistence.AbstractMongoMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoIdGenerator;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.stereotype.Repository;
 
 /**
  * 闲鱼账号Mapper
  */
-@Mapper
-public interface XianyuAccountMapper extends BaseMapper<XianyuAccount> {
+@Repository
+public class XianyuAccountMapper extends AbstractMongoMapper<XianyuAccount> {
+    public XianyuAccountMapper(MongoTemplate mongoTemplate, MongoIdGenerator idGenerator) {
+        super(mongoTemplate, idGenerator, XianyuAccount.class);
+    }
 }

@@ -1,16 +1,23 @@
 package com.feijimiao.xianyuassistant.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.feijimiao.xianyuassistant.entity.XianyuKamiConfig;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import com.feijimiao.xianyuassistant.persistence.AbstractMongoMapper;
+import com.feijimiao.xianyuassistant.persistence.MongoIdGenerator;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Mapper
-public interface XianyuKamiConfigMapper extends BaseMapper<XianyuKamiConfig> {
+@Repository
+public class XianyuKamiConfigMapper extends AbstractMongoMapper<XianyuKamiConfig> {
+    public XianyuKamiConfigMapper(MongoTemplate mongoTemplate, MongoIdGenerator idGenerator) {
+        super(mongoTemplate, idGenerator, XianyuKamiConfig.class);
+    }
 
-    @Select("SELECT * FROM xianyu_kami_config WHERE xianyu_account_id = #{xianyuAccountId} ORDER BY create_time DESC")
-    List<XianyuKamiConfig> findByAccountId(@Param("xianyuAccountId") Long xianyuAccountId);
+    public List<XianyuKamiConfig> findByAccountId(Long accountId) {
+        return selectList(new MongoQueryWrapper<XianyuKamiConfig>()
+                .eq(XianyuKamiConfig::getXianyuAccountId, accountId)
+                .orderByDesc(XianyuKamiConfig::getCreateTime));
+    }
 }

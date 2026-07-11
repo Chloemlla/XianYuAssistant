@@ -1,6 +1,6 @@
 package com.feijimiao.xianyuassistant.backup.handler;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.backup.DataBackupHandler;
 import com.feijimiao.xianyuassistant.entity.XianyuAccount;
 import com.feijimiao.xianyuassistant.entity.XianyuGoodsAutoDeliveryConfig;
@@ -88,7 +88,7 @@ public class AutoDeliveryBackupHandler implements DataBackupHandler {
                 }
 
                 String skuId = (String) map.get("skuId");
-                LambdaQueryWrapper<XianyuGoodsAutoDeliveryConfig> wrapper = new LambdaQueryWrapper<>();
+                MongoQueryWrapper<XianyuGoodsAutoDeliveryConfig> wrapper = new MongoQueryWrapper<>();
                 wrapper.eq(XianyuGoodsAutoDeliveryConfig::getXianyuAccountId, accountId)
                        .eq(XianyuGoodsAutoDeliveryConfig::getXyGoodsId, xyGoodsId)
                        .eq(skuId == null, XianyuGoodsAutoDeliveryConfig::getSkuId, null)

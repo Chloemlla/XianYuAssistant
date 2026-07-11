@@ -8,7 +8,7 @@ import com.feijimiao.xianyuassistant.mapper.XianyuGoodsConfigMapper;
 import com.feijimiao.xianyuassistant.mapper.XianyuGoodsInfoMapper;
 import com.feijimiao.xianyuassistant.service.AIService;
 import com.feijimiao.xianyuassistant.service.bo.RAGReplyResult;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -47,7 +47,7 @@ public class AIReplyStrategy implements ReplyStrategy {
             String fixedMaterial = goodsConfig != null ? goodsConfig.getFixedMaterial() : null;
 
             XianyuGoodsInfo goodsInfo = goodsInfoMapper.selectOne(
-                    new LambdaQueryWrapper<XianyuGoodsInfo>().eq(XianyuGoodsInfo::getXyGoodId, xyGoodsId)
+                    new MongoQueryWrapper<XianyuGoodsInfo>().eq(XianyuGoodsInfo::getXyGoodId, xyGoodsId)
             );
             String goodsDetail = goodsInfo != null ? goodsInfo.getDetailInfo() : null;
 

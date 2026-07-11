@@ -1,6 +1,6 @@
 package com.feijimiao.xianyuassistant.backup.handler;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.feijimiao.xianyuassistant.persistence.MongoQueryWrapper;
 import com.feijimiao.xianyuassistant.backup.DataBackupHandler;
 import com.feijimiao.xianyuassistant.entity.XianyuAccount;
 import com.feijimiao.xianyuassistant.entity.XianyuGoodsInfo;
@@ -86,7 +86,7 @@ public class GoodsBackupHandler implements DataBackupHandler {
                     continue;
                 }
 
-                LambdaQueryWrapper<XianyuGoodsInfo> wrapper = new LambdaQueryWrapper<>();
+                MongoQueryWrapper<XianyuGoodsInfo> wrapper = new MongoQueryWrapper<>();
                 wrapper.eq(XianyuGoodsInfo::getXyGoodId, xyGoodId);
                 XianyuGoodsInfo existing = goodsInfoMapper.selectOne(wrapper);
 

@@ -1,14 +1,24 @@
 package com.feijimiao.xianyuassistant.entity;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
 /**
  * 闲鱼聊天消息实体
  */
 @Data
+@Document(collection = "xianyu_chat_message")
+@CompoundIndexes({
+        @CompoundIndex(name = "uk_chat_account_pnm", def = "{'xianyuAccountId': 1, 'pnmId': 1}", unique = true),
+        @CompoundIndex(name = "idx_chat_account_time", def = "{'xianyuAccountId': 1, 'messageTime': -1}"),
+        @CompoundIndex(name = "idx_chat_session_time", def = "{'sId': 1, 'messageTime': 1}")
+})
 public class XianyuChatMessage {
-    
+    @Id
     private Long id;
     
     // 关联信息
