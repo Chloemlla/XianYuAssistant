@@ -12,7 +12,6 @@ import com.feijimiao.xianyuassistant.service.TokenRefreshService;
 import com.feijimiao.xianyuassistant.service.WebSocketTokenService;
 import com.feijimiao.xianyuassistant.utils.SessionCookieJar;
 import com.feijimiao.xianyuassistant.utils.XianyuSignUtils;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -86,25 +85,12 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
 
     private final Set<Long> accountsUnderMaintenance = ConcurrentHashMap.newKeySet();
 
-    private volatile long nextCookieKeepAliveTime = 0;
-
-    @PostConstruct
-    public void initRefreshSchedules() {
-        scheduleNextCookieKeepAlive();
-    }
-
     private long randomRefreshDelayMinutes() {
         int minMinutes = Math.max(1, webSocketConfig.getCredentialRefreshMinMinutes());
         int maxMinutes = Math.max(minMinutes, webSocketConfig.getCredentialRefreshMaxMinutes());
         return ThreadLocalRandom.current().nextLong(minMinutes, maxMinutes + 1L);
     }
 
-    private void scheduleNextCookieKeepAlive() {
-        long delayMinutes = randomRefreshDelayMinutes();
-        nextCookieKeepAliveTime = System.currentTimeMillis() + delayMinutes * ONE_MINUTE_MS;
-        log.info("📅 下次Cookie保活检查将在 {} 分钟后执行", delayMinutes);
-    }
-    
     /**
      * 闲鱼API地址（用于刷新_m_h5_tk）
      */
@@ -408,10 +394,6 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
      */
     @Scheduled(fixedDelay = ONE_MINUTE_MS, initialDelay = ONE_MINUTE_MS)
     public void scheduledCookieKeepAlive() {
-        if (System.currentTimeMillis() < nextCookieKeepAliveTime) {
-            return;
-        }
-        scheduleNextCookieKeepAlive();
         try {
             long now = System.currentTimeMillis();
             long nextMaintenanceAt = now + randomRefreshDelayMinutes() * ONE_MINUTE_MS;
@@ -420,7 +402,7 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
             for (XianyuCookie cookie : dueCookies) {
                 XianyuAccount account = accountMapper.selectById(cookie.getXianyuAccountId());
                 if (account != null && Integer.valueOf(1).equals(account.getStatus())) {
-                    submitMaintenance(account.getId(), () -> {
+                    boolean accepted = submitMaintenance(account.getId(), () -> {
                       try {
                         boolean loginOk = cookieRefreshService.checkLoginStatus(account.getId());
                         if (loginOk) {
@@ -458,6 +440,7 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
                         cookieMapper.releaseCredentialMaintenanceLease(account.getId());
                       }
                     });
+                    if (!accepted) cookieMapper.releaseCredentialMaintenanceLease(account.getId());
                 } else {
                     cookieMapper.releaseCredentialMaintenanceLease(cookie.getXianyuAccountId());
                 }
@@ -487,7 +470,7 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
             for (XianyuCookie cookie : dueCookies) {
                 XianyuAccount account = accountMapper.selectById(cookie.getXianyuAccountId());
                 if (account != null && Integer.valueOf(1).equals(account.getStatus())) {
-                        submitMaintenance(account.getId(), () -> {
+                        boolean accepted = submitMaintenance(account.getId(), () -> {
                           try {
                             boolean success = refreshWebSocketToken(account.getId());
                             if (success) {
@@ -499,6 +482,7 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
                             cookieMapper.releaseWebsocketTokenLease(account.getId());
                           }
                         });
+                        if (!accepted) cookieMapper.releaseWebsocketTokenLease(account.getId());
                 } else {
                     cookieMapper.releaseWebsocketTokenLease(cookie.getXianyuAccountId());
                 }
@@ -509,9 +493,9 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
         }
     }
 
-    private void submitMaintenance(Long accountId, Runnable task) {
+    private boolean submitMaintenance(Long accountId, Runnable task) {
         if (!accountsUnderMaintenance.add(accountId)) {
-            return;
+            return false;
         }
         try {
             maintenanceExecutor.execute(() -> {
@@ -523,9 +507,11 @@ public class TokenRefreshServiceImpl implements TokenRefreshService {
                     accountsUnderMaintenance.remove(accountId);
                 }
             });
+            return true;
         } catch (java.util.concurrent.RejectedExecutionException e) {
             accountsUnderMaintenance.remove(accountId);
             log.warn("【账号{}】维护队列已满，本轮跳过", accountId);
+            return false;
         }
     }
     

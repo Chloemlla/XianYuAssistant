@@ -28,7 +28,7 @@ public class XianyuGoodsOrderMapper extends AbstractMongoMapper<XianyuGoodsOrder
     public XianyuGoodsOrder selectByAccountIdAndOrderId(Long a,String o){return mongoTemplate.findOne(Query.query(Criteria.where("xianyuAccountId").is(a).and("orderId").is(o)),entityType);}
     public XianyuGoodsOrder claimForApiDelivery(Long accountId,String orderId,String claimToken,long leaseUntil){
         Criteria available = new Criteria().orOperator(Criteria.where("deliveryClaimExpiresAt").exists(false),Criteria.where("deliveryClaimExpiresAt").lt(System.currentTimeMillis()));
-        Query query = Query.query(new Criteria().andOperator(Criteria.where("xianyuAccountId").is(accountId),Criteria.where("orderId").is(orderId),Criteria.where("state").ne(1),available));
+        Query query = Query.query(new Criteria().andOperator(Criteria.where("xianyuAccountId").is(accountId),Criteria.where("orderId").is(orderId),Criteria.where("state").in(null,0,2),available));
         Update update = new Update().set("deliveryClaimToken",claimToken).set("deliveryClaimExpiresAt",leaseUntil).set("state",2);
         return mongoTemplate.findAndModify(query,update,FindAndModifyOptions.options().returnNew(true),entityType);
     }

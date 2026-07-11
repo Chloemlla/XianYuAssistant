@@ -1,4 +1,4 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
+import axios, { AxiosHeaders, type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { toast } from './toast'
 import type { ApiResponse } from '@/types'
 
@@ -93,7 +93,9 @@ const retryWithRefresh = async (config: RetriableRequestConfig) => {
   }
   config._authRetry = true
   const token = await refreshAccessToken()
-  config.headers = { ...config.headers, Authorization: `Bearer ${token}` }
+  const headers = AxiosHeaders.from(config.headers)
+  headers.set('Authorization', `Bearer ${token}`)
+  config.headers = headers
   return service.request(config)
 }
 

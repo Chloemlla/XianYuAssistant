@@ -84,7 +84,7 @@ public class WebSocketController {
             
             log.info("📋 滑块验证信息:");
             log.info("   - 账号ID: {}", reqDTO.getXianyuAccountId());
-            log.info("   - 验证URL: {}", e.getCaptchaUrl());
+            log.info("   - 已生成验证URL");
             log.info("   - 提示: 请访问 https://www.goofish.com/im 完成验证后手动更新Cookie和Token");
             
             ResultObject<CaptchaInfoDTO> result = new ResultObject<>(1001, "需要滑块验证", captchaInfo);

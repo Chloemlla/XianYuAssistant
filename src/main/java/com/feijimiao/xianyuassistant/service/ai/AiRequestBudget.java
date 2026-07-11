@@ -38,7 +38,13 @@ public class AiRequestBudget {
         if (!permits.tryAcquire()) {
             throw new IllegalStateException("AI请求并发已达上限");
         }
-        Future<T> future = executor.submit(operation::get);
+        Future<T> future;
+        try {
+            future = executor.submit(operation::get);
+        } catch (RuntimeException e) {
+            permits.release();
+            throw new IllegalStateException("AI请求执行队列已满", e);
+        }
         try {
             return future.get(timeoutSeconds, TimeUnit.SECONDS);
         } catch (Exception e) {

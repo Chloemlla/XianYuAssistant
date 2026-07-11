@@ -12,4 +12,5 @@ public class GetSettingRespDTO {
     private String settingKey;
     private String settingValue;
     private String settingDesc;
+    private Boolean hasValue;
 }

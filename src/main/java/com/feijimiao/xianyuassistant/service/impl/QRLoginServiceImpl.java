@@ -366,7 +366,7 @@ public class QRLoginServiceImpl implements QRLoginService {
             Matcher matcher = pattern.matcher(html);
             if (matcher.find()) {
                 params.put(paramName, matcher.group(1));
-                log.debug("提取到参数 {}: {}", paramName, matcher.group(1));
+                log.debug("提取到登录参数: {}", paramName);
             }
         }
         
@@ -466,7 +466,7 @@ public class QRLoginServiceImpl implements QRLoginService {
                                 session.setVerificationUrl(iframeUrl);
                                 log.warn("⚠️ 账号被风控，需要手机验证");
                                 log.warn("   - 会话ID: {}", session.getSessionId());
-                                log.warn("   - 验证URL: {}", iframeUrl);
+                                log.warn("   - 已生成风控验证URL");
                             } else {
                                 // 登录成功，保存Cookie
                                 log.info("🎉 扫码确认成功！开始保存账号信息...");

@@ -204,7 +204,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
             
             if (response.statusCode() == 200) {
                 String responseBody = response.body();
-                log.debug("上传响应: {}", responseBody);
+                log.debug("上传响应已接收: responseLength={}", responseBody.length());
                 
                 return parseUploadResponse(responseBody);
             } else if (response.statusCode() == 302 || response.statusCode() == 301) {
@@ -256,7 +256,7 @@ public class ImageUploadServiceImpl implements ImageUploadService {
                 return root.get("data").get("fileUrl").asText();
             }
             
-            log.error("无法从响应中提取图片URL: {}", responseBody);
+            log.error("无法从响应中提取图片URL: responseLength={}", responseBody == null ? 0 : responseBody.length());
             return null;
             
         } catch (Exception e) {

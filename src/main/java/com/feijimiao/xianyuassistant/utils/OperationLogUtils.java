@@ -119,7 +119,7 @@ public class OperationLogUtils {
             Map<String, Object> params = Map.of(
                 "cid", cid,
                 "toId", toId,
-                "text", text.length() > 100 ? text.substring(0, 100) + "..." : text
+                "textLength", text == null ? 0 : text.length()
             );
             
             operationLogService.log(accountId, 
@@ -147,7 +147,7 @@ public class OperationLogUtils {
             Map<String, Object> params = Map.of(
                 "cid", cid,
                 "toId", toId,
-                "text", text.length() > 100 ? text.substring(0, 100) + "..." : text
+                "textLength", text == null ? 0 : text.length()
             );
             
             operationLogService.log(accountId, 

@@ -129,19 +129,23 @@ public class AccountBackupHandler implements DataBackupHandler {
                     wrapper.eq(XianyuCookie::getXianyuAccountId, accountId);
                     XianyuCookie existing = cookieMapper.selectOne(wrapper);
 
-                    XianyuCookie cookie = new XianyuCookie();
+                    String cookieText = (String) map.get("cookieText");
+                    if (existing == null && (cookieText == null || cookieText.isBlank())) {
+                        continue;
+                    }
+
+                    XianyuCookie cookie = existing == null ? new XianyuCookie() : existing;
                     cookie.setXianyuAccountId(accountId);
-                    cookie.setCookieText((String) map.get("cookieText"));
-                    cookie.setMH5Tk((String) map.get("mH5Tk"));
+                    if (map.containsKey("cookieText")) cookie.setCookieText(cookieText);
+                    if (map.containsKey("mH5Tk")) cookie.setMH5Tk((String) map.get("mH5Tk"));
                     cookie.setCookieStatus(map.get("cookieStatus") != null ? ((Number) map.get("cookieStatus")).intValue() : null);
                     cookie.setExpireTime((String) map.get("expireTime"));
-                    cookie.setWebsocketToken((String) map.get("websocketToken"));
+                    if (map.containsKey("websocketToken")) cookie.setWebsocketToken((String) map.get("websocketToken"));
                     cookie.setTokenExpireTime(map.get("tokenExpireTime") != null ? ((Number) map.get("tokenExpireTime")).longValue() : null);
 
                     if (existing == null) {
                         cookieMapper.insert(cookie);
                     } else {
-                        cookie.setId(existing.getId());
                         cookieMapper.updateById(cookie);
                     }
                 } catch (Exception e) {

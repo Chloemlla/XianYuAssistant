@@ -32,7 +32,7 @@ public class MessageDecryptUtils {
                 return null;
             }
 
-            log.debug("原始加密数据: {}", encryptedData);
+            log.debug("收到加密数据: payloadLength={}", encryptedData.length());
             log.debug("加密数据长度: {}", encryptedData.length());
 
             // 清理数据，移除可能的非ASCII字符

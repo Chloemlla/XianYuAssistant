@@ -152,6 +152,7 @@ public class AIServiceImpl implements AIService {
 
                 用户问题：%s
                 """, context, prompt);
+        aiRequestBudget.validateInputs(sysPrompt, userMessage);
 
         long llmStart = System.currentTimeMillis();
         log.info("[AI Chat] 准备调用LLM, 总预处理耗时: {}ms", llmStart - startTime);
@@ -251,6 +252,7 @@ public class AIServiceImpl implements AIService {
         } else {
             userMessage = msg;
         }
+        aiRequestBudget.validateInputs(sysPrompt, userMessage);
 
         // 6. 请求大模型，阻塞等待完整响应
         try {
@@ -339,6 +341,7 @@ public class AIServiceImpl implements AIService {
         
         userMsgBuilder.append("用户问题：").append(msg);
         userMessage = userMsgBuilder.toString();
+        aiRequestBudget.validateInputs(sysPrompt, userMessage);
 
         try {
             String replyContent = chatClient.prompt()
@@ -423,6 +426,7 @@ public class AIServiceImpl implements AIService {
         
         userMsgBuilder.append("用户问题：").append(msg);
         String userMessage = userMsgBuilder.toString();
+        aiRequestBudget.validateInputs(finalSystemPrompt, userMessage);
 
         return chatClient.prompt()
                 .system(finalSystemPrompt)
@@ -519,6 +523,7 @@ public class AIServiceImpl implements AIService {
         
         userMsgBuilder.append("用户问题：").append(msg);
         String userMessage = userMsgBuilder.toString();
+        aiRequestBudget.validateInputs(finalSystemPrompt, userMessage, contextMessages);
 
         try {
             String replyContent;

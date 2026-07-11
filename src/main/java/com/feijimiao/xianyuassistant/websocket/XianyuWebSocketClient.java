@@ -829,7 +829,7 @@ public class XianyuWebSocketClient extends WebSocketClient {
             String messageJson = objectMapper.writeValueAsString(message);
             log.debug("{}发送图片消息JSON: payloadLength={}", logPrefix(), messageJson.length());
             send(messageJson);
-            log.info("{}✅ 图片消息已发送: {}", logPrefix(), imageUrl);
+            log.info("{}✅ 图片消息已发送: urlLength={}", logPrefix(), imageUrl == null ? 0 : imageUrl.length());
             
         } catch (Exception e) {
             log.error("{}❌ 发送图片消息失败: cid={}, toId={}", logPrefix(), cid, toId, e);

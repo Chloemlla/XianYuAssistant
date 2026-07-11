@@ -30,6 +30,9 @@ public class SysSettingServiceImpl implements SysSettingService {
 
     /** AI相关配置键，变更时需要触发ChatClient重建 */
     private static final Set<String> AI_RELATED_KEYS = Set.of("ai_api_key", "ai_base_url", "ai_model");
+    private static final Set<String> SENSITIVE_KEYS = Set.of(
+            "ai_api_key", "ai_embedding_api_key", "email_smtp_password");
+    private static final String MASKED_VALUE = "********";
 
     @Autowired
     private XianyuSysSettingMapper sysSettingMapper;
@@ -67,7 +70,7 @@ public class SysSettingServiceImpl implements SysSettingService {
 
         GetSettingRespBO respBO = new GetSettingRespBO();
         respBO.setSettingKey(setting.getSettingKey());
-        respBO.setSettingValue(setting.getSettingValue());
+        applyApiValue(respBO, setting);
         respBO.setSettingDesc(setting.getSettingDesc());
         return respBO;
     }
@@ -80,7 +83,7 @@ public class SysSettingServiceImpl implements SysSettingService {
         for (XianyuSysSetting setting : settings) {
             GetSettingRespBO respBO = new GetSettingRespBO();
             respBO.setSettingKey(setting.getSettingKey());
-            respBO.setSettingValue(setting.getSettingValue());
+            applyApiValue(respBO, setting);
             respBO.setSettingDesc(setting.getSettingDesc());
             result.add(respBO);
         }
@@ -102,6 +105,9 @@ public class SysSettingServiceImpl implements SysSettingService {
         XianyuSysSetting existing = sysSettingMapper.selectOne(wrapper);
 
         if (existing != null) {
+            if (SENSITIVE_KEYS.contains(reqBO.getSettingKey().trim()) && MASKED_VALUE.equals(reqBO.getSettingValue())) {
+                return;
+            }
             // 更新
             existing.setSettingValue(reqBO.getSettingValue());
             existing.setSettingDesc(reqBO.getSettingDesc());
@@ -143,5 +149,11 @@ public class SysSettingServiceImpl implements SysSettingService {
             log.info("[SysSetting] AI配置删除，触发ChatClient重建: key={}", settingKey);
             dynamicAIChatClientManager.forceRebuild();
         }
+    }
+
+    private void applyApiValue(GetSettingRespBO response, XianyuSysSetting setting) {
+        boolean hasValue = setting.getSettingValue() != null && !setting.getSettingValue().isBlank();
+        response.setHasValue(hasValue);
+        response.setSettingValue(SENSITIVE_KEYS.contains(setting.getSettingKey()) && hasValue ? MASKED_VALUE : setting.getSettingValue());
     }
 }

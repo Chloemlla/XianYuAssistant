@@ -49,6 +49,7 @@ public class SysSettingController {
                 respDTO.setSettingKey(respBO.getSettingKey());
                 respDTO.setSettingValue(respBO.getSettingValue());
                 respDTO.setSettingDesc(respBO.getSettingDesc());
+                respDTO.setHasValue(respBO.getHasValue());
             } else {
                 respDTO.setSettingKey(reqDTO.getSettingKey());
                 respDTO.setSettingValue(null);
@@ -75,6 +76,7 @@ public class SysSettingController {
                 respDTO.setSettingKey(respBO.getSettingKey());
                 respDTO.setSettingValue(respBO.getSettingValue());
                 respDTO.setSettingDesc(respBO.getSettingDesc());
+                respDTO.setHasValue(respBO.getHasValue());
                 result.add(respDTO);
             }
 
